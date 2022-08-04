@@ -1,0 +1,413 @@
+﻿namespace PortalRestService.Core.Responses
+{
+    public class Data
+    {
+        public int Id { get; set; }
+        public int LocationAddressId { get; set; }
+        public LocationAddress LocationAddress { get; set; }
+        public int LocationStatusId { get; set; }
+        public LocationStatus LocationStatus { get; set; }
+        public Department Department {get; set;}
+        //public int LocationId { get; set; }
+        public string ContactPersonName { get; set; }
+        public string GlobalTax { get; set; }
+        public string TotalCapacity { get; set; }
+        public string UtilityService { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public string Description { get; set; }
+        public bool IsActive { get; set; }
+        public string ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
+        //public int NetworkId { get; set; }
+       // public string NetworkName { get; set; }
+        public string LocationName { get; set; }
+        public int LocationNumber { get; set; }
+        //public int SubNetworkId { get; set; }
+       // public string SubNetworkName { get; set; }
+        public string FuelProtectType { get; set; }
+        public string TimeZone { get; set; }
+        public List<LocationSchedule> LocationSchedule { get; set; }
+    }
+
+    public class GetLocatinByIdResponse
+    {
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+        public Data data { get; set; }
+    }
+    public class AllLocationQueryResponse
+    {
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+
+        public List<LocationData> data { get; set; }
+    }
+
+    public class LocationData
+    {
+        public long Id { get; set; }
+        public string LocationName { get; set; }
+    }
+
+    public class StatusSummaryData
+    {
+        public string Type { get; set; }
+        public int Count { get; set; }
+        public List<StatusItemData> StatusData { get; set; }
+    }
+
+    public class StatusSummary
+    {
+        public int StatusCode { get; set; }
+        public string Message { get; set; }
+        public List<StatusSummaryData> data { get; set; }
+    }
+
+    public class StatusItemData
+    {
+        public string Key { get; set; }
+        public int value { get; set; }
+    }
+
+    public class LocationStatusByLocationIdResponse
+    {
+        public string LocationName { get; set; }
+        public string ContactPersonName { get; set; }
+
+        public long LocationStatusId { get; set; }
+        public string LocationStatusName { get; set; }
+
+
+    }
+
+    //public class LocationDashboardResponse
+    //{
+
+    //    public int? StatusCode { get; set; }
+    //    public string? StatusMessage { get; set; }
+
+    //    public List<LocationDashboard> data { get; set; }
+
+    //}
+    //public class LocationDashboard
+    //{
+    //    public LocationDashboard()
+    //    {
+    //        locationSchedule = new List<LocationSchedule>();
+    //    }
+    //    public long Id { get; set; }
+
+    //    public long LocationAddressId { get; set; }
+
+    //    public long LocationStatusId { get; set; }
+
+    //    public long LocationId { get; set; }
+
+    //    public string ContactPersonName { get; set; }
+
+    //    public string GlobalTax { get; set; }
+
+    //    public string TotalCapacity { get; set; }
+
+    //    public string UtilityService { get; set; }
+
+    //    public string CreatedBy { get; set; }
+
+    //    public DateTime CreatedOn { get; set; }
+
+    //    public string Description { get; set; }
+
+
+    //    public string ModifiedBy { get; set; }
+
+    //    public DateTime ModifiedOn { get; set; }
+
+    //    public long NetworkId { get; set; }
+
+    //    public string NetworkName { get; set; }
+
+    //    public string LocationName { get; set; }
+
+    //    public long LocationNumber { get; set; }
+
+    //    public long SubNetworkId { get; set; }
+
+    //    public string SubNetworkName { get; set; }
+
+    //    public string TimeZone { get; set; }
+
+    //    public string FuelProductType { get; set; }
+
+    //    public LocationAddress LocationAddress { get; set; }
+
+    //    public LocationStatus locationStatus { get; set; }
+
+    //    public List<LocationSchedule> locationSchedule { get; set; }
+
+    //}
+
+    public partial class LocationAddress
+    {
+
+        public long Id { get; set; }
+
+
+        public string AddressLine1 { get; set; }
+
+
+        public string AddressLine2 { get; set; }
+
+
+        public string AlternateMobileNumber { get; set; }
+
+
+        public long CityId { get; set; }
+
+
+        public string CityName { get; set; }
+
+
+        public long CountryId { get; set; }
+
+
+        public string CountryName { get; set; }
+
+
+        public string CreatedBy { get; set; }
+
+
+        public DateTime CreatedOn { get; set; }
+
+
+        public string Email { get; set; }
+
+
+        public bool IsActive { get; set; }
+
+
+        public string LandlineNumber { get; set; }
+
+
+        public string Latitude { get; set; }
+
+
+        public string Longitude { get; set; }
+
+
+        public string MobileNumber { get; set; }
+
+
+        public string ModifiedBy { get; set; }
+
+
+        public DateTime ModifiedOn { get; set; }
+
+
+        public string PinCode { get; set; }
+
+
+        public long StateId { get; set; }
+
+
+        public string StateName { get; set; }
+
+    }
+
+    public partial class LocationStatus
+    {
+
+
+        public long Id { get; set; }
+
+
+        public string LocationStatusName { get; set; }
+
+
+        public string CreatedBy { get; set; }
+
+
+        public DateTime CreatedOn { get; set; }
+
+
+        public bool IsActive { get; set; }
+
+
+        public string ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
+
+
+
+    }
+
+    public partial class LocationSchedule
+    {
+
+
+        public long Id { get; set; }
+
+
+        public string Day { get; set; }
+
+
+        public long LocationId { get; set; }
+        //  public virtual Location Location { get; set; }
+
+
+
+        public DateTime StartTime { get; set; }
+
+
+        public DateTime EndTime { get; set; }
+
+
+        public string CreatedBy { get; set; }
+
+
+        public DateTime CreatedOn { get; set; }
+
+
+        public bool IsActive { get; set; }
+
+
+        public string ModifiedBy { get; set; }
+
+
+        public DateTime ModifiedOn { get; set; }
+
+
+    }
+
+    public partial class OperatorUserMapper
+    {
+        public long Id { get; set; }
+
+        public long LocationId { get; set; }
+        
+        public string UserName { get; set; }
+
+        public string UserId { get; set; }
+ 
+        public bool IsActive { get; set; }
+       
+        public string CreatedBy { get; set; }
+        
+        public DateTime CreatedOn { get; set; }
+
+        public string ModifiedBy { get; set; }
+
+        public DateTime ModifiedOn { get; set; }
+    }
+
+    public partial class Department
+    {
+        public long Id { get; set; }
+
+        public string DepartmentName { get; set; }
+
+        public string ContactPersonName { get; set; }
+
+        public string Address { get; set; }
+
+        public bool IsActive { get; set; }
+
+        public string CreatedBy { get; set; }
+
+        public DateTime CreatedOn { get; set; }
+        public string ModifiedBy { get; set; }
+
+        
+        public DateTime ModifiedOn { get; set; }
+    }
+
+    public class AllLocationStatusQueryResponse
+    {
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+
+        public List<LocationStatusData> data { get; set; }
+    }
+
+    public class LocationStatusData
+    {
+        public long Id { get; set; }
+        public string LocationName { get; set; }
+
+        public string LocationStatus { get; set; }
+    }
+
+    public class AllLocationStatusChartBO
+    {
+
+        public long Counts { get; set; }
+        public string LocationStatus { get; set; }
+        public string Color { get; set; }
+
+    }
+
+    public class LocationStatusQueryResponse
+    {
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+
+        public List<AllLocationStatusChartBO> data { get; set; }
+    }
+    public class LocationPerformingResponse
+    {
+
+        
+        public int? MeterValue { get; set; }
+        public string LocationName { get; set; }
+        
+        public string Orderby { get; set; }
+        public string Color { get; set; }
+    }
+    public class LocationPerformingChartResponse
+    {
+        public LocationPerformingChartResponse()
+        {
+            data = new List<LocationPerformingResponse>();
+        }
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+        public List<LocationPerformingResponse> data { get; set; }
+    }
+    public class MilesAddedByLocationResponse
+    {
+
+
+        public double RangeAdded { get; set; }
+        public string Times { get; set; }
+
+
+    }
+    public class MilesAddedByLocationChartResponse
+    {
+        public MilesAddedByLocationChartResponse()
+        {
+            data = new List<MilesAddedByLocationResponse>();
+        }
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+        public List<MilesAddedByLocationResponse> data { get; set; }
+        public class ChargingSession
+        {
+
+            public long Id { get; set; }
+            public long ChargerId { get; set; }
+            public int? ChargingCost { get; set; }
+            public string ChargingStatus { get; set; }
+            public int? ConnectorId { get; set; }
+            public string DeviceId { get; set; }
+            public string ReasonForStop { get; set; }
+            public int? StartMeterValue { get; set; }
+            public int? StartSoc { get; set; }
+            public DateTime? StartTime { get; set; }
+            public int? EndMeterValue { get; set; }
+            public int? EndSoc { get; set; }
+            public DateTime? EndTime { get; set; }
+            public DateTime? CreatedAt { get; set; }
+            public DateTime? ModifiedAt { get; set; }
+        }
+    }
+}

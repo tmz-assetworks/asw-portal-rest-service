@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="11.0.1" />
+    <PackageReference Include="MediatR" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PortalRestService.Core\PortalRestService.Core.csproj" />
+    <ProjectReference Include="..\PortalRestService.Infrastructure\PortalRestService.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Commands\Assets\" />
+    <Folder Include="Handlers\Assets\CommandHandlers\" />
+    <Folder Include="Mapper\Assets\" />
+    <Folder Include="Responses\Assets\" />
+  </ItemGroup>
+
+</Project>
