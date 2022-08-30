@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -64,6 +64,57 @@ namespace PortalRestService.Application
             Critical = 1,
             High = 2,
             Medium = 3
+        }
+         public enum EventlogRequest
+        {
+            [Display(Name = "Authorize")]
+            Authorize = 1,
+            [Display(Name = "Heartbeat")]
+            Heartbeat = 2,
+            [Display(Name = "StatusNotification")]
+            StatusNotification = 3,
+            [Display(Name = "GetConfiguration")]
+            GetConfiguration = 4,
+            [Display(Name = "GetLocalListVersion")]
+            GetLocalListVersion = 5,
+            [Display(Name = "ClearCache")]
+            ClearCache = 6,
+            [Display(Name = "MeterValues")]
+            MeterValues = 7,
+            [Display(Name = "StopTransaction")]
+            StopTransaction = 8,
+            [Display(Name = "StartTransaction")]
+            StartTransaction = 9,
+            [Display(Name = "RemortStartTransaction")]
+            RemortStartTransaction = 10,
+            [Display(Name = "RemoteStopTransaction")]
+            RemoteStopTransaction = 11,
+            [Display(Name = "GetCompositeSchedule")]
+            GetCompositeSchedule = 12,
+            [Display(Name = "ChangeConfiguration")]
+            ChangeConfiguration = 13,
+            [Display(Name = "ChangeAvailability")]
+            ChangeAvailability = 14,
+            [Display(Name = "GetDiagnostics")]
+            GetDiagnostics = 15,
+            [Display(Name = "SendLocalList")]
+            SendLocalList = 16,
+            [Display(Name = "TriggerMessage")]
+            TriggerMessage = 17,
+            [Display(Name = "UnlockConnector")]
+            UnlockConnector = 18,
+            [Display(Name = "UpdateFirmware")]
+            UpdateFirmware = 19,
+            [Display(Name = "FirmwareStatusNotification")]
+            ReserveNow = 20,
+            [Display(Name = "SetChargingProfile")]
+            SetChargingProfile = 21,
+            [Display(Name = "RemoteStartTransaction")]
+            RemoteStartTransaction = 22,
+            [Display(Name = "Reset")]
+            Reset = 23,
+            [Display(Name = "BootNotification")]
+            BootNotification = 24
         }
 
       

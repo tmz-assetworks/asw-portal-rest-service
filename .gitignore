@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -54,4 +54,5 @@
 /DashboardService/PortalRestService.UnitTests/obj
 /DashboardService/PortalRestService.UnitTests/obj
 /DashboardService/PortalRestService.UnitTests/bin
+/DashboardService/PortalRestService.Api/app
 /DashboardService/PortalRestService.Api/app

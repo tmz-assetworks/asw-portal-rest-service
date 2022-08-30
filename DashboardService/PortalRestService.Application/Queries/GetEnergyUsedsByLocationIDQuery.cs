@@ -13,10 +13,12 @@ namespace PortalRestService.Application.Queries
     {
         public List<int> location { get; set; }
         public string duration { get; set; }
-        public GetEnergyUsedsByLocationIDQuery(List<int> Location, string Duration)
+        public string chargeboxId { get; set; }
+        public GetEnergyUsedsByLocationIDQuery(List<int> Location, string Duration, string ChargeboxId)
         {
             location = Location;
             duration = Duration;
+            chargeboxId = ChargeboxId;
         }
     }
 }

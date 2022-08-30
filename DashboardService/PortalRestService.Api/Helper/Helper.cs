@@ -13,6 +13,9 @@ namespace RestService.Assets.Helpers
     {
         private static readonly string AssetBaseAPIAddress = "http://10.0.0.4:6009/api/";
 
+        private static readonly string AssetBaseAPIAddress = "http://localhost:7200/api/";
+
+
         public static async Task<HttpResponseMessage> GetCallAPIAsync(string apiUrl)
         {
             using (var client = new HttpClient())

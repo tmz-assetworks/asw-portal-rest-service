@@ -10,7 +10,7 @@ namespace PortalRestService.Core.Repositories
     public interface IChargingSessionRepository : IRepository<ChargingSessionByLocationForChartResponse>
     {
         //custom operations here
-       Task<ChargingSessionByLocationForChartResponse> GetChargerSession(List<int> location, string duration);
+       Task<ChargingSessionByLocationForChartResponse> GetChargerSession(List<int> location, string duration, string ChargeBoxId);
     }
   
 }

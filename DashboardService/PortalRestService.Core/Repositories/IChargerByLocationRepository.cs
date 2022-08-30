@@ -10,6 +10,6 @@ namespace PortalRestService.Core.Repositories
 {
     public interface IChargerByLocationRepository : IRepository<ChargerStatusResponse>
     {
-        Task<ChargerStatusForChartResponse> GetChargerStatusByLocationID(List<int> locationid,string duration);
+        Task<ChargerStatusForChartResponse> GetChargerStatusByLocationID(List<int> locationid,string duration, string chargeBoxId);
     }
 }

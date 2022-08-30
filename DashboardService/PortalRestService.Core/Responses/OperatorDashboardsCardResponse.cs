@@ -1,5 +1,7 @@
 
 using PortalRestService;
+using PortalRestService.Core.PagingHelper;
+
 namespace PortalRestService.Core.Responses
 {
   
@@ -61,7 +63,36 @@ namespace PortalRestService.Core.Responses
         public string chargeBoxId { get; set; }
         public string stationName { get; set; }
         public int vendorId { get; set; }
-        public Vendor vendor { get; set; }
+        public Vendor vendor { get; set; }        
+        public List<Port> Ports { get; set; }
+    }
+    public class Port
+    {
+        public long Id { get; set; }
+        public long DispenserId { get; set; }
+        public long ConnectorId { get; set; }
+        public string CreatedBy { get; set; }
+        public Connector Connector { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public long IncrementalPower { get; set; }
+        public bool IsActive { get; set; }
+        public long MaxPower { get; set; }
+        public long MinPower { get; set; }
+        public string ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
+        public string PortName { get; set; }
+        public long Power { get; set; }
+        public long ConnectorType { get; set; }
+    }
+
+    public class Connector
+    {
+        public long Id { get; set; }
+        public string CreatedBy { get; set; }
+        public string ConnectorType { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public string ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
     }
 
     public class Vendor
@@ -195,7 +226,10 @@ namespace PortalRestService.Core.Responses
     public string StatusMessage { get; set; }
 
     public List<LocationsDispenserDetails> data { get; set; }
-}
+
+    public PaginationResponse paginationResponse { get; set; }
+
+    }
 
 public class LocationsDispenserDetails
 {

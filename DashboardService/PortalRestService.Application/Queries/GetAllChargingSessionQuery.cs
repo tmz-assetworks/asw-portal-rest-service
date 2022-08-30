@@ -9,10 +9,13 @@ namespace PortalRestService.Application.Queries
     {
         public List<int> location { get; set; }
         public string duration { get; set; }
-        public GetAllChargingSessionQuery(List<int> Location, string Duration)
+        public string ChargeBoxId { get; set; }
+
+        public GetAllChargingSessionQuery(List<int> Location, string Duration, string chargeBoxId)
         {
             location = Location;
             duration = Duration;
+            ChargeBoxId = chargeBoxId;
         }
     }
 }

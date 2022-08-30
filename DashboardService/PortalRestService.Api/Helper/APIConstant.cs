@@ -22,6 +22,9 @@
         //http://51.141.73.41:6003/api/ChargingSession/getChargingSession
         //public const string GetSummaryData = "https://run.mocky.io/v3/0a2a634e-ebb6-4132-8bc3-b9668d27cbe4";
 
+        public const string GetVehicleById = "Vehicle/getVehiclebyid";
+
+
 
     }
 }

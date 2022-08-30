@@ -1,4 +1,6 @@
 ﻿
+using PortalRestService.Core.PagingHelper;
+
 namespace PortalRestService.Core.Responses
 {
     public class ChargerSessionResponse
@@ -41,6 +43,7 @@ namespace PortalRestService.Core.Responses
     public class ChargerSessionRequest
     {
         public List<int> LocationIds { get; set; }
+        public string? chargerBoxId { get; set; }
         public string? Duration { get; set; }
         public string? Opratorid { get; set; }
 
@@ -51,10 +54,10 @@ namespace PortalRestService.Core.Responses
         public string? opratorid { get; set; }
 
     }
-    public class LocationDispenserRequest
+    public class LocationDispenserDetailRequest : QueryStringParameters
     {
         public List<long> LocationIds { get; set; }
-        public string? opratorid { get; set; }
+        public string? opratorId { get; set; }
 
     }
     public class LocationPerformingRequest
@@ -85,6 +88,7 @@ namespace PortalRestService.Core.Responses
         public string ChargeBoxId { get; set; }
 
         public string? times { get; set; }
+        public string? svalue { get; set; }
     }
     public class ChargerByLocationChartBO
     {
@@ -93,6 +97,8 @@ namespace PortalRestService.Core.Responses
         public string ChargeStatus { get; set; }
 
         public string? times { get; set; }
+
+        public string? svalue { get; set; }
     }
     public class ChargerStatusForChartResponse
     {
@@ -122,6 +128,8 @@ namespace PortalRestService.Core.Responses
         public DateTime? EndTime { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? ModifiedAt { get; set; }
+        
+        
     }
 
     public class DispenserByLocationIdResponse
@@ -154,7 +162,7 @@ namespace PortalRestService.Core.Responses
         public string ChargeBoxId { get; set; }
         public long ChargerId { get; set; }
         public string SerialNumber { get; set; }
-
+        public string ConnectorType { get; set; }
 
     }
 
@@ -191,6 +199,8 @@ namespace PortalRestService.Core.Responses
         public string ChargeBoxId { get; set; }
         //public long ChargerId { get; set; }
         public string SerialNumber { get; set; }
+
+        public string?  svalue { get; set; }
         public string? times { get; set; }
     }
 
@@ -216,9 +226,106 @@ namespace PortalRestService.Core.Responses
     {
         public List<int> LocationIds { get; set; }
         public string? Duration { get; set; }
+        public string? chargerBoxId { get; set; }
         public string? Opratorid { get; set; }
 
 
+    }
+    public class EventLogRequest : QueryStringParameters
+    {
+        public List<int> LocationIds { get; set; }
+
+        public string? Opratorid { get; set; }
+
+        public List<string> ChargerBoxIds { get; set; }
+
+    }
+    public class EventLogRequestBO
+    {
+        public long Id { get; set; }
+        public long ChargerId { get; set; }
+        public int? ChargingCost { get; set; }
+        public string ChargingStatus { get; set; }
+        public int? ConnectorId { get; set; }
+        public string DeviceId { get; set; }
+        public string ReasonForStop { get; set; }
+        public int? StartMeterValue { get; set; }
+        public int? StartSoc { get; set; }
+        public DateTime? StartTime { get; set; }
+        public int? EndMeterValue { get; set; }
+        public int? EndSoc { get; set; }
+        public DateTime? EndTime { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? ModifiedAt { get; set; }
+
+        public long LocationId { get; set; }
+
+        public string LocationName { get; set; }
+
+        public string ContactPersonName { get; set; }
+
+        public string AddressLine1 { get; set; }
+
+        public string LocationStatusName { get; set; }
+
+        public long LocationStatusId { get; set; }
+
+        public string ChargeBoxId { get; set; }
+        //public long ChargerId { get; set; }
+        public string SerialNumber { get; set; }
+        public string? times { get; set; }
+    }
+    public class OcppEventLogRequest
+    {
+        public List<string> chargerboxid { get; set; }
+       
+
+    }
+    public class ChartDetailsListRequest : QueryStringParameters
+    {
+       
+
+        public List<int> LocationIds { get; set; }
+        public string? Duration { get; set; }
+        public string? Opratorid { get; set; }
+        public string? Flag { get; set; }
+
+    }
+    public class ChargerSessionListRequest : QueryStringParameters
+    {
+        public List<string> chargerboxid { get; set; }
+
+    }
+    public class ChargerInformationRequest
+    {
+        public string ChargeBoxId { get; set; }
+        public string OperatorId { get; set; }
+    }
+    public class ChargerInformationResponse
+    {
+        public ChargerInformationResponse()
+        {
+            data = new ChargerInfo();
+        }
+        public int? StatusCode { get; set; }
+        public string? StatusMessage { get; set; }
+        public ChargerInfo data { get; set; }
+    }
+    public class ChargerInfo
+    {
+        public string SerialNo { get; set; }
+        public string? ChargeBoxId { get; set; }
+        public string Charger { get; set; }
+        public string ChargerType { get; set; }
+        public string ChargerStatus { get; set; }
+        public DateTime InstalledDate { get; set; }
+        public string Address { get; set; }
+        public string Country { get; set; }
+        public string State { get; set; }
+        public string City { get; set; }
+        public string ZipCode { get; set; }
+        public string ConnectorIds { get; set; }
+        public long ConnectorType { get; set; }       
     }
 }
 

@@ -29,7 +29,9 @@ namespace PortalRestService.Core.Responses
         public string ProtocolName { get; set; }
         //public string ConnnectorType { get; set; }   
         public string ChargerStatus { get; set; }
-       // public string ChargerPort { get; set; }
+        // public string ChargerPort { get; set; }
+
+        public long DispenserStatusId { get; set; }
         public string DispenserModel { get; set; }
         public string ConnectorType { get; set; }
         public string NoofPort { get; set; }

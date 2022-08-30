@@ -1,0 +1,70 @@
+﻿using Newtonsoft.Json;
+using PortalRestService.Core.Repositories;
+using PortalRestService.Core.Responses;
+using PortalRestService.Helper;
+using PortalRestService.Infrastructure.Repositories.Repository;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PortalRestService.Infrastructure.Repositories
+{
+    public class GetAllChargeBoxIDRepository : OcppRepository<ChargeBoxIDListResponse>, IGetAllChargeBoxIDRepository
+    {
+        public GetAllChargeBoxIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        {
+
+        }
+
+        public async Task<ChargeBoxIDListResponse> GetAllChargeBoxID()
+        {
+            ChargeBoxIDListResponse re = new ChargeBoxIDListResponse();
+            DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+            string callingMethoddispenser = APIConstant.GetDispenserByLocations;
+            List<int> myList = new List<int>();
+            string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
+            {
+                opratorid = "",
+                LocationIds = myList
+            });
+            StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
+            HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethoddispenser, httpContent);
+
+            var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
+            ChargeBoxIDList chargeBoxIDList = new ChargeBoxIDList();
+            try
+            {
+                dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
+                if (dispenserByLocationIdResponse.data.Count > 0)
+                {
+                    re.data = (from v in dispenserByLocationIdResponse.data
+                               select new ChargeBoxIDList
+                               {
+                                   id = v.LocationId,
+                                   chargeboxid = v.ChargeBoxId
+
+                               }).Distinct().OrderByDescending(a => a.chargeboxid).ToList<ChargeBoxIDList>();
+                    re.StatusCode = 200;
+                    re.StatusMessage = "Record found!";
+                }
+                else
+                {
+                    re.StatusCode = 200;
+                    re.StatusMessage = "Record not found";
+                }
+            }
+            catch (Exception ex)
+            {
+
+                re.StatusCode = 500;
+                re.StatusMessage = "Internal server Error";
+                
+
+            }
+            return re;
+        }
+        
+    }
+}

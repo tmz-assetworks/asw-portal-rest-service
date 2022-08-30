@@ -14,9 +14,9 @@ using System.Threading.Tasks;
 namespace PortalRestService.Infrastructure.Repositories
 {
 #pragma warning disable
-    public class GetChargerByLocationIDRepository : Repository<ChargerStatusForChartResponse>, IChargerByLocationRepository
+    public class GetChargerByLocationIDRepository : OcppRepository<ChargerStatusForChartResponse>, IChargerByLocationRepository
     {
-        public GetChargerByLocationIDRepository() : base()
+        public GetChargerByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
         {
 
         }
@@ -36,28 +36,13 @@ namespace PortalRestService.Infrastructure.Repositories
             throw new NotImplementedException();
         }
 
-        
-        async Task<ChargerStatusForChartResponse> IChargerByLocationRepository.GetChargerStatusByLocationID(List<int> location, string duration)
+
+        async Task<ChargerStatusForChartResponse> IChargerByLocationRepository.GetChargerStatusByLocationID(List<int> location, string duration, string chargeBoxId)
         {
             ChargerStatusForChartResponse obj = new ChargerStatusForChartResponse();
-            List<ChargingSession> ChargingSessions = new List<ChargingSession>();
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-
-                string callingMethodSession = APIConstant.GetChargerSessionAll;
-                HttpResponseMessage responseSession = await Helpers.Helper.GetCallOCPPAPIAsync(callingMethodSession);
-
-                var chargingSessions = await responseSession.Content.ReadAsStringAsync();
-                ChargingSessions = JsonConvert.DeserializeObject<List<ChargingSession>>(chargingSessions);
-
-                //string callingMethoddispenser = APIConstant.GetDispenserByLocation + location[0];
-                //HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetAPIAsync(callingMethoddispenser);
-
-                //var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-
-                //dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
@@ -71,37 +56,76 @@ namespace PortalRestService.Infrastructure.Repositories
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
                 dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
+                string laveltype = "time";
+                TimeSpan interval = new TimeSpan(4, 0, 0);
+                if (duration == "7")
+                {
+                    duration = "6";
+                    interval = new TimeSpan(24, 0, 0);
+                    laveltype = "day";
+                }
+                else
+                if (duration == "30")
+                {
+                    duration = "28";
+                    interval = new TimeSpan(24 * 7, 0, 0);
+                    laveltype = "date";
+                }
+                else
+                if (duration == "90")
+                {
+                    interval = new TimeSpan(24, 0, 0);
+                    laveltype = "month";
+                }
 
 
-                List<ChargerByLocationBO> res = (from s in ChargingSessions
+                List<ChargerByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                  where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                  join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
-                                                 on s.ChargerId equals c.ChargerId
+                           on s.ChargerId equals c.ChargerId
                                                  select new ChargerByLocationBO
                                                  {
 
                                                      ChargerId = s.ChargerId,
                                                      ChargingStatus = (
-                                                                s.ChargingStatus.Equals("Completed") ? "Available" :
-                                                                s.ChargingStatus.Equals("cancelled") ? "Available" :
-                                                                s.ChargingStatus.Equals("Interrupted") ? "Faulted" : "Busy"
+                                                                s.ChargingStatus.ToLower().Equals("completed") ? "Available" :
+                                                                s.ChargingStatus.ToLower().Equals("cancelled") ? "Available" :
+                                                                s.ChargingStatus.ToLower().Equals("interrupted") ? "Faulted" : "Busy"
                                                         ),
                                                      StartTime = s.StartTime,
                                                      ChargeBoxId = c.ChargeBoxId,
-                                                     times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
+                                                     svalue = (s.StartTime.HasValue == true ?
+                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
+                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
+                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
+                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") : ""),
+                                                     times = (s.StartTime.HasValue == true ?
+                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
+                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
+                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") :
+                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
                                                  }).ToList<ChargerByLocationBO>();
 
-                                        List<ChargerByLocationChartBO> finalon = null;
-                                        finalon = res
+                List<ChargerByLocationChartBO> finalon = null;
+                                 if (!string.IsNullOrEmpty(chargeBoxId))
+                                 {
+                                     if (res != null)
+                                     {
+                                         res = res.Where(f => f.ChargeBoxId == chargeBoxId).ToList();
+                                     }
+                                 }
+                                 finalon = res
                                         .GroupBy(x => new { x.times, x.ChargingStatus })
                                         .Select(y => new ChargerByLocationChartBO()
                                         {
                                             ChargeStatus = y.Key.ChargingStatus,
-                                            times = y.Key.times.Length == 2 ? y.Key.times : "0" + y.Key.times,
-                                            Counts =y.ToList().Count,
+                                            svalue = y.Max(f => f.svalue),
+                                            times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
+                                            Counts = y.ToList().Count,
                                             Color = Extensions.GetColorCodesByCharger(y.Key.ChargingStatus)
+
                                         }
-                                        ).OrderBy(t => t.times).ThenBy(t=>t.ChargeStatus).ToList<ChargerByLocationChartBO>();
+                                        ).OrderBy(t => t.svalue).ThenBy(t => t.ChargeStatus).ToList<ChargerByLocationChartBO>();
 
 
                 obj.StatusMessage = "Record Found";
@@ -110,7 +134,7 @@ namespace PortalRestService.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                obj.StatusMessage = "Operation Failed!";  
+                obj.StatusMessage = "Operation Failed!";
                 obj.StatusCode = 404;
                 obj.data = null;
             }

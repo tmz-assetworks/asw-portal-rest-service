@@ -23,7 +23,7 @@ namespace PortalRestService.Application.Handlers.QueryHandlers
         
         public async Task<ChargerStatusForChartResponse> Handle(GetChargerByLocationIDQuery request, CancellationToken cancellationToken)
         {
-            return await _chargerlocationRepository.GetChargerStatusByLocationID(request.location, request.duration);
+            return await _chargerlocationRepository.GetChargerStatusByLocationID(request.location, request.duration,request.chargeBoxId);
         }
     }
 }

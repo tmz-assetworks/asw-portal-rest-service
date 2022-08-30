@@ -14,6 +14,7 @@ namespace PortalRestService.Core.Entities.Charger
         public string ChargingStatus { get; set; }
 
         public string? times { get; set; }
+        public string?  svalue { get; set; }
         public string? Color { get; set; }
     }
     public class ChargingSessionByLocationForChartResponse

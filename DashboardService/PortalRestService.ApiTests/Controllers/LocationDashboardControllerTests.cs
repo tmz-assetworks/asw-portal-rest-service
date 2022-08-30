@@ -1,12 +1,18 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Moq.Protected;
+using Newtonsoft.Json;
+using PortalRestService.Application.Queries;
+using PortalRestService.Core.Responses;
 using PortalRestService.Helpers;
 using RestService.Assets.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,104 +23,206 @@ namespace RestService.Assets.Controllers.Tests
     {
         private readonly LocationDashboardController _locationDashboardController;
         private readonly Mock<IMediator> _mediator;
-        private readonly Mock<IConfiguration> _configuration;
         private readonly Mock<IHttpHelper> _mockHttpHelper;
+        private readonly Mock<IConfiguration> _configuration;
         public LocationDashboardControllerTests()
         {
             _mediator = new Mock<IMediator>();
-            _configuration = new Mock<IConfiguration>();
+
             _mockHttpHelper = new Mock<IHttpHelper>();
+            _configuration = new Mock<IConfiguration>();
 
-            _locationDashboardController = new LocationDashboardController(_mediator.Object, _configuration.Object, _mockHttpHelper.Object)
-            {
-
-            };
+            _locationDashboardController = new LocationDashboardController(_mediator.Object, _configuration.Object);
             {
 
             }
         }
-        //[TestMethod]
-        //public async Task GetSummaryStatus_OK_Result_Test()
-        //{
-        //    // Arrange 
-        //    var mockStatusSummary = GetMockChargerResponse();
+        [TestMethod()]
+        public async Task LocationStatusTest()
+        {
+            //Arrange
+            var chargerSessionRequest = new PortalRestService.Core.Responses.ChargerSessionRequest()
+            {
+                LocationIds = new List<int> { },
+                chargerBoxId = "CH01",
+                Duration = "90",
+                Opratorid = ""
+            };
 
-        //    var mockHandler = new Mock<DelegatingHandler>();
+            var locationStatusQueryResponse = new List<AllLocationStatusChartBO>()
+            {
+                             new AllLocationStatusChartBO()
+                             {
+                                Counts=1,
+                                Color="Green",
+                                LocationStatus="Active"
+                             }
+           };
+            _mediator.Setup(md => md.Send(It.IsAny<GetLocationStatusByLocationIdQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync(locationStatusQueryResponse);
 
-        //    mockHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+            //Act
+            var actionresult = _locationDashboardController.LocationStatus(chargerSessionRequest).Result as ActionResult<List<PortalRestService.Core.Responses.AllLocationStatusChartBO>>;
 
-        //    var seriaizedStatusSummary = JsonConvert.SerializeObject(mockStatusSummary);
+            // Assert 
+            Assert.IsNotNull(actionresult);
+            Assert.AreEqual(200, ((actionresult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as PortalRestService.Core.Responses.LocationStatusQueryResponse).StatusCode);
 
-        //    var httpResponseMessage = new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(seriaizedStatusSummary) };
+        }
+        [TestMethod()]
+        public async Task GetDispenserByLocationSuccessTest()
+        {
+            //Arrange
+            List<long> Ids = new List<long> { };
+            var locationDispenserForLocationResponse = new LocationDispenserForLocationResponse()
+            {
+                StatusCode = 200,
+                StatusMessage = "Ok",
+                data = new List<LocationDispenserForLocation>()
+                        {
+                            new LocationDispenserForLocation()
+                            {
+                             ChargeBoxId="1",
+                             ChargerStatus="Active",
+                             ConnectorType="Conector",
+                             DispenserId=1,
+                             DispenserMake="DispenserMake",
+                             DispenserModel="DispenserModel",
+                             DispenserName="DispenserName",
+                             locationId=1,
+                             NoofPort="10",
+                             ProtocolName="Http",
+                             SerialNumber="1"
+                            }
+                        }
+            };
+            _mediator.Setup(md => md.Send(It.IsAny<GetDispenserByLocationIdQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync(locationDispenserForLocationResponse);
 
-        //    _mockHttpHelper.Setup(mockHttp => mockHttp.GetCallMockAPIAsync(It.IsAny<string>())).ReturnsAsync(httpResponseMessage);
+            //Act
+            var actionResult = _locationDashboardController.GetDispenserByLocation(Ids).Result;
 
-        //    // Act
-        //    var actionResult = await _locationDashboardController.GetSummaryStatus();
+            // Assert
+            Assert.IsNotNull(actionResult);
+            Assert.AreEqual(200, ((actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as PortalRestService.Core.Responses.LocationDispenserForLocationResponse).StatusCode);
+            var dispenserByLocationResponse = (actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as LocationDispenserForLocationResponse;
+            Assert.IsNotNull(dispenserByLocationResponse);
+        }
+        [TestMethod()]
+        public void GetLocatinByIdSuccessTest()
+        {
+            // Arrange 
+            long Id = 4;
 
-        //    // Assert
-        //    Assert.IsNotNull(actionResult);
-        //    Assert.AreEqual(200, (actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).StatusCode);
-        //    var summaryResponse = (actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as StatusItemData;
-        //    Assert.IsNotNull(summaryResponse);
-        //}
-        //[TestMethod()]
-        //public void GetLocatinByIdTest()
-        //{
+            // Act
+            var actionResult = _locationDashboardController.GetLocatinById(Id).Result;
 
-        //}
-        //#region private methods 
-        //private StatusSummary GetMockStatusSummary()
-        //{
-        //    return new StatusSummary()
-        //    {
-        //        Message = "Ok",
-        //        StatusCode = 1,
-        //        StatusSummaryDataList = new List<StatusSummaryData>()
-        //           {
-        //                new StatusSummaryData()
-        //                {
-        //                     Type="Type 1",
+            // Assert
+            Assert.IsNotNull(actionResult);
+            Assert.AreEqual(200, ((actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as PortalRestService.Core.Responses.GetLocatinByIdResponse).StatusCode);
+        }
+        [TestMethod()]
+        public void GetLocatinByIdNotFoundTest()
+        {
+            // Arrange 
+            long Id = 0;
 
-        //                     Count = 1,
+            // Act
+            var actionResult = _locationDashboardController.GetLocatinById(Id).Result;
+            string statusMessage = "Record not found";
 
-        //                     StatusDataList= new List<StatusItemData>()
-        //                      {
-        //                           new StatusItemData()
-        //                           {
-        //                                Key="Key",
-        //                                value=1
-        //                           }
-        //                      },
-        //                }
-        //           }
-        //    };
-        //}
+            // Assert
+            Assert.IsNotNull(actionResult);
+            Assert.AreEqual(statusMessage, ((actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as PortalRestService.Core.Responses.GetLocatinByIdResponse).StatusMessage);
+        }
+        private GetLocatinByIdResponse GetMockGetLocatinByIdResponse()
+        {
+            return new GetLocatinByIdResponse()
+            {
+                StatusCode = 1,
+                StatusMessage = "Ok",
+                data = new Data()
+                {
+                    LocationName = "Noida",
+                    ContactPersonName = "John",
+                    CreatedBy = "Adam",
+                    CreatedOn = DateTime.Now,
+                    Department = new Department()
+                    {
+                        ContactPersonName = "Adam",
+                        CreatedOn = DateTime.Now,
+                        CreatedBy = "Damon",
+                        Address = "Noida",
+                        DepartmentName = "ChargerDept",
+                        Id = 1,
+                        IsActive = true,
+                        ModifiedBy = "Smith",
+                        ModifiedOn = DateTime.Now,
+                    },
+                    ModifiedBy = "Adam",
+                    IsActive = false,
+                    Id = 1,
+                    Description = "Desc",
+                    GlobalTax = "100",
+                    ModifiedOn = DateTime.Now,
+                    LocationAddressId = 1,
+                    LocationNumber = 1,
+                    LocationSchedule = new List<LocationSchedule>()
+                    {
+                        new LocationSchedule()
+                        {
+                             LocationId = 1,
+                             ModifiedOn= DateTime.Now,
+                             CreatedBy="Flodian",
+                             CreatedOn= DateTime.Now,
+                             Day="1",
+                             EndTime= DateTime.Now,
+                             Id= 1,
+                             IsActive= true,
+                             ModifiedBy="Smith",
+                             StartTime= DateTime.Now,
+                        }
+                    },
+                    LocationStatus = new LocationStatus()
+                    {
+                        Id = 1,
+                        LocationStatusName = "Delhi",
+                        CreatedBy = "Adam",
+                        ModifiedBy = "John",
+                        IsActive = false,
+                        CreatedOn = DateTime.Now,
+                        ModifiedOn = DateTime.Now,
+                    },
+                    LocationStatusId = 1,
+                    FuelProtectType = "FullProtect",
+                    TimeZone = "UTC",
+                    TotalCapacity = "100",
+                    UtilityService = "1",
+                    LocationAddress = new LocationAddress()
+                    {
+                        Id = 1,
+                        IsActive = !true,
+                        ModifiedBy = "John",
+                        CreatedBy = "Adam",
+                        AddressLine1 = "Noida",
+                        AddressLine2 = "Delhi",
+                        AlternateMobileNumber = "776668867",
+                        CityId = 1,
+                        CityName = "Bareilly",
+                        CountryId = 1,
+                        CountryName = "India",
+                        CreatedOn = DateTime.Now,
+                        Email = "abc@nn.com",
+                        LandlineNumber = "1020",
+                        Latitude = "10",
+                        Longitude = "20",
+                        MobileNumber = "07865565757",
+                        ModifiedOn = DateTime.Now,
+                        PinCode = "121222",
+                        StateId = 1,
+                        StateName = "U.P"
+                    }
+                },
 
-        //private ChargerResponse GetMockChargerResponse()
-        //{
-        //    return new ChargerResponse()
-        //    {
-        //        ChargerDataList = new List<ChargerData>()
-        //        {
-        //            new ChargerData()
-        //            {
-        //                 Count = 1,
-        //                 StatusData=new List<StatusData>()
-        //                  {
-        //                      new StatusData()
-        //                      {
-        //                           Key="Key",
-        //                           Value="Valued"
-        //                      }
-        //                  },
-        //                 Type="Type 1"
-        //            }
-        //        },
-        //        Message = "Ok",
-        //        StatusCode = 1
-        //    };
-        //}
-        //#endregion
+            };
+        }
     }
 }

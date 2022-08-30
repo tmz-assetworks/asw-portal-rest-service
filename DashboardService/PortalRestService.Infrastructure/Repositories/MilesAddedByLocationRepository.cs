@@ -12,32 +12,23 @@ using System.Threading.Tasks;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
-    public class MilesAddedByLocationRepository : Repository<MilesAddedByLocationChartResponse>, IMilesAddedByLocationQueryRepository
+    public class MilesAddedByLocationRepository : OcppRepository<MilesAddedByLocationChartResponse>, IMilesAddedByLocationQueryRepository
     {
         private IConfiguration Configuration;
-        public MilesAddedByLocationRepository(IConfiguration iConfig) : base()
+        public MilesAddedByLocationRepository(IConfiguration iConfig, Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
         {
             Configuration = iConfig;
         }
 
-        async Task<MilesAddedByLocationChartResponse> IMilesAddedByLocationQueryRepository.GetMilesAddedByLocation(List<int> location, string duration)
+        async Task<MilesAddedByLocationChartResponse> IMilesAddedByLocationQueryRepository.GetMilesAddedByLocation(List<int> location, string duration, string chargeBoxId)
         {
             List<MilesAddedByLocationResponse> finalon = null;
             MilesAddedByLocationChartResponse obj = new MilesAddedByLocationChartResponse();
-            List<ChargingSession> ChargingSessions = new List<ChargingSession>();
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
                 if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
                     duration = "1";
-
-
-                string callingMethodSession = APIConstant.GetChargerSessionAll;
-                HttpResponseMessage responseSession = await Helpers.Helper.GetCallOCPPAPIAsync(callingMethodSession);
-
-                var chargingSessions = await responseSession.Content.ReadAsStringAsync();
-                ChargingSessions = JsonConvert.DeserializeObject<List<ChargingSession>>(chargingSessions);
-
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
@@ -51,8 +42,28 @@ namespace PortalRestService.Infrastructure.Repositories
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
                 dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-
-                List<ChargingSessionByLocationBO> res = (from s in ChargingSessions
+                string laveltype = "time";
+                TimeSpan interval = new TimeSpan(4, 0, 0);
+                if (duration == "7")
+                {
+                    duration = "6";
+                    interval = new TimeSpan(24, 0, 0);
+                    laveltype = "day";
+                }
+                else
+                if (duration == "30")
+                {
+                    duration = "28";
+                    interval = new TimeSpan(24 * 7, 0, 0);
+                    laveltype = "date";
+                }
+                else
+                if (duration == "90")
+                {
+                    interval = new TimeSpan(24, 0, 0);
+                    laveltype = "month";
+                }
+                List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                          join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
                                                          on s.ChargerId equals c.ChargerId
@@ -72,22 +83,42 @@ namespace PortalRestService.Infrastructure.Repositories
                                                              LocationStatusName = c.LocationStatusName,
                                                              LocationStatusId = c.LocationStatusId,
                                                              ChargeBoxId = c.ChargeBoxId,
-                                                             times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
+                                                             //times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
+                                                             svalue = (s.StartTime.HasValue == true ?
+                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
+                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
+                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
+                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") : ""),
+                                                             times = (s.StartTime.HasValue == true ?
+                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
+                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
+                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") :
+                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
 
                                                              SerialNumber = c.SerialNumber,
                                                          }).ToList<ChargingSessionByLocationBO>();
 
                 string fuleeffersiancy = this.Configuration.GetSection("Variable")["fuleeffersiancy"];
+                finalon = null;
+                if (!string.IsNullOrEmpty(chargeBoxId))
+                {
+                    if (res != null)
+                    {
+                        res = res.Where(f => f.ChargeBoxId == chargeBoxId).ToList();
+                    }
+                }
 
                 finalon = res
                 .GroupBy(x => new { x.times })
                 .Select(y => new MilesAddedByLocationResponse()
                 {
-                    Times = y.Key.times.Length == 2 ? y.Key.times : "0" + y.Key.times,
+                   // Times = y.Key.times.Length == 2 ? y.Key.times : "0" + y.Key.times,
+                    svalue = y.Max(f => f.svalue),
+                    Times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
                     RangeAdded = (Math.Round(Convert.ToDouble(y.Sum(t => t.EndMeterValue)) - (Convert.ToDouble(y.Sum(t => t.StartMeterValue) <= 0 ? 0 : Convert.ToDouble(y.Sum(t => t.StartMeterValue))) / (100 * Convert.ToDouble(fuleeffersiancy))), 2))
 
                 }
-                ).OrderBy(t => t.Times).ToList<MilesAddedByLocationResponse>();
+                ).OrderBy(t => t.svalue).ToList<MilesAddedByLocationResponse>();
 
                if(finalon.Count > 0)
                 obj.StatusMessage = "Record Found";

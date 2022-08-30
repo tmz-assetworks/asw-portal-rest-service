@@ -12,7 +12,7 @@ namespace PortalRestService.Core.Responses
 
         public long Counts { get; set; }
         public int EndMeterValue { get; set; }
-
+        public string?  svalue { get; set; }
         public string? times { get; set; }
     }
     public class EnergyUsedBOForChartResponse

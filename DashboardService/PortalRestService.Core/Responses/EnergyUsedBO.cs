@@ -12,7 +12,8 @@ namespace PortalRestService.Core.Entities.Charger
 
         public int StartMeterValue { get; set; }
         public int EndMeterValue { get; set; }
-
+        public string chargeboxId { get; set; }
+        public string? svalue { get; set; }
         public string? times { get; set; }
     }
 

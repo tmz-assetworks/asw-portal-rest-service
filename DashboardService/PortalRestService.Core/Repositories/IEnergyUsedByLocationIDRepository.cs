@@ -11,6 +11,6 @@ namespace PortalRestService.Core.Repositories
 {
     public interface IEnergyUsedByLocationIDRepository : IRepository<EnergyUsedBOForChartResponse>
     {
-        Task<EnergyUsedBOForChartResponse> GetEnergyUsedByLocationID(List<int> Location, string Duration);
+        Task<EnergyUsedBOForChartResponse> GetEnergyUsedByLocationID(List<int> Location, string Duration, string chargeBoxId);
     }
 }

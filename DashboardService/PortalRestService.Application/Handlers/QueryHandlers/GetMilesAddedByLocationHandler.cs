@@ -21,7 +21,7 @@ namespace PortalRestService.Application.Handlers.QueryHandlers
 
         public async Task<MilesAddedByLocationChartResponse> Handle(GetMilesAddedByLocationQuery request, CancellationToken cancellationToken)
         {
-            return await _MilesAddedByLocationRepository.GetMilesAddedByLocation(request.location, request.duration);
+            return await _MilesAddedByLocationRepository.GetMilesAddedByLocation(request.location, request.duration, request.chargeBoxId);
         }
     }
 }

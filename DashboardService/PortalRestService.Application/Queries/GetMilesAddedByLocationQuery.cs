@@ -12,13 +12,14 @@ namespace PortalRestService.Application.Queries
     {
         public List<int> location { get; set; }
         public string duration { get; set; }
+        public string chargeBoxId { get; set; }
 
 
-        public GetMilesAddedByLocationQuery(List<int> Location, string Duration)
+        public GetMilesAddedByLocationQuery(List<int> Location, string Duration, string ChargeBoxId)
         {
             location = Location;
             duration = Duration;
-
+            chargeBoxId = ChargeBoxId;
         }
     }
 }

@@ -67,5 +67,10 @@
         public string Message { get; set; }
         public List<SummaryDetail> Data { get; set; }
     }
+
+
+
+
+ 
 }
 

@@ -16,18 +16,16 @@ using System.Threading.Tasks;
 namespace PortalRestService.Infrastructure.Repositories
 {
 #pragma warning disable
-    public class LocationPerformingRepository : Repository<LocationPerformingChartResponse>, ILocationPerformingRepository
+    public class LocationPerformingRepository : OcppRepository<LocationPerformingChartResponse>, ILocationPerformingRepository
     {
-        public LocationPerformingRepository() : base()
+        public LocationPerformingRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
         {
 
         }
-
         async Task<LocationPerformingChartResponse> ILocationPerformingRepository.GetLocationPerforming(List<int> location, string duration, int orderby)
         {
             List<LocationPerformingResponse> finalon = null;
             LocationPerformingChartResponse obj = new LocationPerformingChartResponse();
-            List<ChargingSession> ChargingSessions = new List<ChargingSession>();
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
@@ -36,12 +34,7 @@ namespace PortalRestService.Infrastructure.Repositories
                     duration = "1";
 
 
-                string callingMethodSession = APIConstant.GetChargerSessionAll;
-                HttpResponseMessage responseSession = await Helpers.Helper.GetCallOCPPAPIAsync(callingMethodSession);
-
-                var chargingSessions = await responseSession.Content.ReadAsStringAsync();
-                ChargingSessions = JsonConvert.DeserializeObject<List<ChargingSession>>(chargingSessions);
-
+                
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
@@ -55,8 +48,19 @@ namespace PortalRestService.Infrastructure.Repositories
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
                 dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-
-                List<ChargingSessionByLocationBO> res = (from s in ChargingSessions
+                if (duration == "7")
+                {
+                    duration = "6";
+                    
+                }
+                else
+                if (duration == "30")
+                {
+                    duration = "28";
+                   
+                }
+                
+                List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                          join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
                                                          on s.ChargerId equals c.ChargerId

@@ -1,4 +1,4 @@
-﻿namespace PortalRestService.Helper
+namespace PortalRestService.Helper
 {
     public class APIConstant
     {
@@ -23,7 +23,17 @@
                                                                                                               //public const string GetSummaryData = "https://run.mocky.io/v3/0a2a634e-ebb6-4132-8bc3-b9668d27cbe4";
         public const string Getdispenserbylocation = "Location/getdispenserbylocation";
 
+        
+        public const string GetVehicleByID = "Vehicle/GetAllVehicleByID?id="; 
 
+        public const string GetEventLogByLocationAll = "OcppEventLog/GetOcppEventLog";
+        public const string UpdateOcppEventLogIsRead = "OcppEventLog/UpdateOcppEventLogIsRead?id=";
+
+
+        public const string GetlAllVehicle = "Vehicle/GetAllVechicle";
+        public const string GetDispensersList = "Dispenser/GetDispensersList";            // Auther: Pradeep, Date 08/08/2022
+
+        public const string GetDispenserByChargeboxId = "Dispenser/getdispenserbychargeboxid?ChargeBoxId=";
 
     }
 }

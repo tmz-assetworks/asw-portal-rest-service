@@ -17,7 +17,7 @@ namespace PortalRestService.Application.Handlers.Assets.QueryHandlers
 
         public async Task<ChargingSessionByLocationForChartResponse> Handle(GetAllChargingSessionQuery request, CancellationToken cancellationToken)
         {
-            return await _chargingSessionRepository.GetChargerSession(request.location, request.duration);
+            return await _chargingSessionRepository.GetChargerSession(request.location, request.duration,request.ChargeBoxId);
         }
     }
 }

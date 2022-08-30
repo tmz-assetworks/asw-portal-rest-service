@@ -11,8 +11,10 @@ namespace RestService.Assets
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+
                     webBuilder.UseStartup<Startup>()
-                    .UseUrls("http://*:6010");
+                   .UseUrls("http://*:6010");
+
                 });
     }
 }

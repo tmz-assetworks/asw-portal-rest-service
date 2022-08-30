@@ -45,7 +45,7 @@ namespace RestService.Assets.Controllers
                 }
                 else
                 {
-                    Console.WriteLine("Internal server Error");
+                    getLocatinByIdResponse.StatusMessage = "Operation failed!";
                 }
 
                 return getLocatinByIdResponse == null ? NotFound() : this.Ok(getLocatinByIdResponse);
@@ -54,8 +54,6 @@ namespace RestService.Assets.Controllers
             {
                 return this.BadRequest($"Exception: {ex.Message}");
             }
-
-
         }
 
 
@@ -68,14 +66,22 @@ namespace RestService.Assets.Controllers
             try
             {
                 var result = await _mediator.Send(new GetLocationStatusByLocationIdQuery(chargerSessionRequest.LocationIds, chargerSessionRequest.Duration));
-                locationStatusQueryResponse.StatusMessage = "Record Found";
                 locationStatusQueryResponse.StatusCode = 200;
-                locationStatusQueryResponse.data = result;
+                if (result is not null && result.Count() > 0)
+                {
+                    locationStatusQueryResponse.StatusMessage = "Record found";
+                    locationStatusQueryResponse.data = result;
+                }
+                else
+                {
+                    locationStatusQueryResponse.StatusMessage = "Record not found";
+                }
+
                 return result == null ? NotFound() : this.Ok(locationStatusQueryResponse);
             }
             catch (Exception ex)
             {
-                locationStatusQueryResponse.StatusMessage = "Record not Found";
+                locationStatusQueryResponse.StatusMessage = "Operation failed!";
                 locationStatusQueryResponse.StatusCode = 404;
                 locationStatusQueryResponse.data = null;
                 return this.BadRequest($"Exception: {ex.Message}");

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PortalRestService.Application.Handlers.Assets.QueryHandlers;
@@ -12,6 +12,9 @@ using PortalRestService.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using PortalRestService.Api.Service;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace RestService.Assets
 {
@@ -42,6 +45,15 @@ namespace RestService.Assets
                 };
             });
             services.AddControllers();
+            var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+            var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+            var dbPassword = Environment.GetEnvironmentVariable("DB_SA_PASSWORD");
+            var connectionString = $"Data Source={dbHost};Initial Catalog={dbName};User ID=sa;Password={dbPassword}";
+            services.AddDbContext<PortalRestService.Infrastructure.DBContext.ocpp_dbContext>(
+
+            //m => m.UseSqlServer(Configuration.GetConnectionString("OcppDB")), ServiceLifetime.Transient);
+             m => m.UseSqlServer(connectionString), ServiceLifetime.Transient);
+
             services.AddCors();
             services.AddSwaggerGen(c =>
             {
@@ -79,8 +91,21 @@ namespace RestService.Assets
             services.AddTransient<ILocationStatusByLocationIdRepository, LocationStatusByLocationIdRepository>();
             services.AddTransient<ILocationPerformingRepository, LocationPerformingRepository>();
             services.AddTransient<ILocationDispenserRepository, LocationDispenserRepository>();
+            services.AddTransient<IVehicleDashboardRepository,VehicleDashboardRepository>();
             services.AddSingleton<IHttpHelper, HttpHelper>();
             services.AddTransient<IMilesAddedByLocationQueryRepository, MilesAddedByLocationRepository>();
+            services.AddTransient<IVehicleRepository, VehicleRepository>();
+            services.AddTransient<IEventLogByLocationRepository, EventLogBylocationRepository>();
+            services.AddTransient<IGetAllAlertsRepository, GetAllAlertsRepository>();
+            services.AddTransient<IUpdateIsReadEventLogByIDRepository, UpdateIsReadEventLogByIDRepository>();
+            services.AddTransient<IChartDetailsListRepository, GetChartDetailsListRepository>();
+            services.AddTransient<IGetChargerSessionDetailsListRepository, ChargerSessionDetailsListRepository>();
+            services.AddTransient<IGetChargerInformationRepository, GetChargerInfoRepository>();
+            services.AddTransient<IGetSummaryDataRepository, GetSummaryDataRepository>();
+            services.AddTransient<IGetSummaryStatusRepository, GetSummaryStatusRepository>();
+            services.AddTransient<IGetAllChargeBoxIDRepository, GetAllChargeBoxIDRepository>();
+            services.AddHealthChecks()
+                .AddCheck<PortalHealthCheck>("example_health_check");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -110,6 +135,15 @@ namespace RestService.Assets
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("/health", new HealthCheckOptions()
+                {
+                    ResultStatusCodes =
+                    {
+                        [HealthStatus.Healthy] = StatusCodes.Status200OK,
+                        [HealthStatus.Degraded] = StatusCodes.Status200OK,
+                        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+                    }
+                });
             });
         }
     }

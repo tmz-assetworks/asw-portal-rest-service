@@ -22,7 +22,7 @@ namespace PortalRestService.Application.Handlers.QueryHandlers
 
         public async Task<EnergyUsedBOForChartResponse> Handle(GetEnergyUsedsByLocationIDQuery request, CancellationToken cancellationToken)
         {
-            return await _energyUsedByLocationIDRepository.GetEnergyUsedByLocationID(request.location, request.duration);
+            return await _energyUsedByLocationIDRepository.GetEnergyUsedByLocationID(request.location, request.duration, request.chargeboxId);
         }
     }
 }

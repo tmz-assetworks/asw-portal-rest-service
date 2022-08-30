@@ -1,4 +1,6 @@
-﻿using System;
+﻿using PortalRestService.Core.PagingHelper;
+using PortalRestService.Core.Responses;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,14 +10,12 @@ namespace PortalRestService.Infrastructure.Helper
 {
     public static class CommonHelpers
     {
-
-
         /// <summary>
         /// This function returns hours with two digits like 01,02,03,04 format
         /// </summary>
         /// <param name="hours"></param>
         /// <returns></returns>
-        public static string GetHoursTwoDigistFormat(int hours)
+        public static string GetHoursTwoDigitFormat(int hours)
         {
             if (hours < 10) return "0" + hours;
             else return  hours.ToString();
@@ -29,6 +29,27 @@ namespace PortalRestService.Infrastructure.Helper
             locationcolor.Add(4, "#ffa12d");
             locationcolor.Add(5, "#e97300");
             return locationcolor;       
+        }
+
+        public static string PagenationValidation(QueryStringParameters queryStringParameters)
+        {
+            string message="";
+            if (queryStringParameters.PageNumber != null && queryStringParameters.PageNumber < 0)
+            {
+                if (queryStringParameters.PageNumber < 0)
+                {
+                    message = "Please check Pagination parameter!";
+                }
+
+            }
+            if(queryStringParameters.PageSize != null && queryStringParameters.PageSize < 0)
+            {
+                if(queryStringParameters.PageSize < 0)
+                {
+                    message = "Please check Pagination parameter!";
+                }
+            }
+            return message;
         }
     }
 }
