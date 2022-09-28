@@ -21,7 +21,7 @@ namespace PortalRestService.Application.Handlers.QueryHandlers
 
         public async Task<LocationDispenserForLocationResponse> Handle(GetDispenserByLocationIdQuery request, CancellationToken cancellationToken)
         {
-            return await _locationDispenserRepository.GetDispenserByLocation(request.location);
+            return await _locationDispenserRepository.GetDispenserByLocation(request._LocationDispensersRequest);
         }
     }
 }

@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using PortalRestService.Application.Queries;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Responses;
+using PortalRestService.Infrastructure.Helper;
 using RestService.Assets.Controllers;
 using System;
 using System.Collections.Generic;
@@ -26,11 +27,12 @@ namespace PortalRestService.ApiTests.Controllers
         public ChargerDashboardControllerTestCase()
         {
             _mediator = new Mock<IMediator>();
+            TokenBase token = new TokenBase();
             //this._configuration = configuration;
             _configuration = new ConfigurationBuilder()
                .AddInMemoryCollection()
                .Build();
-            chargerController = new ChargerController(_mediator.Object);
+            chargerController = new ChargerController(_mediator.Object,token);
             {
             }
         }
@@ -273,7 +275,7 @@ namespace PortalRestService.ApiTests.Controllers
         [TestMethod()]
         public async Task GetCommandListTest()
         {
-            //Arrange
+            //Arrange           
             var CommandListResponse = new CommandListResponse()
             {
                 StatusCode = 200,

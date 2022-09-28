@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
+using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -14,9 +15,10 @@ namespace PortalRestService.Infrastructure.Repositories
 {
     public class VehicleDashboardRepository : Repository<VehicleByIdData>, IVehicleDashboardRepository
     {
-        public VehicleDashboardRepository() : base()
+        TokenBase _tokenBase;
+        public VehicleDashboardRepository(TokenBase token) : base()
         {
-
+            _tokenBase=token;   
         }
 
         // Get Vehicle detail by vehicleId
@@ -29,7 +31,7 @@ namespace PortalRestService.Infrastructure.Repositories
             try
             {
                 string str = APIConstant.GetVehicleByID + id;
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetAPIAsync(str);
+                HttpResponseMessage response = await Helpers.Helper.GetCallAssetAuthAPIAsync(str,_tokenBase.acces_token);
                 VehicleResponse getVehicleByIdResponse = new VehicleResponse();
 
                 if (response.IsSuccessStatusCode)

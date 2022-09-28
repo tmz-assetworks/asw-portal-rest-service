@@ -10,25 +10,18 @@ namespace PortalRestService.Helpers
 {
     public interface IHttpHelper
     {
-        Task<HttpResponseMessage> GetCallOCPPAPIAsync(string apiUrl);
-        Task<HttpResponseMessage> GetCallAssetAPIAsync(string apiUrl);
+        Task<HttpResponseMessage> GetCallAssetAPIAsync(string apiUrl, string token);
        // Task<HttpResponseMessage> GetCallAssetWithBodyAPIAsync(string apiUrl, string contentBody);
         Task<HttpResponseMessage> GetCallMockAPIAsync(string apiUrl);
     }
     public class HttpHelper : IHttpHelper
     {
-        public async Task<HttpResponseMessage> GetCallOCPPAPIAsync(string apiUrl)
+        
+        public async Task<HttpResponseMessage> GetCallAssetAPIAsync(string apiUrl,string token)
         {
-            return await Helper.GetCallOCPPAPIAsync(apiUrl);
+            return await Helper.GetCallAssetAuthAPIAsync(apiUrl,token);
         }
-        public async Task<HttpResponseMessage> GetCallAssetAPIAsync(string apiUrl)
-        {
-            return await Helper.GetCallAssetAPIAsync(apiUrl);
-        }
-        //public async Task<HttpResponseMessage> GetCallAssetWithBodyAPIAsync(string apiUrl, string contentBody)
-        //{
-        //    return await Helper.GetCallAssetWithBodyAPIAsync(apiUrl, contentBody);
-        //}
+        
         public async Task<HttpResponseMessage> GetCallMockAPIAsync(string apiUrl)
         {
             return await Helper.GetCallMockAPIAsync(apiUrl);
@@ -36,59 +29,24 @@ namespace PortalRestService.Helpers
     }
     public static class Helper
     {
-       // private static readonly string AssetBaseOCPPAPIAddress = "https://localhost:6003/api/";
+        // private static readonly string AssetBaseOCPPAPIAddress = "https://localhost:6003/api/";
         //private static readonly string AssetBaseAssetAPIAddress = "https://localhost:7200/api/";
 
-     // private static readonly string AssetBaseOCPPAPIAddress = "https://ocpp-core.azurewebsites.net/api/";
-      //private static readonly string AssetBaseAssetAPIAddress = "http://51.142.178.175:6009/api/";
-
-
+        // private static readonly string AssetBaseOCPPAPIAddress = "https://qa-ocpp-core.azurewebsites.net/api/";
+        //private static readonly string AssetBaseAssetAPIAddress = "https://qa-assets-service.azurewebsites.net/api/";
 
         private static readonly string AssetBaseOCPPAPIAddress = Environment.GetEnvironmentVariable("OCPPAPI");
         private static readonly string AssetBaseAssetAPIAddress = Environment.GetEnvironmentVariable("ASSETAPI");
-
-        public static async Task<HttpResponseMessage> GetCallOCPPWithBodyAPIAsync(string apiUrl, StringContent content)
+         public static async Task<HttpResponseMessage> GetCallAssetAuthAPIAsync(string apiUrl,string token)
         {
+
             using (var client = new HttpClient())
             {
-                var response = client.PostAsync(SiteURL(AssetBaseOCPPAPIAddress, apiUrl), content).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    return response;
-                }
-                return response;
-            }
-        }
-
-        public static async Task<HttpResponseMessage> GetCallOCPPAPIAsync(string apiUrl)
-        {
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(AssetBaseOCPPAPIAddress);
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpResponseMessage response = await client.GetAsync(SiteURL(client.BaseAddress.ToString(),apiUrl));
-                if (response.IsSuccessStatusCode)
-                {
-                    return response;
-                }
-                return response;
-            }
-        }
-
-        public static async Task<HttpResponseMessage> GetCallAssetAPIAsync(string apiUrl)
-        {            
-     
-            using (var client = new HttpClient())
-            {               
-
-            
                 client.BaseAddress = new Uri(AssetBaseAssetAPIAddress);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpResponseMessage response = await client.GetAsync(SiteURL(client.BaseAddress.ToString(),apiUrl));
-
-
+                client.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", token));
+                HttpResponseMessage response = await client.GetAsync(SiteURL(client.BaseAddress.ToString(), apiUrl));
                 if (response.IsSuccessStatusCode)
                 {
                     return response;
@@ -96,12 +54,24 @@ namespace PortalRestService.Helpers
                 return response;
             }
         }
-        
-        public static async Task<HttpResponseMessage> GetCallAssetWithBodyAPIAsync(string apiUrl, StringContent content)
+        public static async Task<HttpResponseMessage> GetCallAssetWithBody1APIAsync(string apiUrl, StringContent content)
         {
             using (var client = new HttpClient())
             {   
                 var response =  client.PostAsync(SiteAssetURL(apiUrl), content).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    return response;
+                }
+                return response;
+            }
+        }
+        public static async Task<HttpResponseMessage> GetCallAssetWithBodyAuthAPIAsync(string apiUrl, StringContent content,string token)
+        {
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", token));
+                var response = client.PostAsync(SiteAssetURL(apiUrl), content).Result;
                 if (response.IsSuccessStatusCode)
                 {
                     return response;

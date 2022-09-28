@@ -13,9 +13,10 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 {
     public class ChargingSessionRepository : OcppRepository<ChargerSessionByLocationResponse>, IChargingSessionRepository
     {
-        public ChargingSessionRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        TokenBase _tokenBase;
+        public ChargingSessionRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase) : base(dbContext)
         {
-
+            _tokenBase = tokenBase;
         }
 
         public Task<ChargingSessionByLocationForChartResponse> AddAsync(ChargingSessionByLocationForChartResponse entity)
@@ -46,18 +47,18 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
-                    duration = "1";
+                    if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
+                        duration = "1";
 
                                 
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
-                    opratorid = "",
+                    operatorid = "",
                     LocationIds = location
                 });
                 StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethoddispenser, httpContent);
+                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent, _tokenBase.acces_token);
 
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
@@ -86,7 +87,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                          join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
-                                                         on s.ChargerId equals c.ChargerId
+                                                         on s.ChargerId equals c.DispenserId
                                                          select new ChargingSessionByLocationBO
                                                          {
                                                              Id = s.Id,

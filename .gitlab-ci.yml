@@ -8,11 +8,11 @@ Tag_Release:
   stage: Tag_Release
   image: registry.gitlab.com/gitlab-org/release-cli:latest 
   rules:
-    - if: $CI_COMMIT_BRANCH == "m4_qa_release"
+    - if: $CI_COMMIT_BRANCH == "m5_qa_release"
       when: always    
   script:
     - tag_time=`date "+%d-%m-%Y-%H-%M-%S"`
-    - export COMMIT_TAG="m4_qa_release-$tag_time"
+    - export COMMIT_TAG="m5_qa_release-$tag_time"
     - release-cli create --name "Release $COMMIT_TAG" --tag-name $COMMIT_TAG
 
 sonarqube-check:
@@ -35,7 +35,7 @@ sonarqube-check:
       - "dotnet sonarscanner end /d:sonar.login=\"$SONAR_TOKEN\""
   allow_failure: true
   only:
-    - /^(m4_qa_release)+-?.*$/
+    - /^(m5_qa_release)+-?.*$/
   except:
     - branches
 
@@ -46,7 +46,7 @@ Dotnet_App_Publish:
   tags: 
    - rest-service
   only:
-    - /^(m4_qa_release)+-?.*$/
+    - /^(m5_qa_release)+-?.*$/
   except:
     - branches
   script:
@@ -72,11 +72,11 @@ Docker_Image_Build:
   script:
     - cp -R publish/ DashboardService/PortalRestService.Api/publish/
     - ls -lrth DashboardService/PortalRestService.Api/publish/
-    - docker build -t $IMAGE_TAG -f "DashboardService/PortalRestService.Api/Dockerfile" .
+    - docker build -t $QA_IMAGE_TAG -f "DashboardService/PortalRestService.Api/Dockerfile" .
     - docker login -u $AZ_TOKEN_NAME -p $AZ_LOGIN_TOKEN $AZ_ECR_REPO
-    - docker push $IMAGE_TAG
+    - docker push $QA_IMAGE_TAG
   only:
-    - /^(m4_qa_release)+-?.*$/
+    - /^(m5_qa_release)+-?.*$/
   except:
     - branches
   when: manual

@@ -23,26 +23,26 @@ namespace PortalRestService.Infrastructure.Repositories
 {
     public class LocationDispenserRepository : OcppRepository<LocationDispenserForLocationResponse>, ILocationDispenserRepository
     {
-
-        public LocationDispenserRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        TokenBase _tokenBase;
+        public LocationDispenserRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase) : base(dbContext)
         {
-
+            _tokenBase = tokenBase;
         }
 
-        async Task<LocationDispenserForLocationResponse> ILocationDispenserRepository.GetDispenserByLocation(List<long> LocationIds)
+        async Task<LocationDispenserForLocationResponse> ILocationDispenserRepository.GetDispenserByLocation(LocationDispensersRequest locationDispensersRequest)
         {
             LocationDispenserForLocationResponse objLocationDispneser = new LocationDispenserForLocationResponse();
-            StringContent httpContent = new StringContent(JsonConvert.SerializeObject(LocationIds), Encoding.UTF8, "application/json");
+            StringContent httpContent = new StringContent(JsonConvert.SerializeObject(locationDispensersRequest), Encoding.UTF8, "application/json");
 
-            string callingMethodLocation = APIConstant.Getdispenserbylocation;
-            HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethodLocation, httpContent);
+            string callingMethodLocation = APIConstant.GetlocationDispensers;
+            HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethodLocation, httpContent,_tokenBase.acces_token);
 
             var locationData = await responseSession.Content.ReadAsStringAsync();
             objLocationDispneser = JsonConvert.DeserializeObject<LocationDispenserForLocationResponse>(locationData);
             if (objLocationDispneser.data is not null && objLocationDispneser.data.Count() > 0)
             {
                 // updating charger status as per status of charger in  OCPP ChargerStatuses tables
-                objLocationDispneser.data.ForEach(l => l.ChargerStatus = _dbContext.ChargerStatuses.Where(c => c.ChargerId == l.DispenserId).OrderByDescending(m=>m.ModifiedAt).FirstOrDefault()?.ChargerStatus1);
+                objLocationDispneser.data.ForEach(l => l.ChargerStatus = _dbContext.ChargerStatuses.Where(c => c.ChargerId == l.DispenserId).OrderByDescending(m => m.ModifiedAt).FirstOrDefault()?.Chargerstatus);
             }
             return objLocationDispneser;
         }

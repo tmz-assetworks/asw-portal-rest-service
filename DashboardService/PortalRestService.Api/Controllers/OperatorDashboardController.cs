@@ -17,30 +17,31 @@ using PortalRestService.Core.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Infrastructure.Helper;
+using Microsoft.AspNetCore.Authentication;
 
 namespace PortalRestService.Api.Controllers
 {
     [Route("api/v1/[controller]/")]
-    [ApiController]
+    [ApiController]   
     [Authorize]
     public class OperatorDashboardController : ControllerBase
     {
-
+        TokenBase _tokenBase;
         private readonly IMediator _mediator;
         private readonly IConfiguration _configuration;
         private readonly double perkwtRate = 0;
         private readonly double gasolineInKiloWatt = 0;
         private readonly double lbsofCO2emitted = 0;
         //private readonly IHttpHelper _httpHelper;
-        public OperatorDashboardController(IMediator mediator, IConfiguration configuration)
+
+        public OperatorDashboardController(IMediator mediator, IConfiguration configuration, TokenBase tokenBase)
         {
             _mediator = mediator;
             this._configuration = configuration;
-            //_httpHelper = httpHelper;
-
             gasolineInKiloWatt = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("GallongasolineKiloWatt").Value);
             lbsofCO2emitted = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("lbsofCO2emitted").Value);
             perkwtRate = (double)Convert.ToDouble(this._configuration.GetSection("EneryRatePerKg").GetSection("perkwtRate").Value);
+            _tokenBase = tokenBase;
         }
 
         [HttpGet]
@@ -50,8 +51,9 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.GetAllLocationName;
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetAPIAsync(callingMethod);
+                HttpResponseMessage response = await Helpers.Helper.GetCallAssetAuthAPIAsync(callingMethod,_tokenBase.acces_token);
                 AllLocationQueryResponse alLocationQueryResponse = new AllLocationQueryResponse();
                 if (response.IsSuccessStatusCode)
                 {
@@ -81,9 +83,10 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.Getlocationsdispenserformap;
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(request.LocationIds), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethod, httpContent);
+                HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);
                 LocationsDispenserformapResponce locationsDispenserformapResponce = new LocationsDispenserformapResponce();
                 if (response.IsSuccessStatusCode)
                 {
@@ -118,9 +121,10 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.GetLocationsDispenserDetails;
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethod, httpContent);   // Returens Data with Pagination
+                HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
                 LocationsDispenserDetailsResponce locationsDispenserDetailsResponce = new LocationsDispenserDetailsResponce();
                 if (response.IsSuccessStatusCode)
                 {
@@ -156,6 +160,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetSummaryStatusQuery(locationId,isChargersReq));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -173,6 +178,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetSummaryDataQuery(locationId));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -188,6 +194,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetAllChargingSessionQuery(chargerSessionRequest.LocationIds, chargerSessionRequest.Duration,chargerSessionRequest.chargerBoxId));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -203,6 +210,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetChargerByLocationIDQuery(chargerSessionRequest.LocationIds, chargerSessionRequest.Duration, chargerSessionRequest.chargerBoxId));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -219,6 +227,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetEnergyUsedsByLocationIDQuery(chargerSessionRequest.LocationIds, chargerSessionRequest.Duration, chargerSessionRequest.chargerBoxId));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -234,6 +243,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetLocationPerformingQuery(locationPerformingRequest.LocationIds, locationPerformingRequest.Duration, locationPerformingRequest.Orderby));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -253,6 +263,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetMilesAddedByLocationQuery(milesAddedByLocationRequest.LocationIds, milesAddedByLocationRequest.Duration,milesAddedByLocationRequest.chargerBoxId));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -268,6 +279,7 @@ namespace PortalRestService.Api.Controllers
             EventLogLocationResponse QueryResponse = new EventLogLocationResponse();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 if (eventLogRequest.PageSize == 0) eventLogRequest.PageSize = 10;
                 if (eventLogRequest.PageNumber == 0) eventLogRequest.PageNumber = 1;
 
@@ -316,6 +328,7 @@ namespace PortalRestService.Api.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 if (ModelState.IsValid)
                 {
                     if (operatorAlertRequest.PageSize == 0) operatorAlertRequest.PageSize = 10;
@@ -342,6 +355,7 @@ namespace PortalRestService.Api.Controllers
             EventLogLocationResponse QueryResponse = new EventLogLocationResponse();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new UpdateIsReadEventLogByIDQuery(id));
                 QueryResponse.StatusMessage = "updated successfully!";
                 QueryResponse.StatusCode = (int)HttpStatusCode.OK;

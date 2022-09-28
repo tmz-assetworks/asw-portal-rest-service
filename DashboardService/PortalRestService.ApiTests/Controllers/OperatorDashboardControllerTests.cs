@@ -11,6 +11,7 @@ using PortalRestService.Application.Queries;
 using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Responses;
+using PortalRestService.Infrastructure.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,11 +29,12 @@ namespace PortalRestService.Api.Controllers.Tests
         private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
         public OperatorDashboardControllerTests()
         {
+            TokenBase token = new TokenBase();
             _mediator = new Mock<IMediator>();
             _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection()
            .Build();
-            _operatorDashboardController = new OperatorDashboardController(_mediator.Object, _configuration);
+            _operatorDashboardController = new OperatorDashboardController(_mediator.Object, _configuration,token);
             {
             }
         }
@@ -41,7 +43,7 @@ namespace PortalRestService.Api.Controllers.Tests
         public void GetAllLocationTest()
         {
             // Arrange 
-            // Act
+            // Act           
             var actionResult = _operatorDashboardController.GetAllLocation().Result;
 
             // Assert
@@ -58,7 +60,7 @@ namespace PortalRestService.Api.Controllers.Tests
             // Act
             LocationOpratorRequest locationDispenserRequest = new LocationOpratorRequest();
             locationDispenserRequest.LocationIds = new List<int> { };
-            locationDispenserRequest.opratorid = "1";
+            locationDispenserRequest.operatorid = "1";
             var actionResult = _operatorDashboardController.GetLocationsDispenserformap(locationDispenserRequest).Result as ActionResult<LocationsDispenserformapResponce>;
 
             // Assert
@@ -89,8 +91,7 @@ namespace PortalRestService.Api.Controllers.Tests
         public async Task GetSummaryStatusTest()
         {
             //Arrange
-            int locationId = 4;
-
+            int locationId = 4;            
             var summaryStatusDataResponse = new CardDataResponse()
             {
                 StatusCode = 200,
@@ -116,7 +117,7 @@ namespace PortalRestService.Api.Controllers.Tests
             _mediator.Setup(md => md.Send(It.IsAny<GetSummaryStatusQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync(summaryStatusDataResponse);
 
             //Act
-            var actionresult = _operatorDashboardController.GetSummaryStatus(locationId).Result as ActionResult<PortalRestService.Core.Responses.CardDataResponse>;
+            var actionresult = _operatorDashboardController.GetSummaryStatus(locationId,false).Result as ActionResult<PortalRestService.Core.Responses.CardDataResponse>;
 
             // Assert 
             Assert.IsNotNull(actionresult);
@@ -129,8 +130,7 @@ namespace PortalRestService.Api.Controllers.Tests
         public async Task GetSummaryDataTest()
         {
             //Arrange
-            int locationId = 4;
-
+            int locationId = 4;           
             var summaryDataResponse = new SummaryData()
             {
                 StatusCode = 200,
@@ -608,7 +608,7 @@ namespace PortalRestService.Api.Controllers.Tests
         [TestMethod()]
         public async Task GetEventLogByLocationTest()
         {
-            //Arrange
+            //Arrange           
             var eventLogRequest = new PortalRestService.Core.Responses.EventLogRequest()
             {
                 LocationIds = new List<int> { 4 },
@@ -668,8 +668,7 @@ namespace PortalRestService.Api.Controllers.Tests
         public async Task UpdateOcppEventLogIsReadTest()
         {
             //Arrange
-            int id = 1;
-
+            int id = 1;            
             var eventLogLocationResponse = new EventLogLocationResponse()
             {
                 StatusCode = 200,

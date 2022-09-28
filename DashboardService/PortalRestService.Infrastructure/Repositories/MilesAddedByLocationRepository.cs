@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
+using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -15,9 +16,11 @@ namespace PortalRestService.Infrastructure.Repositories
     public class MilesAddedByLocationRepository : OcppRepository<MilesAddedByLocationChartResponse>, IMilesAddedByLocationQueryRepository
     {
         private IConfiguration Configuration;
-        public MilesAddedByLocationRepository(IConfiguration iConfig, Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        TokenBase _tokenBase;
+        public MilesAddedByLocationRepository(IConfiguration iConfig, Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token) : base(dbContext)
         {
             Configuration = iConfig;
+            _tokenBase = token; 
         }
 
         async Task<MilesAddedByLocationChartResponse> IMilesAddedByLocationQueryRepository.GetMilesAddedByLocation(List<int> location, string duration, string chargeBoxId)
@@ -32,12 +35,12 @@ namespace PortalRestService.Infrastructure.Repositories
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
-                    opratorid = "",
+                    operatorid = "",
                     LocationIds = location
                 });
                 StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethoddispenser, httpContent);
+                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
 
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
@@ -66,7 +69,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                          join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
-                                                         on s.ChargerId equals c.ChargerId
+                                                         on s.ChargerId equals c.DispenserId
                                                          select new ChargingSessionByLocationBO
                                                          {
                                                              Id = s.Id,
@@ -115,7 +118,7 @@ namespace PortalRestService.Infrastructure.Repositories
                    // Times = y.Key.times.Length == 2 ? y.Key.times : "0" + y.Key.times,
                     svalue = y.Max(f => f.svalue),
                     Times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
-                    RangeAdded = (Math.Round(Convert.ToDouble(y.Sum(t => t.EndMeterValue)) - (Convert.ToDouble(y.Sum(t => t.StartMeterValue) <= 0 ? 0 : Convert.ToDouble(y.Sum(t => t.StartMeterValue))) / (100 * Convert.ToDouble(fuleeffersiancy))), 2))
+                    RangeAdded = Math.Round((Convert.ToDouble(y.Sum(t => t.EndMeterValue)) - (Convert.ToDouble(y.Sum(t => t.StartMeterValue)) <= 0 ? 0 : Convert.ToDouble(y.Sum(t => t.StartMeterValue)))) / (100 * Convert.ToDouble(fuleeffersiancy)), 2)
 
                 }
                 ).OrderBy(t => t.svalue).ToList<MilesAddedByLocationResponse>();

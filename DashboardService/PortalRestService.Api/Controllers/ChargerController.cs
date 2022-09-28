@@ -9,6 +9,9 @@ using PortalRestService.Helper;
 using Newtonsoft.Json;
 using System.Text;
 using PortalRestService.Helpers;
+using PortalRestService.Infrastructure.Helper;
+using Microsoft.AspNetCore.Authentication;
+
 namespace RestService.Assets.Controllers
 {
     [Route("api/v1/[controller]/")]
@@ -17,10 +20,12 @@ namespace RestService.Assets.Controllers
     public class ChargerController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public ChargerController(IMediator mediator)
+        TokenBase _tokenBase;
+        public ChargerController(IMediator mediator, TokenBase token)
         {
             _mediator = mediator;
-        }       
+            _tokenBase = token;
+        }
         [HttpPost("GetChartDetailsList")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<PortalRestService.Core.Responses.ChartDetailsListResponse>> GetChartDetailsList([FromBody] ChartDetailsListRequest chartDetailsListRequest)
@@ -28,9 +33,9 @@ namespace RestService.Assets.Controllers
             ChartDetailsListResponse QueryResponse = new ChartDetailsListResponse();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 if (chartDetailsListRequest.PageSize == 0) chartDetailsListRequest.PageSize = 10;
                 if (chartDetailsListRequest.PageNumber == 0) chartDetailsListRequest.PageNumber = 1;
-
                 var result = await _mediator.Send(new GetChartDetailsListQuery(chartDetailsListRequest));
                 if (result != null && result.Count > 0)
                 {
@@ -72,6 +77,7 @@ namespace RestService.Assets.Controllers
             ChargerSessionDetailsListResponse QueryResponse = new ChargerSessionDetailsListResponse();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 if (ChargerSessionRequest.PageSize == 0) ChargerSessionRequest.PageSize = 10;
                 if (ChargerSessionRequest.PageNumber == 0) ChargerSessionRequest.PageNumber = 1;
 
@@ -113,6 +119,7 @@ namespace RestService.Assets.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetChargerInformationQuery(chargerInformationRequest.ChargeBoxId,chargerInformationRequest.OperatorId));
                 return result == null ? NotFound() : this.Ok(result);
             }
@@ -127,7 +134,7 @@ namespace RestService.Assets.Controllers
         {
             CommandListResponse QueryResponse = new CommandListResponse();
             List<CommandList> lin = new List<CommandList>();
-
+            _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
             lin.Add(new CommandList() {Id= 1, value= "Authorize" });
             lin.Add(new CommandList() { Id = 2, value = "BootNotification" });
             lin.Add(new CommandList() { Id = 3, value = "Heartbeat" });
@@ -179,8 +186,9 @@ namespace RestService.Assets.Controllers
             DispensersDetailResponse dispensersDetailResponse = new DispensersDetailResponse();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(dispensersDetailRequest), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await Helper.GetCallAssetWithBodyAPIAsync(callingMethod, httpContent);   // Returens Data with Pagination
+                HttpResponseMessage response = await Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -210,7 +218,7 @@ namespace RestService.Assets.Controllers
         {
             ChargeBoxIDListResponse QueryResponse = new ChargeBoxIDListResponse();
             List<CommandList> lin = new List<CommandList>();
-
+            _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
             QueryResponse = await _mediator.Send(new GetChargeBoxIDQuery());         
             return QueryResponse;
         }

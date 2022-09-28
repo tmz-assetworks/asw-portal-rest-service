@@ -4,6 +4,7 @@ using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
+using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -16,8 +17,10 @@ namespace PortalRestService.Infrastructure.Repositories
 {
     public class UpdateIsReadEventLogByIDRepository : OcppRepository<EventLogLocationResponse>, IUpdateIsReadEventLogByIDRepository
     {
-        public UpdateIsReadEventLogByIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        TokenBase _tokenBase;
+        public UpdateIsReadEventLogByIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token) : base(dbContext)
         {
+            _tokenBase = token;
         }
         public async Task<EventLogLocationResponse> UpdateOcppEventLogIsRead(int id)
         {

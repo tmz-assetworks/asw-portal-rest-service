@@ -3,6 +3,7 @@ using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.DBContext;
+using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -17,10 +18,10 @@ namespace PortalRestService.Infrastructure.Repositories
 
     public class GetChargerInfoRepository : OcppRepository<ChargerInformationResponse>, IGetChargerInformationRepository
     {
-
-        public GetChargerInfoRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        TokenBase _tokenBase;
+        public GetChargerInfoRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase) : base(dbContext)
         {
-
+            _tokenBase = tokenBase;
         }
         public async Task<ChargerInformationResponse> GetChargerInformation(string chargeBoxId, string OperatorId)
         {
@@ -29,7 +30,7 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 string callingMethoddispenser = APIConstant.GetDispenserByChargeboxId + chargeBoxId;
 
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetAPIAsync(callingMethoddispenser);
+                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetAuthAPIAsync(callingMethoddispenser, _tokenBase.acces_token);
 
                 var chrgerInformation = await responsedispenser.Content.ReadAsStringAsync();
                 var dispenser = JsonConvert.DeserializeObject<DispenserResponse>(chrgerInformation);
@@ -44,7 +45,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
                     chargerInformationResponse.data.ConnectorIds = dispenser.data[0].Ports.Count() > 0 ? String.Join(", ", (dispenser.data[0].Ports).Select(s => s.ConnectorId)) : "";
                     // getting the ChargerStatus from OCPP service
-                    chargerInformationResponse.data.ChargerStatus = _dbContext.ChargerStatuses.Where(c => c.ChargerId == dispenser.data[0].id).OrderByDescending(m => m.ModifiedAt).FirstOrDefault()?.ChargerStatus1;
+                    chargerInformationResponse.data.ChargerStatus = _dbContext.ChargerStatuses.Where(c => c.ChargerId == dispenser.data[0].id).OrderByDescending(m => m.ModifiedAt).FirstOrDefault()?.Chargerstatus;
 
                     chargerInformationResponse.data.ChargerType = "Public";
                     chargerInformationResponse.data.City = dispenser.data[0].location.LocationAddress.CityName;

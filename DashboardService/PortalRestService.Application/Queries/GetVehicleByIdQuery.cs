@@ -10,10 +10,10 @@ namespace PortalRestService.Application.Queries
 {
     public class GetVehicleByIdQuery : IRequest<VehicleByIdData>
     {
-        public long vehicle { get; set; }
+        public long vehicle { get; set; } 
         public GetVehicleByIdQuery(long Vehicle)
         {
-            vehicle = Vehicle;
+            this.vehicle = Vehicle;
         }
     }
 }

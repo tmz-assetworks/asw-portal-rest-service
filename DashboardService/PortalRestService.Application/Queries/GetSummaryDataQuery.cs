@@ -11,10 +11,9 @@ namespace PortalRestService.Application.Queries
     public class GetSummaryDataQuery : IRequest<SummaryData>
     {
         public int locationId { get; set; }
-
         public GetSummaryDataQuery(int _locationId)
         {
-            this.locationId = _locationId;
+            this.locationId = _locationId; 
         }
     }
 }

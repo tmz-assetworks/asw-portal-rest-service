@@ -21,7 +21,10 @@ namespace PortalRestService.Core.Responses
         public List<DispensersDetail> data { get; set; }
         public PaginationResponse paginationResponse { get; set; }
     }
-
+    public class LocationDispensersRequest : QueryStringParameters
+    {
+        public List<long> locationIds { get; set; }
+    }
     public class DispensersDetail
     {
 

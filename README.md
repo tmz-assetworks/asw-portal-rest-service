@@ -1,52 +1,51 @@
-# asw-portal-rest-service
+#**Running ASW Rest APP**
+###**● Prerequisites**
+- You have a basic understanding of dotnet and rest api apps.
+- You have 6.0 runtime, hosting bundle and installed.
+- You have MSSQL server 2019 installed on a server.
+- Docker latest version
+- Ngnix should be running (latest stable version)
 
-#**Running ASW Rest Portal API**
-###**Prerequisites**
-Before you begin, ensure you have met the following requirements:
-○	You have a basic understanding of dotnet  and rest api apps.
-○	You have 6.0 runtime, hosting bundle and installed.
-○	You have MSSQL server 2019 installed on a server.
-○	Docker latest version
+###**● Configuring and running the application ***
+1. Git clone from the repository.
+2. cd &lt;base_code_folder&gt;.
+3. Configuration
+`&quot;AzureAd&quot;: {
+   &quot;scopes&quot;: &quot;&lt;scope&gt;&quot;,
+   &quot;ClientId&quot;: &quot;&lt;client Id&gt;&quot;,
+   &quot;Instance&quot;: &quot;&lt;instance&gt;&quot;,
+   &quot;TenantId&quot;: &quot;&lt;TenantId&gt;&quot;,
+   &quot;clientSecret&quot;: &quot;&lt;clientSecret&gt;&quot;`
 
-   
-###**Configuring and running the application  ***
-   Please execute the following instructions from the git bash command line
-•	Git clone from the repository.
-•	cd <base_code_folder>.
-•	Configuration
-  "ApplicationUrl": {
-    "OCPPApiBaseUrl": "<OCPP base url>,
-    "AssetBaseUrl": "<asset base url>,
-  }  
- 
-•	Update the docker.yml file as per the env needed for secret manager.
-•	cd <base_code_folder>.
-•	dotnet  restore
-•	dotnet  build
-•	dotnet test
-•	dotnet  publish  --output <path/to/directory> <path/to/project_file>
-•	run dll 
-
+15. Update the docker.yml file as per the env needed for secret manager.
+16. cd &lt;base_code_folder&gt;.
+17. dotnet restore
+18. dotnet build
+19. dotnet test
+20. dotnet publish --output &lt;path/to/directory&gt; &lt;path/to/project_file&gt;
+21. run dll
 
 ###**● Running the application using docker:***
-    Please execute the following instructions from the command line
+
 Please execute the following instructions from the unix command line
-•	Git clone from the repository.
-•	cd <base_code_folder>.
-•	Configuration
- "ApplicationUrl": {
-    "OCPPApiBaseUrl": "<OCPP base url>,
-    "AssetBaseUrl": "<asset base url>,
-  }  
- 
-●	cd <base_code_folder>.
-●	dotnet  restore
-●	dotnet  build
-●	dotnet test
-●	docker login <docker_container _registory>
-●	username : <username>     Password :<password>
-●	docker image build -t <docker_container _registory>/asset_api:M3-release .
-●	docker push <docker_container _registory>/rest_api:M3release
-●	run this command on server cmd - "docker run -d --name restapi -p 5003:80 <docker_container _registory>/rest_api:M3-release"
+1. Git clone from the repository.
+2. cd &lt;base_code_folder&gt;.
+3. Configuration
+`&quot;AzureAd&quot;: {
+   &quot;scopes&quot;: &quot;&lt;scope&gt;&quot;,
+   &quot;ClientId&quot;: &quot;&lt;client Id&gt;&quot;,
+   &quot;Instance&quot;: &quot;&lt;instance&gt;&quot;,
+   &quot;TenantId&quot;: &quot;&lt;TenantId&gt;&quot;,
+   &quot;clientSecret&quot;: &quot;&lt;clientSecret&gt;&quot;
+   },`
 
-
+5. cd &lt;base_code_folder&gt;.
+6. dotnet restore
+7. dotnet build
+8. dotnet test
+9. docker login &lt;docker_container _registory&gt;
+10. username : &lt;username&gt;     Password :&lt;password&gt;
+11. docker image build -t &lt;docker_container _registory&gt;/resrservice:M4-release .
+12. docker push &lt;docker_container _registory&gt;/resrservice:M4-release
+13. run this command on server cmd - &quot;docker run -d --name restapi -p 5003:80
+    &lt;docker_container _registory&gt;/resrservice:M4-release&quot;

@@ -10,6 +10,6 @@ namespace PortalRestService.Core.Repositories
 {
     public interface ILocationDispenserRepository : IRepository<LocationDispenserForLocationResponse>
     {
-       Task<LocationDispenserForLocationResponse> GetDispenserByLocation(List<long> location);
+       Task<LocationDispenserForLocationResponse> GetDispenserByLocation(LocationDispensersRequest locationDispensersRequest);
     }
 }

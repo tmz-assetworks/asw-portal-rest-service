@@ -12,6 +12,9 @@ namespace PortalRestService.Core.Responses
         public Department Department { get; set; }
         //public int LocationId { get; set; }
         public string ContactPersonName { get; set; }
+        public string ContactPersonNumber { get; set; }
+        public string AlternateMobileNumber { get; set; }
+        public string Email { get; set; }
         public string GlobalTax { get; set; }
         public string TotalCapacity { get; set; }
         public string UtilityService { get; set; }
@@ -196,9 +199,6 @@ namespace PortalRestService.Core.Responses
         public string AddressLine2 { get; set; }
 
 
-        public string AlternateMobileNumber { get; set; }
-
-
         public long CityId { get; set; }
 
 
@@ -217,9 +217,6 @@ namespace PortalRestService.Core.Responses
         public DateTime CreatedOn { get; set; }
 
 
-        public string Email { get; set; }
-
-
         public bool IsActive { get; set; }
 
 
@@ -230,10 +227,6 @@ namespace PortalRestService.Core.Responses
 
 
         public string Longitude { get; set; }
-
-
-        public string MobileNumber { get; set; }
-
 
         public string ModifiedBy { get; set; }
 
@@ -292,10 +285,10 @@ namespace PortalRestService.Core.Responses
 
 
 
-        public DateTime StartTime { get; set; }
+        public string StartTime { get; set; }
 
 
-        public DateTime EndTime { get; set; }
+        public string EndTime { get; set; }
 
 
         public string CreatedBy { get; set; }

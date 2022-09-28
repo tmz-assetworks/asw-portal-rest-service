@@ -1,10 +1,8 @@
-
 using PortalRestService;
 using PortalRestService.Core.PagingHelper;
 
 namespace PortalRestService.Core.Responses
 {
-  
 
     public class CardDataResponse
     {
@@ -14,24 +12,19 @@ namespace PortalRestService.Core.Responses
         public List<CardData> data { get; set; }
     }
 
-
     // Dashboard Cards
     public class CardData
     {
         public string Type { get; set; }
         public int Count { get; set; }
         public List<StatusData> StatusData { get; set; }
-        
     }
-
-
     public class DispenserResponse
     {
         public int StatusCode { get; set; }
         public string StatusMessage { get; set; }
         public List<Dispenser> data { get; set; }   //  Dispenser = Charger
     }
-
     public class Dispenser
     {
         public int id { get; set; }
@@ -63,14 +56,14 @@ namespace PortalRestService.Core.Responses
         public string chargeBoxId { get; set; }
         public string stationName { get; set; }
         public int vendorId { get; set; }
-        public Vendor vendor { get; set; }        
+        public Vendor vendor { get; set; }
         public List<Port> Ports { get; set; }
     }
     public class Port
     {
         public long Id { get; set; }
         public long DispenserId { get; set; }
-        public long ConnectorId { get; set; }
+        public int ConnectorId { get; set; }
         public string CreatedBy { get; set; }
         public Connector Connector { get; set; }
         public DateTime CreatedOn { get; set; }
@@ -136,11 +129,7 @@ namespace PortalRestService.Core.Responses
         public int Uncommisioned { get; set; }
         public int Decommissioned { get; set; }
         public int Installed { get; set; }
-
     }
-
-   
-
     public class LocationResponse
     {
         public int StatusCode { get; set; }
@@ -150,13 +139,12 @@ namespace PortalRestService.Core.Responses
 
     public class Location
     {
-
         public int Id { get; set; }
         public int LocationAddressId { get; set; }
         public LocationAddress LocationAddress { get; set; }
         public int LocationStatusId { get; set; }
         public LocationStatus LocationStatus { get; set; }
-        public int LocationId { get; set; }
+        public string LocationId { get; set; }
         public string ContactPersonName { get; set; }
         public string GlobalTax { get; set; }
         public string TotalCapacity { get; set; }
@@ -176,7 +164,6 @@ namespace PortalRestService.Core.Responses
         public string TimeZone { get; set; }
         public List<LocationSchedule> LocationSchedule { get; set; }
 
-
     }
     public class TotalLocationAndChargerResponse
     {
@@ -184,9 +171,7 @@ namespace PortalRestService.Core.Responses
         public string StatusMessage { get; set; }
         public int TotalLocations { get; set; }
         public int TotalDispenser { get; set; }// Charger
-
     }
-
 
     public class LocationsDispenserformapResponce
     {
@@ -196,7 +181,6 @@ namespace PortalRestService.Core.Responses
         }
         public int StatusCode { get; set; }
         public string StatusMessage { get; set; }
-
         public List<LocationsDispenser> data { get; set; }
     }
 
@@ -210,29 +194,27 @@ namespace PortalRestService.Core.Responses
         public string CountryName { get; set; }
         public string StateName { get; set; }
         public string CityName { get; set; }
-
         public string status { get; set; }
-
-
+        public string ChargeBoxid { get; set; }
     }
 
     public class LocationsDispenserDetailsResponce
-    { 
-    public LocationsDispenserDetailsResponce()
     {
-        data = new List<LocationsDispenserDetails>();
+        public LocationsDispenserDetailsResponce()
+        {
+            data = new List<LocationsDispenserDetails>();
+        }
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+
+        public List<LocationsDispenserDetails> data { get; set; }
+
+        public PaginationResponse paginationResponse { get; set; }
+
     }
-    public int StatusCode { get; set; }
-    public string StatusMessage { get; set; }
 
-    public List<LocationsDispenserDetails> data { get; set; }
-
-    public PaginationResponse paginationResponse { get; set; }
-
-    }
-
-public class LocationsDispenserDetails
-{
+    public class LocationsDispenserDetails
+    {
         public long locationId { get; set; }
         public long DispenserId { get; set; }
         public string LocationName { get; set; }
@@ -245,10 +227,5 @@ public class LocationsDispenserDetails
         public string ContactNo { get; set; }
         public string ContactName { get; set; }
         public DateTime CreatedOn { get; set; }
-
-
     }
-
-
-
 }

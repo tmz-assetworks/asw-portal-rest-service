@@ -52,7 +52,7 @@ namespace RestService.Assets
             services.AddDbContext<PortalRestService.Infrastructure.DBContext.ocpp_dbContext>(
 
             //m => m.UseSqlServer(Configuration.GetConnectionString("OcppDB")), ServiceLifetime.Transient);
-             m => m.UseSqlServer(connectionString), ServiceLifetime.Transient);
+            m => m.UseSqlServer(connectionString), ServiceLifetime.Transient);
 
             services.AddCors();
             services.AddSwaggerGen(c =>
@@ -104,6 +104,8 @@ namespace RestService.Assets
             services.AddTransient<IGetSummaryDataRepository, GetSummaryDataRepository>();
             services.AddTransient<IGetSummaryStatusRepository, GetSummaryStatusRepository>();
             services.AddTransient<IGetAllChargeBoxIDRepository, GetAllChargeBoxIDRepository>();
+            services.AddTransient<IRfIdReaderRepository, RfIdReaderRepository>();
+            services.AddScoped<PortalRestService.Infrastructure.Helper.TokenBase>();
             services.AddHealthChecks()
                 .AddCheck<PortalHealthCheck>("example_health_check");
         }

@@ -10,10 +10,10 @@ namespace PortalRestService.Application.Queries
 {
     public class GetDispenserByLocationIdQuery : IRequest<LocationDispenserForLocationResponse>
     {
-        public List<long> location { get; set; }
-        public GetDispenserByLocationIdQuery(List<long> Location)
+        public LocationDispensersRequest _LocationDispensersRequest = null;
+        public GetDispenserByLocationIdQuery(LocationDispensersRequest dispensersDetailRequest)
         {
-            location = Location;
+            this._LocationDispensersRequest = dispensersDetailRequest;
         }
     }
 }

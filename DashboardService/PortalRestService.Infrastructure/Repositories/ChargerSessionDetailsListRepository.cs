@@ -3,6 +3,7 @@ using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
+using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -14,16 +15,17 @@ namespace PortalRestService.Infrastructure.Repositories
 {
     public class ChargerSessionDetailsListRepository : OcppRepository<ChargerSessionDetailsListResponse>, IGetChargerSessionDetailsListRepository
     {
-        public ChargerSessionDetailsListRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        TokenBase _tokenBase;
+        public ChargerSessionDetailsListRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token) : base(dbContext)
         {
-
+            _tokenBase=token;
         }
 
         async Task<PagedList<ChargerSessionDetailsList>> IGetChargerSessionDetailsListRepository.GetChargerSessionDetailsList(ChargerSessionListRequest request)
         {
             List<ChargerSessionDetailsList> ChargingSessionslist = new List<ChargerSessionDetailsList>();
-           List<ChargerSessionDetailsList> res = new List<ChargerSessionDetailsList>();
-
+            List<ChargerSessionDetailsList> res = new List<ChargerSessionDetailsList>();
+            DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
 
 
             string eventlogre = JsonConvert.SerializeObject(new OcppEventLogRequest()
@@ -31,26 +33,47 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 chargerboxid = request.chargerboxid
             });
-
-            res = (request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.Where(x => request.chargerboxid.Contains(x.DeviceId)) : _dbContext.ChargingSessions).Select(c => new ChargerSessionDetailsList()
+           
+            List<int> myList = new List<int>();
+            string callingMethoddispenser = APIConstant.GetDispenserByLocations;
+            string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
             {
+                operatorid = "",
+                LocationIds = myList
+            });
+            StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
 
-                Id = c.Id,
-                Sessionid = c.Id.ToString().Length == 1 ? "0000000" + c.Id.ToString() : c.Id.ToString().Length == 2 ? "000000" + c.Id.ToString() :
-                c.Id.ToString().Length == 3 ? "00000" + c.Id.ToString() : c.Id.ToString().Length == 4 ? "00000" + c.Id.ToString() : "",
-                Duration = "" ,
-                Usage = (Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)),
-                StartTime = c.StartTime,
-                EndTime = c.EndTime,
-                ChargeBoxId = c.DeviceId,
-                ModifiedAt = c.ModifiedAt,
-                CreatedAt = c.CreatedAt
-            }
-              ).OrderByDescending(a => a.ModifiedAt).Where(s => s.EndTime > s.StartTime).ToList<ChargerSessionDetailsList>();
+            HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent, _tokenBase.acces_token);
 
+            var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
+
+            dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
+           
+
+
+            res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+
+                   join s in dispenserByLocationIdResponse.data.ToList()
+                              on c.ChargerId equals s.DispenserId
+                   select new ChargerSessionDetailsList
+                   {
+                       Id = c.Id,
+                       Sessionid = c.Id.ToString().Length == 1 ? "0000000" + c.Id.ToString() : c.Id.ToString().Length == 2 ? "000000" + c.Id.ToString() :
+                                   c.Id.ToString().Length == 3 ? "00000" + c.Id.ToString() : c.Id.ToString().Length == 4 ? "00000" + c.Id.ToString() : "",
+                       Duration = "",
+                       Usage = (Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)),
+                       StartTime = c.StartTime,
+                       EndTime = c.EndTime,
+                       ChargeBoxId = c.DeviceId,
+                       ModifiedAt = c.ModifiedAt,
+                       CreatedAt = c.CreatedAt
+                   }).DistinctBy(d => d.Id).Where(s => s.ChargeBoxId != null).ToList();
+
+
+           
             foreach (var s in res)
             {
-              
+
                 if (s.EndTime.HasValue && s.StartTime.HasValue)
                 {
                     System.TimeSpan diff1 = (TimeSpan)(s.EndTime - s.StartTime);

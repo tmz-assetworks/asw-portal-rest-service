@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using PortalRestService.Application.Queries;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helpers;
+using PortalRestService.Infrastructure.Helper;
 using RestService.Assets.Controllers;
 using System;
 using System.Collections.Generic;
@@ -31,8 +32,8 @@ namespace RestService.Assets.Controllers.Tests
 
             _mockHttpHelper = new Mock<IHttpHelper>();
             _configuration = new Mock<IConfiguration>();
-
-            _locationDashboardController = new LocationDashboardController(_mediator.Object, _configuration.Object);
+            TokenBase token = new TokenBase();
+            _locationDashboardController = new LocationDashboardController(_mediator.Object, _configuration.Object, token);
             {
 
             }
@@ -72,7 +73,7 @@ namespace RestService.Assets.Controllers.Tests
         public async Task GetDispenserByLocationSuccessTest()
         {
             //Arrange
-            List<long> Ids = new List<long> { };
+            LocationDispensersRequest Ids = new LocationDispensersRequest { };           
             var locationDispenserForLocationResponse = new LocationDispenserForLocationResponse()
             {
                 StatusCode = 200,
@@ -87,7 +88,6 @@ namespace RestService.Assets.Controllers.Tests
                              DispenserId=1,
                              DispenserMake="DispenserMake",
                              DispenserModel="DispenserModel",
-                             DispenserName="DispenserName",
                              locationId=1,
                              NoofPort="10",
                              ProtocolName="Http",
@@ -111,7 +111,6 @@ namespace RestService.Assets.Controllers.Tests
         {
             // Arrange 
             long Id = 4;
-
             // Act
             var actionResult = _locationDashboardController.GetLocatinById(Id).Result;
 
@@ -123,8 +122,7 @@ namespace RestService.Assets.Controllers.Tests
         public void GetLocatinByIdNotFoundTest()
         {
             // Arrange 
-            long Id = 0;
-
+            long Id = 0;            
             // Act
             var actionResult = _locationDashboardController.GetLocatinById(Id).Result;
             string statusMessage = "Record not found";
@@ -174,11 +172,11 @@ namespace RestService.Assets.Controllers.Tests
                              CreatedBy="Flodian",
                              CreatedOn= DateTime.Now,
                              Day="1",
-                             EndTime= DateTime.Now,
+                             EndTime= "",
                              Id= 1,
                              IsActive= true,
                              ModifiedBy="Smith",
-                             StartTime= DateTime.Now,
+                             StartTime="",
                         }
                     },
                     LocationStatus = new LocationStatus()
@@ -204,21 +202,19 @@ namespace RestService.Assets.Controllers.Tests
                         CreatedBy = "Adam",
                         AddressLine1 = "Noida",
                         AddressLine2 = "Delhi",
-                        AlternateMobileNumber = "776668867",
                         CityId = 1,
                         CityName = "Bareilly",
                         CountryId = 1,
                         CountryName = "India",
                         CreatedOn = DateTime.Now,
-                        Email = "abc@nn.com",
                         LandlineNumber = "1020",
                         Latitude = "10",
                         Longitude = "20",
-                        MobileNumber = "07865565757",
                         ModifiedOn = DateTime.Now,
                         PinCode = "121222",
                         StateId = 1,
                         StateName = "U.P"
+                     
                     }
                 },
 

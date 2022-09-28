@@ -14,9 +14,10 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 {
     public class VehicleRepository : Repository<GetAllVehicleResponse>, IVehicleRepository
     {
-        public VehicleRepository() : base()
+        TokenBase _tokenBase;
+        public VehicleRepository(TokenBase tokenBase) : base()
         {
-
+            _tokenBase = tokenBase;
         }
 
         async Task<vehicleWithPagination> IVehicleRepository.GetAllVehicle(GetAllVehicleRequest getAllVehicleRequest)
@@ -30,7 +31,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                 AllVehicle AllVehicle = new AllVehicle();
                 string dd = JsonConvert.SerializeObject(getAllVehicleRequest);
                 StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-                HttpResponseMessage responseVehicle = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethod, httpContent);
+                HttpResponseMessage responseVehicle = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);
 
                 var allVehicle = await responseVehicle.Content.ReadAsStringAsync();
                 AllVehicle = JsonConvert.DeserializeObject<AllVehicle>(allVehicle);

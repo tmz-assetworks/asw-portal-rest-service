@@ -6,6 +6,7 @@ using Moq;
 using PortalRestService.Application.Queries;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Responses;
+using PortalRestService.Infrastructure.Helper;
 using RestService.Assets.Controllers;
 using System;
 using System.Collections.Generic;
@@ -25,11 +26,12 @@ namespace PortalRestService.ApiTests.Controllers
         public VehicleDashboardControllerTestCase()
         {
             _mediator = new Mock<IMediator>();
+            TokenBase token = new TokenBase();
             //this._configuration = configuration;
             _configuration = new ConfigurationBuilder()
                .AddInMemoryCollection()
                .Build();
-            _VehicleDashboardController = new VehicleDashboardController(_mediator.Object, _configuration);
+            _VehicleDashboardController = new VehicleDashboardController(_mediator.Object, _configuration, token);
             {
             }
         }
@@ -38,7 +40,7 @@ namespace PortalRestService.ApiTests.Controllers
         public async Task GetVehicleByIDTest()
         {
             //Arrange
-            long id = 10;
+            long id = 10;           
             var getVehiclesResponse = new VehiclesResponse()
             {
                 StatusCode = 200,

@@ -4,6 +4,7 @@ using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 //using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
+using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -16,8 +17,10 @@ namespace PortalRestService.Infrastructure.Repositories
 #pragma warning disable
     public class EnergyUsedByLocationIDRepository : OcppRepository<EnergyUsedBOForChartResponse>, IEnergyUsedByLocationIDRepository
     {
-        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext) : base(dbContext)
+        TokenBase _tokenBase;
+        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token) : base(dbContext)
         {
+            _tokenBase = token;
         }
         async Task<EnergyUsedBOForChartResponse> IEnergyUsedByLocationIDRepository.GetEnergyUsedByLocationID(List<int> location, string duration, string chargeBoxId)
         {
@@ -28,11 +31,11 @@ namespace PortalRestService.Infrastructure.Repositories
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new Core.Responses.LocationOpratorRequest()
                 {
-                    opratorid = "",
+                    operatorid = "",
                     LocationIds = location
                 });
                 StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethoddispenser, httpContent);
+                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
                 dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
                 string laveltype = "time";
@@ -59,7 +62,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 List<EnergyUsedChartBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now && s.EndMeterValue>0
                                                join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
-                                               on s.ChargerId equals c.ChargerId
+                                               on s.ChargerId equals c.DispenserId
                                                select new EnergyUsedChartBO
                                                {
                                                    StartMeterValue = s.StartMeterValue.Value,

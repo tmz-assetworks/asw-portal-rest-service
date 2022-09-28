@@ -51,7 +51,7 @@ namespace PortalRestService.Core.Responses
     public class LocationOpratorRequest
     {
         public List<int> LocationIds { get; set; }
-        public string? opratorid { get; set; }
+        public string? operatorid { get; set; }
 
     }
     public class LocationDispenserDetailRequest : QueryStringParameters
@@ -160,7 +160,7 @@ namespace PortalRestService.Core.Responses
         public long LocationStatusId { get; set; }
 
         public string ChargeBoxId { get; set; }
-        public long ChargerId { get; set; }
+        public long DispenserId { get; set; }
         public string SerialNumber { get; set; }
         public string ConnectorType { get; set; }
 

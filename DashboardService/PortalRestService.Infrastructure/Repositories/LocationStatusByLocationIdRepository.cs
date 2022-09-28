@@ -4,17 +4,20 @@ using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
+using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System.Net.Http.Headers;
 
 namespace PortalRestService.Infrastructure.Repositories.Assets
 {
 #pragma warning disable
+    
     public class LocationStatusByLocationIdRepository : Repository<AllLocationStatusChartBO>, ILocationStatusByLocationIdRepository
     {
-        public LocationStatusByLocationIdRepository() : base()
+        TokenBase _tokenBase;
+        public LocationStatusByLocationIdRepository(TokenBase tokenBase) : base()
         {
-
+            _tokenBase = tokenBase;
         }
         public async Task<List<AllLocationStatusChartBO>> GetLocationStatusByLocatonId(List<int> location, string duration)
         {
@@ -25,7 +28,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 
 
             string callingMethodLocation = APIConstant.GetAllLocation;
-            HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetAPIAsync(callingMethodLocation);
+            HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetAuthAPIAsync(callingMethodLocation,_tokenBase.acces_token);
 
             var locationData = await responseSession.Content.ReadAsStringAsync();
             obj = JsonConvert.DeserializeObject<AllLocationStatusQueryResponse>(locationData);

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using PortalRestService.Core.Responses;
 using System;
 using System.Collections.Generic;
@@ -8,12 +8,13 @@ using System.Threading.Tasks;
 
 namespace PortalRestService.Application.Queries
 {
-    public class UpdateIsReadEventLogByIDQuery : IRequest<EventLogLocationResponse>
+    public class GetRfIdReaderQuery : IRequest<RfIdReaderDetailsResponse>
     {
-        public int Id { get; set; }     
-        public UpdateIsReadEventLogByIDQuery(int id)
+        public long Id { get; set; }
+        public GetRfIdReaderQuery(long _Id)
         {
-            Id = id;           
+            this.Id = _Id;
         }
     }
 }
+

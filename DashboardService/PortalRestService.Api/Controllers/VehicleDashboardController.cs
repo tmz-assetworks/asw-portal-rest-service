@@ -1,8 +1,10 @@
 using MediatR;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PortalRestService.Application.Queries;
 using PortalRestService.Core.Responses;
+using PortalRestService.Infrastructure.Helper;
 using System.Net;
 
 namespace RestService.Assets.Controllers
@@ -10,16 +12,17 @@ namespace RestService.Assets.Controllers
 
     [Route("api/v1/[controller]/")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class VehicleDashboardController : ControllerBase
     {
         private readonly IMediator _mediator;
         private readonly IConfiguration _configuration;
-        public VehicleDashboardController(IMediator mediator, IConfiguration configuration)
+        TokenBase _tokenBase;
+        public VehicleDashboardController(IMediator mediator, IConfiguration configuration,TokenBase token)
         {
             _mediator = mediator;
             this._configuration = configuration;
-
+            _tokenBase = token; 
         }
 
         /// <summary>
@@ -36,6 +39,7 @@ namespace RestService.Assets.Controllers
             VehicleByIdData vehicleByIdData = new VehicleByIdData();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 vehicleByIdData = await _mediator.Send(new GetVehicleByIdQuery(id));
                 if (vehicleByIdData != null && !(string.IsNullOrEmpty(vehicleByIdData.VIN)))
                 {
@@ -70,6 +74,7 @@ namespace RestService.Assets.Controllers
             GetAllVehicleResponse getAll = new GetAllVehicleResponse();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 StatusList status = new StatusList();
                 List<StatusData> statusData = new List<StatusData>();
                 vehicleWithPagination vehicleWithPaginatio = new vehicleWithPagination();
@@ -109,10 +114,9 @@ namespace RestService.Assets.Controllers
             catch (Exception ex)
             {
                 getAll.StatusMessage = "Operation Failed!";
-                getAll.StatusCode = 400;
+                getAll.StatusCode =(int)HttpStatusCode.BadRequest;
             }
             return getAll;
-
         }
     }
 }

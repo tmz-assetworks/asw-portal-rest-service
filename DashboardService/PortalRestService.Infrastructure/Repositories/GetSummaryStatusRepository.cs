@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using PortalRestService.Application;
 using PortalRestService.Core.Repositories;
@@ -22,7 +22,8 @@ namespace PortalRestService.Infrastructure.Repositories
         private readonly double gasolineInKiloWatt = 0;
         private readonly double lbsofCO2emitted = 0;
         private readonly IConfiguration _configuration;
-        public GetSummaryStatusRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration) : base(dbContext)
+        TokenBase _tokenBase;
+        public GetSummaryStatusRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, TokenBase tokenBase) : base(dbContext)
         {
             this._configuration = configuration;
             //_httpHelper = httpHelper;
@@ -30,9 +31,10 @@ namespace PortalRestService.Infrastructure.Repositories
             gasolineInKiloWatt = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("GallongasolineKiloWatt").Value);
             lbsofCO2emitted = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("lbsofCO2emitted").Value);
             perkwtRate = (double)Convert.ToDouble(this._configuration.GetSection("EneryRatePerKg").GetSection("perkwtRate").Value);
+            _tokenBase = tokenBase;
         }
 
-        public async Task<CardDataResponse> GetSummaryStatus(int locationId, bool isChargersReq)
+         public async Task<CardDataResponse> GetSummaryStatus(int locationId, bool isChargersReq)
         {
             CardDataResponse dataResponse = new CardDataResponse();
 
@@ -51,7 +53,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 HttpResponseMessage locatoinResponse = null;
                 if (locationId == 0 && isChargersReq == false)  // not for Chargers
                 {
-                    locatoinResponse = await PortalRestService.Helpers.Helper.GetCallAssetAPIAsync(APIConstant.GetAllLocation);
+                    locatoinResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetAllLocation,_tokenBase.acces_token);
                     AllLocationStatusQueryResponse Location = new AllLocationStatusQueryResponse();                // Location Status
                     if (locatoinResponse != null && locatoinResponse.IsSuccessStatusCode)
                     {
@@ -78,8 +80,8 @@ namespace PortalRestService.Infrastructure.Repositories
                 // Getting Charger/Dispenser data
                 HttpResponseMessage dispenserResponse = null;
                 if (locationId == 0)
-                    dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAPIAsync(APIConstant.GetAllDispenser);
-                else dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAPIAsync(APIConstant.GetDispenserByLocation + "" + locationId);
+                    dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetAllDispenser,_tokenBase.acces_token);
+                else dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetDispenserByLocation + "" + locationId,_tokenBase.acces_token);
                 if (dispenserResponse.IsSuccessStatusCode)
                 {
                     cardData = new CardData();
@@ -104,28 +106,33 @@ namespace PortalRestService.Infrastructure.Repositories
                     }
                 }
 
-                 cardData = new CardData();
+                cardData = new CardData();
                 cardData.Type = "Charging Session";
                 List<PortalRestService.Core.Models.ChargingSession> objChargingSession = _dbContext.ChargingSessions.ToList();
-              
-                if (locationId > 0)
-                {
-                    List<int> locationIds = new List<int>()
+
+                List<int> locationIds = new List<int>()
                    {
                        locationId
                    };
-                    LocationDispenserForLocationResponse locationsResponse = new LocationDispenserForLocationResponse();
-                    StringContent httpContent = new StringContent(JsonConvert.SerializeObject(locationIds), Encoding.UTF8, "application/json");
+                if(locationId==0)
+                    locationIds = new List<int>()
+                   {
+                       
+                   };
+                LocationDispenserForLocationResponse locationsResponse = new LocationDispenserForLocationResponse();
+                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(locationIds), Encoding.UTF8, "application/json");
 
-                    string callingMethodLocation = APIConstant.Getdispenserbylocation;
-                    HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetWithBodyAPIAsync(callingMethodLocation, httpContent);
+                string callingMethodLocation = APIConstant.Getdispenserbylocation;
+                HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethodLocation, httpContent, _tokenBase.acces_token);
 
-                    var locationData = await responseSession.Content.ReadAsStringAsync();
-                    locationsResponse = JsonConvert.DeserializeObject<LocationDispenserForLocationResponse>(locationData);
-                    if (objChargingSession != null)
+                var locationData = await responseSession.Content.ReadAsStringAsync();
+                locationsResponse = JsonConvert.DeserializeObject<LocationDispenserForLocationResponse>(locationData);
+
+                
+                      if (objChargingSession != null)
                     {
                         List<LocationDispenserForLocation> datalocations = locationsResponse.data.ToList();
-                        var chargingSessionsData = (from cs in objChargingSession join l in datalocations on cs.ChargerId equals l.DispenserId where l.locationId == locationId select cs).ToList();
+                        var chargingSessionsData = (from cs in objChargingSession join l in datalocations on cs.ChargerId equals l.DispenserId where l.ChargeBoxId == cs.DeviceId select cs).ToList();
 
 
                         if (objChargingSession != null)
@@ -143,24 +150,8 @@ namespace PortalRestService.Infrastructure.Repositories
                         data.Add(cardData);
                     }
 
-                }
-                if (objChargingSession != null && locationId == 0)
-                {
-                    cardData.Count = objChargingSession.Count;
-
-                    if (objChargingSession != null)
-                    {
-                        List<StatusData> StatusData = new List<StatusData>()
-                    {
-                        new StatusData { Key = Status_Indication.ChargingSessionStatus.Cancelled.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(objChargingSession.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Cancelled.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Cancelled.GetEnumDisplayName()  },
-                            new StatusData { Key = Status_Indication.ChargingSessionStatus.Interrupted.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(objChargingSession.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Interrupted.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Interrupted.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargingSessionStatus.Completed.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(objChargingSession.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Completed.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Completed.GetEnumDisplayName()  },
-
-                        };
-                        cardData.StatusData = StatusData;
-                        data.Add(cardData);
-                    }
-                }
+                
+                
                 // Charging Session end
 
                 // Getting Error Log
@@ -180,16 +171,12 @@ namespace PortalRestService.Infrastructure.Repositories
                     cardData.StatusData = ErrorStatusData;
                     data.Add(cardData);
                 }
-
                 dataResponse.data = data;
                 dataResponse.StatusMessage = "Record found";
                 dataResponse.StatusCode = (int)HttpStatusCode.OK;
-               
-                
             }
             catch (Exception ex)
             {
-                
             }
             if (dataResponse.data == null)
                 dataResponse.StatusCode = (int)HttpStatusCode.NotFound;

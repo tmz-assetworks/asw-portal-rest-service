@@ -6,6 +6,8 @@ using PortalRestService.Core.Responses;
 using PortalRestService.Application.Queries;
 using PortalRestService.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using PortalRestService.Infrastructure.Helper;
+using Microsoft.AspNetCore.Authentication;
 
 namespace RestService.Assets.Controllers
 {
@@ -16,11 +18,12 @@ namespace RestService.Assets.Controllers
     {
         private readonly IMediator _mediator;
         private readonly IConfiguration _configuration;
-      
-        public LocationDashboardController(IMediator mediator, IConfiguration configuration)
+        TokenBase _tokenBase;
+        public LocationDashboardController(IMediator mediator, IConfiguration configuration,TokenBase token)
         {
             _mediator = mediator;
             this._configuration = configuration;
+            this._tokenBase = token;
             
         }
 
@@ -31,8 +34,9 @@ namespace RestService.Assets.Controllers
         {
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.GetLocationById + id;
-                HttpResponseMessage response = await Helper.GetCallAssetAPIAsync(callingMethod);
+                HttpResponseMessage response = await Helper.GetCallAssetAuthAPIAsync(callingMethod,_tokenBase.acces_token);
                 GetLocatinByIdResponse getLocatinByIdResponse = new GetLocatinByIdResponse();
                 if (response.IsSuccessStatusCode)
                 {
@@ -65,6 +69,7 @@ namespace RestService.Assets.Controllers
             LocationStatusQueryResponse locationStatusQueryResponse = new LocationStatusQueryResponse();
             try
             {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetLocationStatusByLocationIdQuery(chargerSessionRequest.LocationIds, chargerSessionRequest.Duration));
                 locationStatusQueryResponse.StatusCode = 200;
                 if (result is not null && result.Count() > 0)
@@ -91,12 +96,13 @@ namespace RestService.Assets.Controllers
         [HttpPost("GetDispenserByLocation")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<LocationDispenserForLocationResponse>> GetDispenserByLocation([FromBody] List<long> Id)
+        public async Task<ActionResult<LocationDispenserForLocationResponse>> GetDispenserByLocation([FromBody] LocationDispensersRequest request)
         {
             LocationDispenserForLocationResponse locationStatusQueryResponse = new LocationDispenserForLocationResponse();
             try
             {
-                var result = await _mediator.Send(new GetDispenserByLocationIdQuery(Id));
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
+                var result = await _mediator.Send(new GetDispenserByLocationIdQuery(request));
                 return result == null ? NotFound() : this.Ok(result);
             }
             catch (Exception ex)
@@ -104,8 +110,6 @@ namespace RestService.Assets.Controllers
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
-
-
     }
 
 }

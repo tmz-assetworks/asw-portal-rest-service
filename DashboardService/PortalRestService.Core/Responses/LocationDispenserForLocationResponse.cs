@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PortalRestService.Core.PagingHelper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,7 @@ namespace PortalRestService.Core.Responses
         public string StatusMessage { get; set; }
 
         public List<LocationDispenserForLocation> data { get; set; }
+        public PaginationResponse paginationResponse { get; set; }
     }
 
     public class LocationDispenserForLocation
@@ -23,7 +25,7 @@ namespace PortalRestService.Core.Responses
         public long locationId { get; set; }
         public long DispenserId { get; set; }
         public string ChargeBoxId { get; set; }
-        public string DispenserName { get; set; }
+        //public string DispenserName { get; set; }
         public string DispenserMake { get; set; }
         public string SerialNumber { get; set; }
         public string ProtocolName { get; set; }

@@ -22,8 +22,9 @@ namespace PortalRestService.Helper
                                                                                                               //http://51.141.73.41:6003/api/ChargingSession/getChargingSession
                                                                                                               //public const string GetSummaryData = "https://run.mocky.io/v3/0a2a634e-ebb6-4132-8bc3-b9668d27cbe4";
         public const string Getdispenserbylocation = "Location/getdispenserbylocation";
+        public const string GetlocationDispensers = "Dispenser/GetLocationDispensers";
 
-        
+
         public const string GetVehicleByID = "Vehicle/GetAllVehicleByID?id="; 
 
         public const string GetEventLogByLocationAll = "OcppEventLog/GetOcppEventLog";
@@ -34,6 +35,9 @@ namespace PortalRestService.Helper
         public const string GetDispensersList = "Dispenser/GetDispensersList";            // Auther: Pradeep, Date 08/08/2022
 
         public const string GetDispenserByChargeboxId = "Dispenser/getdispenserbychargeboxid?ChargeBoxId=";
+       
+        public const string GetAllRfIdReaders = "RFIdReader/GetAllRfIdReaders";
+        public const string GetRfIdReaderById = "RFIdReader/GetRfIdReaderById";
 
     }
 }
