@@ -29,28 +29,28 @@ namespace PortalRestService.Core.Responses
 
         public string vehicleMacAddress { get; set; }
 
-        public string Type { get; set; }
-
-        public string SubscriptionPlanName { get; set; }
-
-        public string Value { get; set; }
-
         public string Make { get; set; }
 
-        public string ModelYear { get; set; }
+        public long ModelYear { get; set; }
 
         public string Model { get; set; }
-
-        public DateTime ValidFrom { get; set; }
-
-        public bool Status { get; set; }
-
-        public DateTime ValidTo { get; set; }
+        public bool Status { get; set; }       
 
        public string rfId { get; set; }
+        public List<ApplicableSubscriptionPlan> applicableSubscriptionPlans { get; set; }
 
     }
-      public class VehicleData
+    public class ApplicableSubscriptionPlan
+    {
+        public string SubscriptionPlanName { get; set; }
+        public string Type { get; set; }
+        public string SubscriptionsValue { get; set; }
+        public DateTime ValidFrom { get; set; }
+        public DateTime ValidTo { get; set; }
+        public string RfIdNumbers { get; set; }
+
+    }
+    public class VehicleData
     {
         public int Id { get; set; }
         public string VIN { get; set; }
@@ -69,8 +69,9 @@ namespace PortalRestService.Core.Responses
         public DateTime createdOn { get; set; }
         public string modifiedBy { get; set; }
         public DateTime modifiedOn { get; set; }
-        public int vehicleModelYearid { get; set; }
-        public VehicleModelYear vehicleModelYear { get; set; }
+         
+        //public long vehicleModelYearid { get; set; }
+        //public VehicleModelYear vehicleModelYear { get; set; }
         public int vehicleModelId { get; set; }
         public VehicleModel vehicleModel { get; set; }
 
@@ -81,6 +82,7 @@ namespace PortalRestService.Core.Responses
         public VehicleMake vehicleMake { get; set; }
         public  int vehicleRFIDid { get; set; }
         public List<VehicleRFID> vehicleRFID { get; set; }
+        public List<ApplicableSubscriptionPlan> applicableSubscriptionPlans { get; set; }
     }
 
     public class VehicleMake

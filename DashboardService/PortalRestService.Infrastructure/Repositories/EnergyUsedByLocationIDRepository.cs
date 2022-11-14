@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
@@ -18,9 +20,13 @@ namespace PortalRestService.Infrastructure.Repositories
     public class EnergyUsedByLocationIDRepository : OcppRepository<EnergyUsedBOForChartResponse>, IEnergyUsedByLocationIDRepository
     {
         TokenBase _tokenBase;
-        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token) : base(dbContext)
+        private readonly IConfiguration _configuration;
+        private readonly string OccpIp = String.Empty;
+        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token, IConfiguration configuration) : base(dbContext)
         {
             _tokenBase = token;
+            this._configuration = configuration;
+            OccpIp = this._configuration.GetSection("OccpIp").GetSection("ip").Value;
         }
         async Task<EnergyUsedBOForChartResponse> IEnergyUsedByLocationIDRepository.GetEnergyUsedByLocationID(List<int> location, string duration, string chargeBoxId)
         {
@@ -102,15 +108,15 @@ namespace PortalRestService.Infrastructure.Repositories
                 ).OrderBy(t =>t.svalue).ToList<EnergyUsedsResponse>();
 
 
-                obj.StatusMessage = "Record Found";
+                obj.StatusMessage = RespnoseMessage.Record_found;
                 obj.StatusCode = 200;
                 obj.data = finalon;
             }
             catch (Exception ex)
             {
-                obj.StatusMessage = "Record not Found";
+                obj.StatusMessage = RespnoseMessage.Faild;
                 obj.StatusCode = 404;
-                obj.data = null;
+                obj.data = new List<EnergyUsedsResponse>(); 
             }
 
             return obj;

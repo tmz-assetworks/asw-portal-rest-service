@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PortalRestService.Application;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
@@ -30,12 +31,11 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                var random = new Random();
+                
                 if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
                     duration = "1";
 
 
-                
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
@@ -43,9 +43,7 @@ namespace PortalRestService.Infrastructure.Repositories
                     LocationIds = location
                 });
                 StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-
                 HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
-
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
                 dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
@@ -121,20 +119,20 @@ namespace PortalRestService.Infrastructure.Repositories
 
                         finalon[j].Color = locationcolors[j + 1].Trim();
                     }
-                    obj.StatusMessage = "Record Found";
+                    obj.StatusMessage = RespnoseMessage.Record_found;
                 }
                 else
                 {
-                    obj.StatusMessage = "Record not Found";
+                    obj.StatusMessage = RespnoseMessage.Record_not_found;
                 }
                 obj.StatusCode = 200;
                 obj.data = finalon;
             }
             catch (Exception ex)
             {
-                obj.StatusMessage = "Record not Found";
+                obj.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 obj.StatusCode = 404;
-                obj.data = null;
+                obj.data = new List<LocationPerformingResponse>();
             }
             return obj;
         }

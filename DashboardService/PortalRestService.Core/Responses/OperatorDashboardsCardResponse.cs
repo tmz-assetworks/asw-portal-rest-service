@@ -29,8 +29,6 @@ namespace PortalRestService.Core.Responses
     {
         public int id { get; set; }
         public string assetId { get; set; }
-        public int dispenserStatusId { get; set; }
-        public DispenserStatus dispenserStatus { get; set; }
         public string description { get; set; }
         public string endPointUrl { get; set; }
         public string firmwareVersion { get; set; }
@@ -58,6 +56,21 @@ namespace PortalRestService.Core.Responses
         public int vendorId { get; set; }
         public Vendor vendor { get; set; }
         public List<Port> Ports { get; set; }
+        public DateTime InstallationDate { get; set; }
+        public List<ChargerStatus> ChargerStatuses { get; set; }
+    }
+    public partial class ChargerStatus
+    {
+        public int Id { get; set; }
+        public int? ChargerId { get; set; }
+        public string ChargerStatus1 { get; set; }
+        public int? ConnectorId { get; set; }
+        public string ConnectorStatus { get; set; }
+        public DateTime? CreatedOn { get; set; }
+        public DateTime? ModifiedoN { get; set; }
+        public int? ReservationId { get; set; }
+        public DateTime? ReservationExpiryDate { get; set; }
+        public string IdTag { get; set; }
     }
     public class Port
     {

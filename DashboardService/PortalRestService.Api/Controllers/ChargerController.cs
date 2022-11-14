@@ -11,6 +11,7 @@ using System.Text;
 using PortalRestService.Helpers;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
+using PortalRestService.Core.ConstantResponse;
 
 namespace RestService.Assets.Controllers
 {
@@ -37,36 +38,66 @@ namespace RestService.Assets.Controllers
                 if (chartDetailsListRequest.PageSize == 0) chartDetailsListRequest.PageSize = 10;
                 if (chartDetailsListRequest.PageNumber == 0) chartDetailsListRequest.PageNumber = 1;
                 var result = await _mediator.Send(new GetChartDetailsListQuery(chartDetailsListRequest));
-                if (result != null && result.Count > 0)
+
+                if (chartDetailsListRequest.IsExport == true)
                 {
-                    QueryResponse.StatusMessage = "Record found";
-                    QueryResponse.data = result;
-                    QueryResponse.paginationResponse = new PortalRestService.Core.PagingHelper.PaginationResponse
+                    if (result != null)
                     {
-                        TotalCount = result.TotalCount,
-                        PageSize = result.PageSize,
-                        CurrentPage = result.CurrentPage,
-                        TotalPages = result.TotalPages,
-                        HasNext = result.HasNext,
-                        HasPrevious = result.HasPrevious
-                    };
-                    QueryResponse.StatusCode = (int)HttpStatusCode.OK;
+                        QueryResponse.data = result;
+                        QueryResponse.StatusCode = RespnoseCode.OK;
+                        QueryResponse.StatusMessage = RespnoseMessage.Record_found;
+                        QueryResponse.paginationResponse = new  PaginationResponse();
+                    }
+                    else
+                    {
+                        QueryResponse.data = new List<ChartDetailsList>();
+                        QueryResponse.StatusCode = RespnoseCode.OK;
+                        QueryResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                        QueryResponse.paginationResponse = new PaginationResponse();
+                    }
                 }
                 else
                 {
+                    if (!string.IsNullOrEmpty(chartDetailsListRequest.SearchParam))
+                        result = result.Where(d => d.LocationName.ToLower() == chartDetailsListRequest.SearchParam.ToLower() || d.ChargeBoxId.ToLower() == chartDetailsListRequest.SearchParam.ToLower()).ToList();
 
-                    QueryResponse.StatusCode = (int)HttpStatusCode.OK;
-                    QueryResponse.StatusMessage = "Record not found";
-                    QueryResponse.data = null;
-                    QueryResponse.paginationResponse = new PaginationResponse();
+                       var dataResult = PagedList<ChartDetailsList>.ToPagedList(result,
+                        chartDetailsListRequest.PageNumber,
+                        chartDetailsListRequest.PageSize);
+
+                    
+                    if (dataResult != null)
+                    {
+                        
+                        QueryResponse.data = dataResult;
+                        QueryResponse.paginationResponse = new PortalRestService.Core.PagingHelper.PaginationResponse
+                        {
+                            TotalCount = dataResult.TotalCount,
+                            PageSize = dataResult.PageSize,
+                            CurrentPage = dataResult.CurrentPage,
+                            TotalPages = dataResult.TotalPages,
+                            HasNext = dataResult.HasNext,
+                            HasPrevious = dataResult.HasPrevious
+                        };
+                        QueryResponse.StatusCode = RespnoseCode.OK;
+                        QueryResponse.StatusMessage = RespnoseMessage.Record_found;
+                    }
+                    else
+                    {
+
+                        QueryResponse.StatusCode = RespnoseCode.OK;
+                        QueryResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                        QueryResponse.data = new List<ChartDetailsList>();
+                        QueryResponse.paginationResponse = new PaginationResponse();
+                    }
+                    return QueryResponse == null ? NotFound() : this.Ok(QueryResponse);
                 }
-                //return result == null ? NotFound() : this.Ok(result);
             }
             catch (Exception ex)
             {
-                QueryResponse.StatusMessage = "Operation failed!";
-                QueryResponse.StatusCode = (int)HttpStatusCode.NotFound;
-                QueryResponse.data = null;
+                QueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                QueryResponse.StatusCode = RespnoseCode.Bad_Request;
+                QueryResponse.data = new List<ChartDetailsList>();
             }
             return QueryResponse;
         }
@@ -84,7 +115,7 @@ namespace RestService.Assets.Controllers
                 var result = await _mediator.Send(new GetChargerSessionDetailsListQuery(ChargerSessionRequest));
                 if (result != null && result.Count > 0)
                 {
-                    QueryResponse.StatusMessage = "Record found";
+                    QueryResponse.StatusMessage = RespnoseMessage.Record_found;
                     QueryResponse.data = result;
                     QueryResponse.paginationResponse = new PortalRestService.Core.PagingHelper.PaginationResponse
                     {
@@ -100,16 +131,16 @@ namespace RestService.Assets.Controllers
                 else
                 {   
                     QueryResponse.StatusCode = (int)HttpStatusCode.OK;
-                    QueryResponse.StatusMessage = "Record not found";
-                    QueryResponse.data = null;
+                    QueryResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                    QueryResponse.data = new List<ChargerSessionDetailsList>();
                     QueryResponse.paginationResponse = new PaginationResponse();
                 }
             }
             catch (Exception ex)
             {
-                QueryResponse.StatusMessage = "Operation failed!";
-                QueryResponse.StatusCode = (int)HttpStatusCode.NotFound;
-                QueryResponse.data = null;
+                QueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                QueryResponse.StatusCode = RespnoseCode.Bad_Request;
+                QueryResponse.data = new List<ChargerSessionDetailsList>();
             }
             return QueryResponse;
         }
@@ -165,7 +196,7 @@ namespace RestService.Assets.Controllers
             lin.Add(new CommandList() { Id = 29, value = "Reset" });
             lin.Add(new CommandList() { Id = 30, value = "RemoteStartTransaction" });
             
-            QueryResponse.StatusMessage = "Record found";
+            QueryResponse.StatusMessage = RespnoseMessage.Record_found;
                     QueryResponse.data = lin;
                     QueryResponse.StatusCode = (int)HttpStatusCode.OK;
                 
@@ -183,33 +214,35 @@ namespace RestService.Assets.Controllers
         public async Task<DispensersDetailResponse> GetDispensersDetail(DispensersDetailRequest dispensersDetailRequest)
         {
             string callingMethod = APIConstant.GetDispensersList;
-            DispensersDetailResponse dispensersDetailResponse = new DispensersDetailResponse();
+            DispensersDetailResponse? dispensersDetailResponse = new DispensersDetailResponse();
             try
             {
+               
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(dispensersDetailRequest), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
 
                 if (response.IsSuccessStatusCode)
-                {
+                { 
                     var dispenserdetails = await response.Content.ReadAsStringAsync();
                     dispensersDetailResponse = JsonConvert.DeserializeObject<DispensersDetailResponse>(dispenserdetails);
-                    if (dispensersDetailResponse != null && dispensersDetailResponse.data != null && dispensersDetailResponse.data.Count() > 0)
-                        dispensersDetailResponse.StatusMessage = "Record found.";
-                    else dispensersDetailResponse.StatusMessage = "Record not found.";
                     dispensersDetailResponse.StatusCode = (int)HttpStatusCode.OK;
+                    if (dispensersDetailResponse.data.Count() > 0)
+                        dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_found;
+                    else
+                        dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_not_found;
                 }
                 else
-                {
-                    Console.WriteLine("Internal server Error");
-                }
+                { 
+                    dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                }                
             }
             catch (Exception ex)
             {
+                dispensersDetailResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 dispensersDetailResponse.StatusCode = (int)HttpStatusCode.BadRequest;
             }
             return dispensersDetailResponse;
-
 
         }
         [HttpGet("GetChargeBoxIDList")]

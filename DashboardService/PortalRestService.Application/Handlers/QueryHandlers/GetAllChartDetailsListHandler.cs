@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace PortalRestService.Application.Handlers.QueryHandlers
 {
-    public class GetAllChartDetailsListHandler : IRequestHandler<GetChartDetailsListQuery, PagedList<ChartDetailsList>>
+    public class GetAllChartDetailsListHandler : IRequestHandler<GetChartDetailsListQuery, List<ChartDetailsList>>
     {
         private readonly IChartDetailsListRepository _chartDetailsListRepository;
 
@@ -21,9 +21,9 @@ namespace PortalRestService.Application.Handlers.QueryHandlers
         }
 
 
-        public async Task<PagedList<ChartDetailsList>> Handle(GetChartDetailsListQuery request, CancellationToken cancellationToken)
+        public async Task <List<ChartDetailsList>> Handle(GetChartDetailsListQuery request, CancellationToken cancellationToken)
         {
-            return (PagedList<ChartDetailsList>)await _chartDetailsListRepository.GetChartDetailsList(request.chartDetailsListRequest);
+            return await _chartDetailsListRepository.GetChartDetailsList(request.chartDetailsListRequest);
         }
     }
 }

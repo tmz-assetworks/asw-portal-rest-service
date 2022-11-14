@@ -8,6 +8,6 @@ namespace PortalRestService.Infrastructure.Helper
 {
     public class TokenBase
     {
-        public string acces_token { get; set; }
+        public string? acces_token { get; set; }
     }
 }

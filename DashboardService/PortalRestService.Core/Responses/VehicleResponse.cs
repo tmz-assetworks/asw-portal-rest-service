@@ -37,7 +37,7 @@ namespace PortalRestService.Core.Responses
     {
         public long id { get; set; }
         public string VIN { get; set; }
-        public string ModelYear { get; set; }
+        public long ModelYear { get; set; }
         public string Make { get; set; }
         public string Model { get; set; }
         public string LicencePlate { get; set; }
@@ -82,6 +82,7 @@ namespace PortalRestService.Core.Responses
         public string ModifiedBy { get; set; }
 
         public DateTime ModifiedOn { get; set; }
+        public long ModelYear { get; set; }
         public VehicleModelYear1 VehicleModelYear { get; set; }
 
         public VehicleModel1 VehicleModel { get; set; }

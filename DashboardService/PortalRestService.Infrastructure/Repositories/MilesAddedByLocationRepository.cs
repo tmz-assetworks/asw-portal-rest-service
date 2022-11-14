@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
@@ -124,17 +125,17 @@ namespace PortalRestService.Infrastructure.Repositories
                 ).OrderBy(t => t.svalue).ToList<MilesAddedByLocationResponse>();
 
                if(finalon.Count > 0)
-                obj.StatusMessage = "Record Found";
+                obj.StatusMessage = RespnoseMessage.Record_found;
                 else
-                    obj.StatusMessage = "Record not Found";
+                    obj.StatusMessage = RespnoseMessage.Record_not_found;
                 obj.StatusCode = 200;
                 obj.data = finalon;
             }
             catch (Exception ex)
             {
-                obj.StatusMessage = "Failed!";
-                obj.StatusCode = 404;
-                obj.data = null;
+                obj.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                obj.StatusCode = RespnoseCode.Bad_Request;
+                obj.data = new List<MilesAddedByLocationResponse>();
             }
             return obj;
         }

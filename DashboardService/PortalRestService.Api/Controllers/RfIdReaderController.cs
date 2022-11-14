@@ -11,6 +11,7 @@ using System.Text;
 using PortalRestService.Helpers;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
+using PortalRestService.Core.ConstantResponse;
 
 namespace RestService.Assets.Controllers
 {
@@ -37,7 +38,7 @@ namespace RestService.Assets.Controllers
         public async Task<ActionResult<RfIdReaderResponse>> GetAllRfIdReaders([FromBody] RfIdReaderRequest rfIdReaderRequest)
         {
             string callingMethod = APIConstant.GetAllRfIdReaders;
-            RfIdReaderResponse rfIdReaderResponse = new RfIdReaderResponse();
+            RfIdReaderResponse? rfIdReaderResponse = new RfIdReaderResponse();
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
@@ -47,19 +48,25 @@ namespace RestService.Assets.Controllers
                 {
                     var rfIdReaders = await response.Content.ReadAsStringAsync();
                     rfIdReaderResponse = JsonConvert.DeserializeObject<RfIdReaderResponse>(rfIdReaders);
-                    if (rfIdReaderResponse != null && rfIdReaderResponse.data != null && rfIdReaderResponse.data.Count() > 0)
-                        rfIdReaderResponse.StatusMessage = "Record found.";
-                    else rfIdReaderResponse.StatusMessage = "Record not found.";
+                    if (rfIdReaderResponse.data.Count() > 0)
+                        rfIdReaderResponse.StatusMessage = RespnoseMessage.Record_found;
+                    else rfIdReaderResponse.StatusMessage = RespnoseMessage.Record_not_found;
+
                     rfIdReaderResponse.StatusCode = (int)HttpStatusCode.OK;
                 }
                 else
                 {
-                    Console.WriteLine("Internal server Error");
+                    rfIdReaderResponse.StatusCode = (int)HttpStatusCode.OK;
+                    rfIdReaderResponse.StatusMessage = RespnoseMessage.Record_not_found;
                 }
+
             }
             catch (Exception ex)
             {
-                rfIdReaderResponse.StatusCode = (int)HttpStatusCode.BadRequest;
+                rfIdReaderResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                rfIdReaderResponse.StatusCode = RespnoseCode.Bad_Request;
+
+               
             }
             return rfIdReaderResponse;
         }
@@ -81,17 +88,17 @@ namespace RestService.Assets.Controllers
                 rfIdReaderRespnse.StatusCode = (int)HttpStatusCode.OK;
                 if (rFIDReaderDetails is not null)
                 {
-                    rfIdReaderRespnse.StatusMessage = "Record found.";
+                    rfIdReaderRespnse.StatusMessage = RespnoseMessage.Record_found;
                 }
                 else
                 {
-                    rfIdReaderRespnse.StatusMessage = "Record not found.";
+                    rfIdReaderRespnse.StatusMessage = RespnoseMessage.Record_not_found;
                 }
             }
             catch (Exception ex)
             {
-                rfIdReaderRespnse.StatusMessage = "Operaion failed!";
-
+                rfIdReaderRespnse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                rfIdReaderRespnse.StatusCode = RespnoseCode.Bad_Request;
             }
             return rfIdReaderRespnse;
         }

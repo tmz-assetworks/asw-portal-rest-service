@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
@@ -17,9 +19,13 @@ namespace PortalRestService.Infrastructure.Repositories
     public class GetAllAlertsRepository : OcppRepository<EventLogLocationResponse>, IGetAllAlertsRepository
     {
         TokenBase _tokenBase;
-        public GetAllAlertsRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token) : base(dbContext)
+        private readonly IConfiguration _configuration;
+        private readonly string OccpIp = String.Empty;
+        public GetAllAlertsRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token, IConfiguration configuration) : base(dbContext)
         {
             _tokenBase = token;
+            this._configuration = configuration;
+            OccpIp = this._configuration.GetSection("OccpIp").GetSection("ip").Value;
         }
         public async Task<OperatorAlertResponse> GetAllAlerts(OperatorAlertRequest operatorAlertRequest)
         {
@@ -40,23 +46,13 @@ namespace PortalRestService.Infrastructure.Repositories
             }
             //EventLogLocationResponse eventLogLocationResponse = new EventLogLocationResponse();
 
-            List<AlertResponse> res = new List<AlertResponse>();
-            DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+            List<AlertResponse>? res = new List<AlertResponse>();
+            DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
                 List<string> str = new List<string>();
 
-                //string eventlogre = JsonConvert.SerializeObject(new OcppEventLogRequest()
-                //{
-                //    chargerboxid = operatorAlertRequest.chargerBoxIds
-                //});
-                //StringContent httpContenteventlog = new StringContent(eventlogre, Encoding.UTF8, "application/json");
-                //string EventLogMethodName = APIConstant.GetEventLogByLocationAll;
-                //HttpResponseMessage responseSession = await Helpers.Helper.GetCallOCPPWithBodyAPIAsync(EventLogMethodName, httpContenteventlog);  // TODO
-
-                //var EventLogData = await responseSession.Content.ReadAsStringAsync();
-                //eventLogLocationResponse = JsonConvert.DeserializeObject<EventLogLocationResponse>(EventLogData);
-
+                
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
@@ -81,7 +77,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                Category = "OCPP",
                                MessageType = s.RequestType,
                                DateTime = s.CreatedAt,
-                               IPAddress = "192.168.0.1",
+                               IPAddress = OccpIp==null?"":OccpIp,
                                LocationsName = c.LocationName,
                                RequestPayload = s.RequestPayload == null ? "" : s.RequestPayload.Replace(",", ",\r\n"),
                                ResponsePayload = s.ResponsePayload == null ? "" : s.ResponsePayload.Replace(",", ",\r\n")
@@ -102,7 +98,7 @@ namespace PortalRestService.Infrastructure.Repositories
                   operatorAlertRequest.PageSize);
                     if (res.Count>0)
                     {
-                        operatorAlertResponse.StatusMessage = "Record Found";
+                        operatorAlertResponse.StatusMessage = RespnoseMessage.Record_found;
                         operatorAlertResponse.StatusCode = 200;
                         operatorAlertResponse.data = dataResult;
                         operatorAlertResponse.paginationResponse = new PaginationResponse()
@@ -118,20 +114,21 @@ namespace PortalRestService.Infrastructure.Repositories
                     else
                     {
                         operatorAlertResponse.StatusCode = 200;
-                        operatorAlertResponse.StatusMessage = "Record not Found";
+                        operatorAlertResponse.StatusMessage = RespnoseMessage.Record_not_found;
                     }
                 }
                 else
                 {
                     operatorAlertResponse.StatusCode = 404;
-                    operatorAlertResponse.StatusMessage = "Record not Found";
+                    operatorAlertResponse.StatusMessage = RespnoseMessage.Record_not_found;
                 }
             }
             catch (Exception ex)
             {
-                operatorAlertResponse.StatusMessage = "Failed!";
+                operatorAlertResponse.StatusMessage = RespnoseMessage.Faild;
                 operatorAlertResponse.StatusCode = (int)HttpStatusCode.ExpectationFailed ;
-                operatorAlertResponse.data = null;
+
+                operatorAlertResponse.data = new List<AlertResponse>();
             }
             return operatorAlertResponse;
         }

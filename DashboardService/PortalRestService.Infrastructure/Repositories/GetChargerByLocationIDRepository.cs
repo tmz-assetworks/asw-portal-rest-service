@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Repositories.Base;
@@ -130,15 +131,15 @@ namespace PortalRestService.Infrastructure.Repositories
                                         ).OrderBy(t => t.svalue).ThenBy(t => t.ChargeStatus).ToList<ChargerByLocationChartBO>();
 
 
-                obj.StatusMessage = "Record Found";
+                obj.StatusMessage = RespnoseMessage.Record_found;
                 obj.StatusCode = 200;
                 obj.data = finalon;
             }
             catch (Exception ex)
             {
-                obj.StatusMessage = "Operation Failed!";
+                obj.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 obj.StatusCode = 404;
-                obj.data = null;
+                obj.data =new List<ChargerByLocationChartBO>();
             }
 
             return obj;

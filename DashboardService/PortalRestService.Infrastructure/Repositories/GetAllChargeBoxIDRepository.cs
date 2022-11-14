@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
@@ -49,21 +50,19 @@ namespace PortalRestService.Infrastructure.Repositories
 
                                }).Distinct().OrderByDescending(a => a.chargeboxid).ToList<ChargeBoxIDList>();
                     re.StatusCode = 200;
-                    re.StatusMessage = "Record found!";
+                    re.StatusMessage = RespnoseMessage.Record_found;
                 }
                 else
                 {
                     re.StatusCode = 200;
-                    re.StatusMessage = "Record not found";
+                    re.StatusMessage = RespnoseMessage.Record_not_found;
                 }
             }
             catch (Exception ex)
             {
-
-                re.StatusCode = 500;
-                re.StatusMessage = "Internal server Error";
-                
-
+                re.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                re.StatusCode = RespnoseCode.Bad_Request;
+ 
             }
             return re;
         }
