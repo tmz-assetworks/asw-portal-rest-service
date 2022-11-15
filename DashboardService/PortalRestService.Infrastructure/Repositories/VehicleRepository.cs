@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Repositories.Base;
@@ -28,12 +29,12 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
             try
             {
                 string callingMethod = APIConstant.GetlAllVehicle;
-                AllVehicle AllVehicle = new AllVehicle();
+                AllVehicle ?AllVehicle = new AllVehicle();
                 string dd = JsonConvert.SerializeObject(getAllVehicleRequest);
                 StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
                 HttpResponseMessage responseVehicle = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);
 
-                var allVehicle = await responseVehicle.Content.ReadAsStringAsync();
+                    var allVehicle = await responseVehicle.Content.ReadAsStringAsync();
                 AllVehicle = JsonConvert.DeserializeObject<AllVehicle>(allVehicle);
                 if (AllVehicle.data !=null && AllVehicle.data.Count > 0)
                 {
@@ -42,7 +43,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                                                   {
                                                       id = v.Id,
                                                       VIN = v.VIN,
-                                                      ModelYear = v.VehicleModelYear.Name,
+                                                      ModelYear = v.ModelYear,
                                                       Make = v.VehicleMake.Name,
                                                       Model = v.VehicleModel.Name,
                                                       LicencePlate = v.LicencePlate,
@@ -59,20 +60,20 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                 }
                 else
                 {
-                    getAllVehicleResponse.StatusMessage = "Record not Found";
+                    getAllVehicleResponse.StatusMessage = RespnoseMessage.Record_not_found; 
                     getAllVehicleResponse.StatusCode = 200;
                     getAllVehicleResponse.paginationResponse = null;
-                    getAllVehicleResponse.data = null;
+                    getAllVehicleResponse.data = new List<Vehicle>();
                 }
 
             }
 
             catch (Exception ex)
             {
-                getAllVehicleResponse.StatusMessage = "Record not Found"+ ex.Message.ToString();
-                getAllVehicleResponse.StatusCode = 404;
+                getAllVehicleResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                getAllVehicleResponse.StatusCode = RespnoseCode.Bad_Request;
                 getAllVehicleResponse.paginationResponse = null;
-                getAllVehicleResponse.data = null;
+                getAllVehicleResponse.data =  new List<Vehicle>();
             }
             return vehicleWithPagination;
 

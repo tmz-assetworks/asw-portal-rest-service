@@ -289,12 +289,20 @@ namespace PortalRestService.Core.Responses
         public string? Duration { get; set; }
         public string? Opratorid { get; set; }
         public string? Flag { get; set; }
+        public string? Fromdate { get; set; }
+        public string? Todate { get; set; }
+        public List<string>? status { get; set; }
+
+        public bool? IsExport { get; set; }
+
 
     }
     public class ChargerSessionListRequest : QueryStringParameters
     {
         public List<string> chargerboxid { get; set; }
-
+        public string? Fromdate { get; set; }
+        public string? Todate { get; set; }
+        public List<string>? status { get; set; }
     }
     public class ChargerInformationRequest
     {

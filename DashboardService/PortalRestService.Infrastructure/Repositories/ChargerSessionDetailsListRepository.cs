@@ -25,7 +25,7 @@ namespace PortalRestService.Infrastructure.Repositories
         {
             List<ChargerSessionDetailsList> ChargingSessionslist = new List<ChargerSessionDetailsList>();
             List<ChargerSessionDetailsList> res = new List<ChargerSessionDetailsList>();
-            DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+            DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
 
 
             string eventlogre = JsonConvert.SerializeObject(new OcppEventLogRequest()
@@ -48,29 +48,76 @@ namespace PortalRestService.Infrastructure.Repositories
             var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
             dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-           
 
 
-            res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+            string zero = "0000000000";
+            if (!string.IsNullOrEmpty(request.Fromdate) || !string.IsNullOrEmpty(request.Todate) || request.status.Count > 0)
+            {
+                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
 
-                   join s in dispenserByLocationIdResponse.data.ToList()
-                              on c.ChargerId equals s.DispenserId
-                   select new ChargerSessionDetailsList
-                   {
-                       Id = c.Id,
-                       Sessionid = c.Id.ToString().Length == 1 ? "0000000" + c.Id.ToString() : c.Id.ToString().Length == 2 ? "000000" + c.Id.ToString() :
-                                   c.Id.ToString().Length == 3 ? "00000" + c.Id.ToString() : c.Id.ToString().Length == 4 ? "00000" + c.Id.ToString() : "",
-                       Duration = "",
-                       Usage = (Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)),
-                       StartTime = c.StartTime,
-                       EndTime = c.EndTime,
-                       ChargeBoxId = c.DeviceId,
-                       ModifiedAt = c.ModifiedAt,
-                       CreatedAt = c.CreatedAt
-                   }).DistinctBy(d => d.Id).Where(s => s.ChargeBoxId != null).ToList();
+                       join s in dispenserByLocationIdResponse.data.ToList()
+                                  on c.ChargerId equals s.DispenserId
+                       select new ChargerSessionDetailsList
+                       {
+                           Id = c.Id,
+                           Duration = "",
+                           Sessionid = zero.Substring(0,(10- c.Id.ToString().Length))+ c.Id.ToString(),
+                           ChargingStatus = c.ChargingStatus,
+                           Usage = (Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)),
+                           StartTime = c.StartTime,
+                           EndTime = c.EndTime,
+                           ChargeBoxId = c.DeviceId,
+                           ModifiedAt = c.ModifiedAt,
+                           CreatedAt = c.CreatedAt,
+                           Startmetervalue=c.StartMeterValue,
+                           Endmetervalue=c.EndMeterValue,
+                           Startsoc=c.StartSoc,
+                           EndSoc=c.EndSoc,
+                         
+                           ReasoneForStop=c.ReasonForStop
+                           
+                       }).DistinctBy(d => d.Id).Where(s => s.ChargeBoxId != null).ToList();
+                if (res != null)
+                {
+                    if (!string.IsNullOrEmpty(request.Fromdate))
+                    {
+                        res = res.Where(o => o.StartTime >= Convert.ToDateTime(request.Fromdate) && o.EndTime <= Convert.ToDateTime(request.Todate)).ToList();
+                    }
+                    if (request.status.Count > 0)
+                    {
+                        res = res.Where(o => request.status.Contains(o.ChargingStatus)).ToList();
+                    }
+                }
+
+            }
+            else
+            {
+                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+
+                       join s in dispenserByLocationIdResponse.data.ToList()
+                                  on c.ChargerId equals s.DispenserId
+                       select new ChargerSessionDetailsList
+                       {
+                           Id = c.Id,
+                           Duration = "",
+                           Sessionid = zero.Substring(0,(10- c.Id.ToString().Length))+ c.Id.ToString(),
+                           Usage = (Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)),
+                           StartTime = c.StartTime,
+                           EndTime = c.EndTime,
+                           ChargingStatus = c.ChargingStatus,
+                           ChargeBoxId = c.DeviceId,
+                           ModifiedAt = c.ModifiedAt,
+                           CreatedAt = c.CreatedAt,
+                           Startmetervalue = c.StartMeterValue,
+                           Endmetervalue = c.EndMeterValue,
+                           Startsoc = c.StartSoc,
+                           EndSoc = c.EndSoc,
+                           ReasoneForStop = c.ReasonForStop
+                       }).DistinctBy(d => d.Id).Where(s => s.ChargeBoxId != null).ToList();
+            }
 
 
-           
+
             foreach (var s in res)
             {
 

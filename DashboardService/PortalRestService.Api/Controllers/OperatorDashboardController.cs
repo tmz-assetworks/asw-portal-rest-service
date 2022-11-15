@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Authorization;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
+using PortalRestService.Core.ConstantResponse;
 
 namespace PortalRestService.Api.Controllers
 {
@@ -49,27 +50,25 @@ namespace PortalRestService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<AllLocationQueryResponse>> GetAllLocation()
         {
+            AllLocationQueryResponse alLocationQueryResponse = new AllLocationQueryResponse();
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.GetAllLocationName;
                 HttpResponseMessage response = await Helpers.Helper.GetCallAssetAuthAPIAsync(callingMethod,_tokenBase.acces_token);
-                AllLocationQueryResponse alLocationQueryResponse = new AllLocationQueryResponse();
+                
                 if (response.IsSuccessStatusCode)
                 {
                     var locationinfo = await response.Content.ReadAsStringAsync();
                     return Ok(JsonConvert.DeserializeObject<AllLocationQueryResponse>(locationinfo));
                 }
-                else
-                {
-                    Console.WriteLine("Internal server Error");
-                }
-
-
+               
                 return alLocationQueryResponse == null ? NotFound() : this.Ok(alLocationQueryResponse);
             }
             catch (Exception ex)
             {
+                alLocationQueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                alLocationQueryResponse.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
             }
 
@@ -81,29 +80,27 @@ namespace PortalRestService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<LocationsDispenserformapResponce>> GetLocationsDispenserformap([FromBody] LocationOpratorRequest request)
         {
+            LocationsDispenserformapResponce? locationsDispenserformapResponce = new LocationsDispenserformapResponce();
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.Getlocationsdispenserformap;
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(request.LocationIds), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);
-                LocationsDispenserformapResponce locationsDispenserformapResponce = new LocationsDispenserformapResponce();
+                
                 if (response.IsSuccessStatusCode)
                 {
                     var locationdispenserformapinfo = await response.Content.ReadAsStringAsync();
                     locationsDispenserformapResponce = JsonConvert.DeserializeObject<LocationsDispenserformapResponce>(locationdispenserformapinfo);
 
                 }
-                else
-                {
-                    Console.WriteLine("Internal server Error");
-                }
-
-
+                
                 return locationsDispenserformapResponce == null ? NotFound() : this.Ok(locationsDispenserformapResponce);
             }
             catch (Exception ex)
             {
+                locationsDispenserformapResponce.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                locationsDispenserformapResponce.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -119,33 +116,41 @@ namespace PortalRestService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<LocationsDispenserDetailsResponce>> GetLocationsDispenserDetails([FromBody] LocationDispenserDetailRequest request)
         {
+            LocationsDispenserDetailsResponce? locationsDispenserDetailsResponce = new LocationsDispenserDetailsResponce();
             try
             {
+                
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.GetLocationsDispenserDetails;
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
-                LocationsDispenserDetailsResponce locationsDispenserDetailsResponce = new LocationsDispenserDetailsResponce();
+
                 if (response.IsSuccessStatusCode)
                 {
+                    locationsDispenserDetailsResponce.StatusCode = (int)HttpStatusCode.OK;
 
                     var locationdispenserdetailsinfo = await response.Content.ReadAsStringAsync();
                     locationsDispenserDetailsResponce = JsonConvert.DeserializeObject<LocationsDispenserDetailsResponce>(locationdispenserdetailsinfo);
-                    if (locationsDispenserDetailsResponce != null && locationsDispenserDetailsResponce.data != null && locationsDispenserDetailsResponce.data.Count() > 0)
-                        locationsDispenserDetailsResponce.StatusMessage = "Record found.";
-                    else locationsDispenserDetailsResponce.StatusMessage = "Record not found.";
-                    locationsDispenserDetailsResponce.StatusCode = (int)HttpStatusCode.OK;
+                    if (locationsDispenserDetailsResponce.data.Count() > 0)
+                        locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_found;
+                    else locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_not_found;
+
                 }
                 else
                 {
-                    Console.WriteLine("Internal server Error");
+                    locationsDispenserDetailsResponce.StatusCode = (int)HttpStatusCode.OK;
+                    locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_not_found;
                 }
-                return locationsDispenserDetailsResponce == null ? NotFound() : this.Ok(locationsDispenserDetailsResponce);
+                
             }
             catch (Exception ex)
             {
-                return this.BadRequest($"Exception: {ex.Message}");
+                locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                locationsDispenserDetailsResponce.StatusCode = RespnoseCode.Bad_Request;
+
+
             }
+            return locationsDispenserDetailsResponce;
         }
 
         /// <summary>
@@ -286,7 +291,7 @@ namespace PortalRestService.Api.Controllers
                 var result = await _mediator.Send(new EventLogByLocationQuery(eventLogRequest));
                 if (result != null && result.Count > 0)
                 {
-                    QueryResponse.StatusMessage = "Record found";
+                    QueryResponse.StatusMessage = RespnoseMessage.Record_found;
                     QueryResponse.data = result;
                     QueryResponse.paginationResponse = new Core.PagingHelper.PaginationResponse
                     {
@@ -301,8 +306,8 @@ namespace PortalRestService.Api.Controllers
                 }
                 else
                 {
-                    QueryResponse.StatusMessage = "Record not found";
-                    QueryResponse.data = null;
+                    QueryResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                    QueryResponse.data = new List<EventLogLocation>();
                     QueryResponse.paginationResponse = new PaginationResponse();
                     QueryResponse.StatusCode = (int)HttpStatusCode.OK;
                 }
@@ -310,9 +315,11 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
-                QueryResponse.StatusMessage = "Operation failed!";
-                QueryResponse.StatusCode = (int)HttpStatusCode.ExpectationFailed;
-                QueryResponse.data = null;
+
+                QueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                QueryResponse.StatusCode = RespnoseCode.Bad_Request;
+
+                QueryResponse.data = new List<EventLogLocation>();
             }
             return QueryResponse;
         }
@@ -357,15 +364,15 @@ namespace PortalRestService.Api.Controllers
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new UpdateIsReadEventLogByIDQuery(id));
-                QueryResponse.StatusMessage = "updated successfully!";
+                QueryResponse.StatusMessage = RespnoseMessage.Record_Updated_Successfully;
                 QueryResponse.StatusCode = (int)HttpStatusCode.OK;
-                QueryResponse.data = null;
+                QueryResponse.data = new List<EventLogLocation>();
             }
             catch (Exception ex)
             {
-                QueryResponse.StatusMessage = "Not updated";
-                QueryResponse.StatusCode = (int)HttpStatusCode.NotFound;
-                QueryResponse.data = null;
+                QueryResponse.StatusMessage = RespnoseMessage.Record_Not_Updated;
+                QueryResponse.StatusCode = (int)HttpStatusCode.NotModified;
+                QueryResponse.data =  new List<EventLogLocation>(); ;
             }
             return QueryResponse;
         }

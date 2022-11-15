@@ -91,7 +91,7 @@ namespace PortalRestService.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-
+                
             }
 
             res = res != null ? res.OrderByDescending(a => a.ModifiedAt).ToList() : res;

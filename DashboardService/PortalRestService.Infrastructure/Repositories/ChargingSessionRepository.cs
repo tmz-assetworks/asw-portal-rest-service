@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Repositories.Base;
@@ -44,7 +45,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 
             ChargingSessionByLocationForChartResponse obj = new ChargingSessionByLocationForChartResponse();
             
-            DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+            DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
                     if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
@@ -152,17 +153,17 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 
 
                 if(finalon.Count>0)
-                obj.StatusMessage = "Record Found";
+                obj.StatusMessage = RespnoseMessage.Record_found;
                 else
-                obj.StatusMessage = "Record not Found";
+                obj.StatusMessage = RespnoseMessage.Record_not_found;
                 obj.StatusCode = 200;
                 obj.data = finalon;
             }
             catch (Exception ex)
             {
-                obj.StatusMessage = "Failed!";
-                obj.StatusCode = 404;
-                obj.data = null;
+                obj.StatusMessage = RespnoseMessage.Opeartion_Failed; 
+                obj.StatusCode = RespnoseCode.Bad_Request;
+                obj.data = new List<ChargingSessionByLocationChartBO>();
             }
             return obj;
         }

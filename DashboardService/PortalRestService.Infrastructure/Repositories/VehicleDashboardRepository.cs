@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
@@ -18,12 +19,12 @@ namespace PortalRestService.Infrastructure.Repositories
         TokenBase _tokenBase;
         public VehicleDashboardRepository(TokenBase token) : base()
         {
-            _tokenBase=token;   
+            _tokenBase = token;
         }
 
         // Get Vehicle detail by vehicleId
         // Auther:ATUL, Date : 
-      public  async Task<VehicleByIdData> VehicleDetailsById(long id)
+        public async Task<VehicleByIdData> VehicleDetailsById(long id)
 
         {
             VehicleByIdData vehicleByIdData = new VehicleByIdData();
@@ -31,8 +32,8 @@ namespace PortalRestService.Infrastructure.Repositories
             try
             {
                 string str = APIConstant.GetVehicleByID + id;
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetAuthAPIAsync(str,_tokenBase.acces_token);
-                VehicleResponse getVehicleByIdResponse = new VehicleResponse();
+                HttpResponseMessage response = await Helpers.Helper.GetCallAssetAuthAPIAsync(str, _tokenBase.acces_token);
+                VehicleResponse? getVehicleByIdResponse = new VehicleResponse();
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -44,30 +45,27 @@ namespace PortalRestService.Infrastructure.Repositories
                         vehicleByIdData = new VehicleByIdData()
                         {
                             VIN = getVehicleByIdResponse.data.VIN,
-                            ModelYear = getVehicleByIdResponse.data.vehicleModelYear.name,
-                            Make = getVehicleByIdResponse.data.vehicleMake.name,
-                            Model = getVehicleByIdResponse.data.vehicleModel.name,
+                            ModelYear = getVehicleByIdResponse.data.ModelYear,
+                            Make =(getVehicleByIdResponse.data !=null && getVehicleByIdResponse.data.vehicleMake!=null) ? getVehicleByIdResponse.data.vehicleMake.name:"",
+                            Model =(getVehicleByIdResponse.data!=null && getVehicleByIdResponse.data.vehicleModel!=null)? getVehicleByIdResponse.data.vehicleModel.name:"",
                             licencePlate = getVehicleByIdResponse.data.licencePlate,
                             department = getVehicleByIdResponse.data.department,
                             domicileLocation = getVehicleByIdResponse.data.domicileLocation,
                             vehicleMacAddress = getVehicleByIdResponse.data.vehicleMacAddress,
-                            Type = getVehicleByIdResponse.data.SubscriptionPlan.SubscriptionsDetails,
-                            SubscriptionPlanName = getVehicleByIdResponse.data.SubscriptionPlan.SubscriptionPlanName,
-                            Value = getVehicleByIdResponse.data.SubscriptionPlan.SubscriptionsValue,
-                            ValidFrom = getVehicleByIdResponse.data.SubscriptionPlan.ValidFrom,
-                            ValidTo = getVehicleByIdResponse.data.SubscriptionPlan.ValidTo,
                             Status = getVehicleByIdResponse.data.isActive,
                             rfId = getVehicleByIdResponse.data.vehicleRFID != null ? String.Join(",", (getVehicleByIdResponse.data.vehicleRFID).Select(x => x.name)) : "",
+                            applicableSubscriptionPlans = getVehicleByIdResponse.data.applicableSubscriptionPlans,
                         };
                     }
                 }
-               
+
                 return vehicleByIdData;
 
             }
             catch (Exception ex)
             {
-                
+                vehiclesResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                vehiclesResponse.StatusCode = RespnoseCode.Bad_Request;
             }
             return vehicleByIdData;
 

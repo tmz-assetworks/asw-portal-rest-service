@@ -143,18 +143,7 @@ namespace RestService.Assets.Controllers.Tests
                     ContactPersonName = "John",
                     CreatedBy = "Adam",
                     CreatedOn = DateTime.Now,
-                    Department = new Department()
-                    {
-                        ContactPersonName = "Adam",
-                        CreatedOn = DateTime.Now,
-                        CreatedBy = "Damon",
-                        Address = "Noida",
-                        DepartmentName = "ChargerDept",
-                        Id = 1,
-                        IsActive = true,
-                        ModifiedBy = "Smith",
-                        ModifiedOn = DateTime.Now,
-                    },
+                   
                     ModifiedBy = "Adam",
                     IsActive = false,
                     Id = 1,
@@ -163,6 +152,7 @@ namespace RestService.Assets.Controllers.Tests
                     ModifiedOn = DateTime.Now,
                     LocationAddressId = 1,
                     LocationNumber = 1,
+                    DepartmentName="IT",
                     LocationSchedule = new List<LocationSchedule>()
                     {
                         new LocationSchedule()
@@ -202,7 +192,7 @@ namespace RestService.Assets.Controllers.Tests
                         CreatedBy = "Adam",
                         AddressLine1 = "Noida",
                         AddressLine2 = "Delhi",
-                        CityId = 1,
+                        //CityId = 1,
                         CityName = "Bareilly",
                         CountryId = 1,
                         CountryName = "India",

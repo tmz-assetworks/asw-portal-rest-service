@@ -10,6 +10,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using PortalRestService.Helpers;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Core.ConstantResponse;
 
 namespace PortalRestService.Infrastructure.Repositories.Assets
 {
@@ -34,19 +35,19 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                 {
                     var dispenserdetails = await response.Content.ReadAsStringAsync();
                     dfIdReaderDetailsResponse = JsonConvert.DeserializeObject<RfIdReaderDetailsResponse>(dispenserdetails);
-                    if (dfIdReaderDetailsResponse != null && dfIdReaderDetailsResponse.data != null )
-                        dfIdReaderDetailsResponse.StatusMessage = "Record found.";
-                    else dfIdReaderDetailsResponse.StatusMessage = "Record not found.";
+                    if ( dfIdReaderDetailsResponse.data != null )
+                        dfIdReaderDetailsResponse.StatusMessage = RespnoseMessage.Record_found;
+                    else dfIdReaderDetailsResponse.StatusMessage = RespnoseMessage.Record_not_found;
                     dfIdReaderDetailsResponse.StatusCode = (int)HttpStatusCode.OK;
                 }
-                else
-                {
-                    dfIdReaderDetailsResponse.StatusMessage ="Internal server Error";
-                }
+                
             }
             catch (Exception ex)
             {
-                dfIdReaderDetailsResponse.StatusCode = (int)HttpStatusCode.BadRequest;
+
+                dfIdReaderDetailsResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                dfIdReaderDetailsResponse.StatusCode = RespnoseCode.Bad_Request;
+
             }
 
             return dfIdReaderDetailsResponse;

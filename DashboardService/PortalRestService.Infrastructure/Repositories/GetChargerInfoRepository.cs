@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
@@ -36,7 +37,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 var dispenser = JsonConvert.DeserializeObject<DispenserResponse>(chrgerInformation);
                 if(dispenser.data != null)
                 {
-                    chargerInformationResponse.StatusMessage = "Record Found";
+                    chargerInformationResponse.StatusMessage = RespnoseMessage.Record_found;
                     chargerInformationResponse.StatusCode = (int)HttpStatusCode.OK;
                     chargerInformationResponse.data.SerialNo = dispenser.data[0].serialNumber;
                     chargerInformationResponse.data.ZipCode = dispenser.data[0].location.LocationAddress.PinCode;
@@ -47,26 +48,26 @@ namespace PortalRestService.Infrastructure.Repositories
                     // getting the ChargerStatus from OCPP service
                     chargerInformationResponse.data.ChargerStatus = _dbContext.ChargerStatuses.Where(c => c.ChargerId == dispenser.data[0].id).OrderByDescending(m => m.ModifiedAt).FirstOrDefault()?.Chargerstatus;
 
-                    chargerInformationResponse.data.ChargerType = "Public";
+                    chargerInformationResponse.data.ChargerType = RespnoseMessage.Record_not_found;
                     chargerInformationResponse.data.City = dispenser.data[0].location.LocationAddress.CityName;
                     chargerInformationResponse.data.Country = dispenser.data[0].location.LocationAddress.CountryName;
                     chargerInformationResponse.data.State = dispenser.data[0].location.LocationAddress.StateName;
-                    chargerInformationResponse.data.InstalledDate = dispenser.data[0].dispenserStatus.createdOn;
+                    chargerInformationResponse.data.InstalledDate = dispenser.data[0].InstallationDate;
                     chargerInformationResponse.data.ChargeBoxId = dispenser.data[0].chargeBoxId;
                     chargerInformationResponse.data.ConnectorType = dispenser.data[0].Ports.Count() > 0 ? dispenser.data[0].Ports[0].ConnectorType : 0;
                 }
                 else
                 {
                     chargerInformationResponse.StatusCode = (int)HttpStatusCode.OK;
-                    chargerInformationResponse.StatusMessage = "Record Not Found";
-                    chargerInformationResponse.data = null;
+                    chargerInformationResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                    chargerInformationResponse.data = new ChargerInfo(); 
                 }
             }
             else
             {
-                chargerInformationResponse.data = null;
+                chargerInformationResponse.data =new  ChargerInfo();
                 chargerInformationResponse.StatusCode = (int)HttpStatusCode.OK;
-                chargerInformationResponse.StatusMessage = "Please provide ChargeBox Id";
+                chargerInformationResponse.StatusMessage = RespnoseMessage.Please_provide_ChargeBox_Id;
             }
             return chargerInformationResponse;
         }

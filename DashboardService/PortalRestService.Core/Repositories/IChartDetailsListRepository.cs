@@ -11,6 +11,6 @@ namespace PortalRestService.Core.Repositories
 {
     public interface IChartDetailsListRepository : IRepository<EventLogLocationResponse>
     {
-        Task<PagedList<ChartDetailsList>> GetChartDetailsList(ChartDetailsListRequest request);
+        Task<List<ChartDetailsList>> GetChartDetailsList(ChartDetailsListRequest request);
     }
 }

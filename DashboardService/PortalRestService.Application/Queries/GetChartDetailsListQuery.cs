@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PortalRestService.Application.Queries
 {
-    public class GetChartDetailsListQuery : IRequest<PagedList<ChartDetailsList>>
+    public class GetChartDetailsListQuery : IRequest<List<ChartDetailsList>>
     {
         public ChartDetailsListRequest chartDetailsListRequest { get; set; }
         public GetChartDetailsListQuery(ChartDetailsListRequest chartDetailsListRequest)

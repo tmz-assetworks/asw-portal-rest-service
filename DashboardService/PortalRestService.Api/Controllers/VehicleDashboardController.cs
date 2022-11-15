@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PortalRestService.Application.Queries;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Responses;
 using PortalRestService.Infrastructure.Helper;
 using System.Net;
@@ -44,19 +45,21 @@ namespace RestService.Assets.Controllers
                 if (vehicleByIdData != null && !(string.IsNullOrEmpty(vehicleByIdData.VIN)))
                 {
                     vehiclesResponse.data = vehicleByIdData;
-                    vehiclesResponse.StatusMessage = "Record found!";
+                    vehiclesResponse.StatusMessage = RespnoseMessage.Record_found;
                 }
                 else
                 {
                     vehiclesResponse.data = vehicleByIdData;
-                    vehiclesResponse.StatusMessage = "Record not found";
+                    vehiclesResponse.StatusMessage = RespnoseMessage.Record_not_found;
                 }
                 vehiclesResponse.StatusCode = (int)HttpStatusCode.OK;
             }
             catch (Exception ex)
             {
-                vehiclesResponse.StatusMessage = "Operation Failed!";
-                vehiclesResponse.StatusCode = 400;
+
+                vehiclesResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                vehiclesResponse.StatusCode = RespnoseCode.Bad_Request;
+
             }
             return vehiclesResponse;
         }
@@ -84,8 +87,8 @@ namespace RestService.Assets.Controllers
                     getAll.data = vehicleWithPaginatio.data;
                     getAll.paginationResponse = vehicleWithPaginatio.paginationResponse;
                     getAll.StatusCode = (int)HttpStatusCode.OK;
-                    getAll.StatusMessage = "Record found";
-                    status.Type = "Vehicle";
+                    getAll.StatusMessage = RespnoseMessage.Record_found;
+                    status.Type = "Vehicles";
                     status.Count = vehicleWithPaginatio.paginationResponse.TotalCount;
                     statusData = new List<StatusData>(){
                             new StatusData () {
@@ -106,15 +109,17 @@ namespace RestService.Assets.Controllers
                 else
                 {
                     getAll.StatusCode = 200;
-                    getAll.StatusMessage = "Record  not found";
-                    getAll.data = null;
+                    getAll.StatusMessage = RespnoseMessage.Record_not_found;
+                    getAll.data = new List<Vehicle>();
                     getAll.paginationResponse = new PortalRestService.Core.PagingHelper.PaginationResponse();
                 }
             }
             catch (Exception ex)
             {
-                getAll.StatusMessage = "Operation Failed!";
+                getAll.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 getAll.StatusCode =(int)HttpStatusCode.BadRequest;
+
+
             }
             return getAll;
         }

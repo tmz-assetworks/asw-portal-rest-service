@@ -9,8 +9,9 @@ namespace PortalRestService.Core.Responses
         public LocationAddress LocationAddress { get; set; }
         public int LocationStatusId { get; set; }
         public LocationStatus LocationStatus { get; set; }
-        public Department Department { get; set; }
+        //public Department Department { get; set; }
         //public int LocationId { get; set; }
+        public string DepartmentName { get; set; }
         public string ContactPersonName { get; set; }
         public string ContactPersonNumber { get; set; }
         public string AlternateMobileNumber { get; set; }
@@ -199,7 +200,7 @@ namespace PortalRestService.Core.Responses
         public string AddressLine2 { get; set; }
 
 
-        public long CityId { get; set; }
+        //public long CityId { get; set; }
 
 
         public string CityName { get; set; }
@@ -304,7 +305,7 @@ namespace PortalRestService.Core.Responses
 
 
         public DateTime ModifiedOn { get; set; }
-
+        public bool IsOpenAlldays { get; set; }
 
     }
 
@@ -488,6 +489,14 @@ namespace PortalRestService.Core.Responses
         public long LocationId { get; set; }
         public string LocationName { get; set; }
         public string ChargeBoxId { get; set; }
+        public string ChargingStatus { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
+        public int? Startsoc { get; set; }
+        public int? EndSoc { get; set; }
+        public string? ReasoneForStop { get; set; }
+        public int? Startmetervalue { get; set; }
+        public int? Endmetervalue { get; set; }
     }
 
     public class ChartDetailsListResponse
@@ -502,7 +511,7 @@ namespace PortalRestService.Core.Responses
         public PaginationResponse paginationResponse { get; set; }
     }
 
-    public class ChargerSessionDetailsList
+     public class ChargerSessionDetailsList
     {
         public long Id { get; set; }
         public string Sessionid { get; set; }
@@ -513,6 +522,13 @@ namespace PortalRestService.Core.Responses
         public string ChargeBoxId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? ModifiedAt { get; set; }
+        public string ChargingStatus { get; set; }
+        public int? Startsoc { get; set; }
+        public int? EndSoc { get; set; }
+        public string? ReasoneForStop { get; set; }
+        public int? Startmetervalue { get; set; }
+        public int? Endmetervalue { get; set; }
+       
     }
 
     public class ChargerSessionDetailsListResponse

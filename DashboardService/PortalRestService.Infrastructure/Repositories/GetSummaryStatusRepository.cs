@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using PortalRestService.Application;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
@@ -96,18 +97,31 @@ namespace PortalRestService.Infrastructure.Repositories
                     {
                         List<StatusData> StatusData = new List<StatusData>()
                     {
-                        new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.dispenserStatus.dispenserStatusName.ToLower().Equals(Status_Indication.ChargerStatus.Available.ToString().ToLower())).ToList().Count).ToString(), Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.dispenserStatus.dispenserStatusName.ToLower().Equals(Status_Indication.ChargerStatus.Connected.GetEnumDisplayName().ToLower())).ToList().Count).ToString()  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.dispenserStatus.dispenserStatusName.ToLower().Equals(Status_Indication.ChargerStatus.Offline.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
-
+                        new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatuses !=null && d.ChargerStatuses.Count >0 && d.ChargerStatuses[0].ChargerStatus1.ToLower().Equals(Status_Indication.ChargerStatus.Available.ToString().ToLower())).ToList().Count).ToString(), Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatuses !=null && d.ChargerStatuses.Count>0  && d.ChargerStatuses[0].ChargerStatus1.Replace("Unavailable","Connected").ToLower().Equals(Status_Indication.ChargerStatus.Connected.GetEnumDisplayName().ToLower())).ToList().Count).ToString()  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatuses ==null || d.ChargerStatuses.Count==0).ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
+                       
                       };
                         cardData.StatusData = StatusData;
                         data.Add(cardData);
                     }
+                    else
+                    {
+                        List<StatusData> StatusData = new List<StatusData>()
+                    {
+                    new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = "0", Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
+                    new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = "0"  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
+                    new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value="0" , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
+
+                        };
+                        cardData.StatusData = StatusData;
+                        data.Add(cardData);
+                    }
                 }
+               
 
                 cardData = new CardData();
-                cardData.Type = "Charging Session";
+                cardData.Type = "Charging Sessions";
                 List<PortalRestService.Core.Models.ChargingSession> objChargingSession = _dbContext.ChargingSessions.ToList();
 
                 List<int> locationIds = new List<int>()
@@ -140,9 +154,9 @@ namespace PortalRestService.Infrastructure.Repositories
                             cardData.Count = chargingSessionsData.Count;
                             List<StatusData> StatusData = new List<StatusData>()
                          {
-                        new StatusData { Key = Status_Indication.ChargingSessionStatus.Completed.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(chargingSessionsData.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Completed.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Completed.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargingSessionStatus.Interrupted.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(chargingSessionsData.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Interrupted.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Interrupted.GetEnumDisplayName()  },
                         new StatusData { Key = Status_Indication.ChargingSessionStatus.Cancelled.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(chargingSessionsData.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Cancelled.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Cancelled.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.ChargingSessionStatus.Interrupted.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(chargingSessionsData.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Interrupted.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Interrupted.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.ChargingSessionStatus.Completed.ToString(), Value = CommonHelpers.GetHoursTwoDigitFormat(chargingSessionsData.Where(d => d.ChargingStatus.ToLower().Equals(Status_Indication.ChargingSessionStatus.Completed.ToString().ToLower())).ToList().Count).ToString() , Color = ColorsEnum.ChargingSessionsColor.Completed.GetEnumDisplayName()  },
                         };
                             cardData.StatusData = StatusData;
 
@@ -164,15 +178,15 @@ namespace PortalRestService.Infrastructure.Repositories
                     cardData.Count = 10;
                     List<StatusData> ErrorStatusData = new List<StatusData>()
                     {
-                        new StatusData { Key = Status_Indication.Errors.Critical.ToString(), Value = "05" , Color = ColorsEnum.ChargingSessionsColor.Completed.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.Errors.High.ToString(), Value = "02" , Color = ColorsEnum.ChargingSessionsColor.Interrupted.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.Errors.Medium.ToString(), Value = "03" , Color = ColorsEnum.ChargingSessionsColor.Cancelled.GetEnumDisplayName()  },
-                        };
+                        new StatusData { Key = Status_Indication.Errors.Critical.ToString(), Value = "05" , Color = ColorsEnum.ErrorsColor.Critical.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.Errors.High.ToString(), Value = "02" , Color = ColorsEnum.ErrorsColor.High.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.Errors.Medium.ToString(), Value = "03" , Color = ColorsEnum.ErrorsColor.Medium.GetEnumDisplayName()  },
+                    };
                     cardData.StatusData = ErrorStatusData;
                     data.Add(cardData);
                 }
                 dataResponse.data = data;
-                dataResponse.StatusMessage = "Record found";
+                dataResponse.StatusMessage = RespnoseMessage.Record_found;
                 dataResponse.StatusCode = (int)HttpStatusCode.OK;
             }
             catch (Exception ex)

@@ -8,6 +8,7 @@ using PortalRestService.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
+using PortalRestService.Core.ConstantResponse;
 
 namespace RestService.Assets.Controllers
 {
@@ -32,12 +33,14 @@ namespace RestService.Assets.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<GetLocatinByIdResponse>> GetLocatinById(long id)
         {
+            GetLocatinByIdResponse getLocatinByIdResponse = new GetLocatinByIdResponse();
             try
             {
+                
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.GetLocationById + id;
                 HttpResponseMessage response = await Helper.GetCallAssetAuthAPIAsync(callingMethod,_tokenBase.acces_token);
-                GetLocatinByIdResponse getLocatinByIdResponse = new GetLocatinByIdResponse();
+               
                 if (response.IsSuccessStatusCode)
                 {
                     var locationinfo = await response.Content.ReadAsStringAsync();
@@ -49,13 +52,15 @@ namespace RestService.Assets.Controllers
                 }
                 else
                 {
-                    getLocatinByIdResponse.StatusMessage = "Operation failed!";
+                    getLocatinByIdResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 }
 
                 return getLocatinByIdResponse == null ? NotFound() : this.Ok(getLocatinByIdResponse);
             }
             catch (Exception ex)
             {
+                getLocatinByIdResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                getLocatinByIdResponse.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -74,21 +79,21 @@ namespace RestService.Assets.Controllers
                 locationStatusQueryResponse.StatusCode = 200;
                 if (result is not null && result.Count() > 0)
                 {
-                    locationStatusQueryResponse.StatusMessage = "Record found";
+                    locationStatusQueryResponse.StatusMessage = RespnoseMessage.Record_found;
                     locationStatusQueryResponse.data = result;
                 }
                 else
                 {
-                    locationStatusQueryResponse.StatusMessage = "Record not found";
+                    locationStatusQueryResponse.StatusMessage = RespnoseMessage.Record_not_found;
                 }
 
                 return result == null ? NotFound() : this.Ok(locationStatusQueryResponse);
             }
             catch (Exception ex)
             {
-                locationStatusQueryResponse.StatusMessage = "Operation failed!";
-                locationStatusQueryResponse.StatusCode = 404;
-                locationStatusQueryResponse.data = null;
+                locationStatusQueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                locationStatusQueryResponse.StatusCode = RespnoseCode.Bad_Request;
+                locationStatusQueryResponse.data = new List<AllLocationStatusChartBO>();
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }

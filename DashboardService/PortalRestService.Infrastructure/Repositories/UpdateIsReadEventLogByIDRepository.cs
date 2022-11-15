@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Models;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Repositories;
@@ -35,7 +36,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
             EventLogLocationres.data = null;
             EventLogLocationres.StatusCode = 200;
-            EventLogLocationres.StatusMessage = "updated";
+            EventLogLocationres.StatusMessage = RespnoseMessage.Record_Updated_Successfully;
 
             return EventLogLocationres;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -11,8 +11,7 @@ namespace PortalRestService.Infrastructure.EnumData
     {
         public enum DisplayingLabels
         {
-
-            // chargingInfustructure
+            //chargingInfustructure
             [Display(Name = "Charging Infustructure")]
             chargingInfustructure = 1,
             [Display(Name = "Total Location")]
@@ -20,14 +19,14 @@ namespace PortalRestService.Infrastructure.EnumData
             [Display(Name = "Total Charger")]
             TotalCharger = 3,
 
-            //Revenue
+            //Revenue 
             [Display(Name = "Revenue")]
             Revenue = 2,
-            [Display(Name = "Total Revenue")]
+            [Display(Name = "Total Cost")]
             TotalRevenue = 4,
-            [Display(Name = "Daily Revenue")]
+            [Display(Name = "Daily Cost")]
             DailyRevenue = 5,
-            [Display(Name = "Today's Revenue")]
+            [Display(Name = "Today's Cost")]
             TodaysRevenue = 6,
 
             // EnergyUsed
