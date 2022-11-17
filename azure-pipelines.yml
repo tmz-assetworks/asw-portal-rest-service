@@ -14,6 +14,8 @@
 #      ...
 #      ...
 #
+# Builds will be tagged with the pipeline start time in yyyyMMddHHmmss and branch name.
+#
 
 trigger:
 - none
@@ -23,6 +25,7 @@ pool:
 
 variables:
   projectName: 'PortalRestService.Api'
+  runDateTag: $[format('{0:yyyyMMddHHmmss}', pipeline.startTime)]
 
 jobs: 
 - job: PublishServiceArtifacts
@@ -82,6 +85,15 @@ jobs:
         Contents: '**/Dockerfile'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
         flattenFolders: true
+
+    # add build tags
+    - task: PowerShell@2
+      displayName: Add Build Tags
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "##vso[build.addbuildtag]$(runDateTag)"
+          Write-Host "##vso[build.addbuildtag]$(Build.SourceBranchName)"
     
     # publish the artifacts
     - task: PublishBuildArtifacts@1
