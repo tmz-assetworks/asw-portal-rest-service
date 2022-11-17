@@ -38,11 +38,9 @@ namespace PortalRestService.Core.Responses
         public bool isDeviceExists { get; set; }
         public string latitude { get; set; }
         public string longitude { get; set; }
-        public int makeMasterId { get; set; }
-        public MakeMaster makeMaster { get; set; }
+        public string makeName { get; set; }
         public string meterType { get; set; }
-        public int modelId { get; set; }
-        public object model { get; set; }
+        public string modelName { get; set; }
         public bool multiplePorts { get; set; }
         public string pingSchedule { get; set; }
         public bool privateStation { get; set; }

@@ -46,8 +46,8 @@ namespace PortalRestService.Infrastructure.Repositories
                         {
                             VIN = getVehicleByIdResponse.data.VIN,
                             ModelYear = getVehicleByIdResponse.data.ModelYear,
-                            Make =(getVehicleByIdResponse.data !=null && getVehicleByIdResponse.data.vehicleMake!=null) ? getVehicleByIdResponse.data.vehicleMake.name:"",
-                            Model =(getVehicleByIdResponse.data!=null && getVehicleByIdResponse.data.vehicleModel!=null)? getVehicleByIdResponse.data.vehicleModel.name:"",
+                            MakeName =getVehicleByIdResponse.data.MakeName,
+                            ModelName =getVehicleByIdResponse.data.ModelName,
                             licencePlate = getVehicleByIdResponse.data.licencePlate,
                             department = getVehicleByIdResponse.data.department,
                             domicileLocation = getVehicleByIdResponse.data.domicileLocation,
