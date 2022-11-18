@@ -150,7 +150,7 @@ namespace PortalRestService.ApiTests.Controllers
                     City = "BROOKLYN",
                     Country = "USA",
                     InstalledDate = DateTime.Now,
-                    SerialNo = "SN0101010102",
+                    HardwareSerialNumber = "SN0101010102",
                     State = "NEW YORK",
                     ZipCode = "201301"
                 },

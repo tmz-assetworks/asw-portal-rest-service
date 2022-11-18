@@ -29,11 +29,11 @@ namespace PortalRestService.Core.Responses
 
         public string vehicleMacAddress { get; set; }
 
-        public string Make { get; set; }
+        public string MakeName { get; set; }
 
         public long ModelYear { get; set; }
 
-        public string Model { get; set; }
+        public string ModelName { get; set; }
         public bool Status { get; set; }       
 
        public string rfId { get; set; }
@@ -55,9 +55,9 @@ namespace PortalRestService.Core.Responses
         public int Id { get; set; }
         public string VIN { get; set; }
 
-        public string Make { get; set; }
+        public string MakeName { get; set; }
 
-        public long Model { get; set; }
+        public string ModelName { get; set; }
 
         public long ModelYear { get; set; }
         public string licencePlate { get; set; }
@@ -72,14 +72,12 @@ namespace PortalRestService.Core.Responses
          
         //public long vehicleModelYearid { get; set; }
         //public VehicleModelYear vehicleModelYear { get; set; }
-        public int vehicleModelId { get; set; }
-        public VehicleModel vehicleModel { get; set; }
+        
 
         public int SubscriptionPlanCustomerId { get; set; }
 
         public SubscriptionPlan SubscriptionPlan { get; set; }
-        public int vehicleMakeId { get; set; }
-        public VehicleMake vehicleMake { get; set; }
+       
         public  int vehicleRFIDid { get; set; }
         public List<VehicleRFID> vehicleRFID { get; set; }
         public List<ApplicableSubscriptionPlan> applicableSubscriptionPlans { get; set; }

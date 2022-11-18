@@ -38,8 +38,8 @@ namespace PortalRestService.Core.Responses
         public long id { get; set; }
         public string VIN { get; set; }
         public long ModelYear { get; set; }
-        public string Make { get; set; }
-        public string Model { get; set; }
+        public string MakeName { get; set; }
+        public string ModelName { get; set; }
         public string LicencePlate { get; set; }
         public string Department { get; set; }
         public string DomicileLocation { get; set; }
@@ -85,9 +85,9 @@ namespace PortalRestService.Core.Responses
         public long ModelYear { get; set; }
         public VehicleModelYear1 VehicleModelYear { get; set; }
 
-        public VehicleModel1 VehicleModel { get; set; }
+        public string ModelName { get; set; }
 
-        public VehicleMake1 VehicleMake { get; set; }
+        public string MakeName { get; set; }
 
         public ICollection<VehicleRFID1> VehicleRFID { get; set; }
 
