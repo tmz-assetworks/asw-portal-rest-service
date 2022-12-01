@@ -54,6 +54,9 @@ namespace PortalRestService.Infrastructure.EnumData
 
             [Display(Name = "#E97300")]  //or Conected
             Busy = 7,
+
+            [Display(Name = "#E97259")]  //or Unavailable
+            Unavailable = 8,
         }
 
 

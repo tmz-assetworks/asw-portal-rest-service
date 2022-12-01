@@ -6,6 +6,7 @@ using PortalRestService.Application.Queries;
 using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Responses;
 using PortalRestService.Infrastructure.Helper;
+using Serilog;
 using System.Net;
 
 namespace RestService.Assets.Controllers
@@ -56,7 +57,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
-
+                Log.Information("error occurred :" + ex.Message);
                 vehiclesResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 vehiclesResponse.StatusCode = RespnoseCode.Bad_Request;
 
@@ -116,6 +117,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 getAll.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 getAll.StatusCode =(int)HttpStatusCode.BadRequest;
 
@@ -123,5 +125,6 @@ namespace RestService.Assets.Controllers
             }
             return getAll;
         }
+        
     }
 }

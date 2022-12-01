@@ -83,12 +83,10 @@ namespace PortalRestService.Core.Responses
 
         public DateTime ModifiedOn { get; set; }
         public long ModelYear { get; set; }
-        public VehicleModelYear1 VehicleModelYear { get; set; }
-
         public string ModelName { get; set; }
-
         public string MakeName { get; set; }
 
+        public VehicleModelYear1 VehicleModelYear { get; set; }
         public ICollection<VehicleRFID1> VehicleRFID { get; set; }
 
     }

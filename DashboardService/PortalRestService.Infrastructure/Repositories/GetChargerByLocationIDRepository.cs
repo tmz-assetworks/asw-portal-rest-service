@@ -91,9 +91,9 @@ namespace PortalRestService.Infrastructure.Repositories
 
                                                      ChargerId = s.ChargerId,
                                                      ChargingStatus = (
-                                                                s.ChargingStatus.ToLower().Equals("completed") ? "Available" :
+                                                                 s.ChargingStatus.ToLower().Equals("completed") ? "Available" :
                                                                 s.ChargingStatus.ToLower().Equals("cancelled") ? "Available" :
-                                                                s.ChargingStatus.ToLower().Equals("interrupted") ? "Faulted" : "Busy"
+                                                                s.ChargingStatus.ToLower().Equals("Interrupted") ? "Available" : "Unavailable"
                                                         ),
                                                      StartTime = s.StartTime,
                                                      ChargeBoxId = c.ChargeBoxId,

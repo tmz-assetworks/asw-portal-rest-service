@@ -69,15 +69,9 @@ namespace PortalRestService.Core.Responses
         public DateTime createdOn { get; set; }
         public string modifiedBy { get; set; }
         public DateTime modifiedOn { get; set; }
-         
-        //public long vehicleModelYearid { get; set; }
-        //public VehicleModelYear vehicleModelYear { get; set; }
-        
-
         public int SubscriptionPlanCustomerId { get; set; }
 
         public SubscriptionPlan SubscriptionPlan { get; set; }
-       
         public  int vehicleRFIDid { get; set; }
         public List<VehicleRFID> vehicleRFID { get; set; }
         public List<ApplicableSubscriptionPlan> applicableSubscriptionPlans { get; set; }

@@ -67,6 +67,7 @@ namespace PortalRestService.Infrastructure.Repositories
                     List<LocationDispenserForLocation> datalocations = locationsResponse.data.ToList();
                     objChargingSession = (from cs in objChargingSession join l in datalocations on cs.ChargerId equals l.DispenserId where l.ChargeBoxId == cs.DeviceId select cs).ToList();
                 }
+
                 SummaryDetail summaryDetail = new SummaryDetail();
 
                 //Type  chargingInfustructure
@@ -196,6 +197,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 summaryDetail.EnergyPoints = EnergyPoints;
                 summaryDetail.EnergyPoints.Add(energyPointMTofco2Saved);
 
+
                 EnergyPoint energyPointGGEofGasSaved = new EnergyPoint();
                 energyPointGGEofGasSaved.Key = EnumControlTexts.DisplayingLabels.GGEofGasSaved.GetEnumDisplayName();
                 energyPointGGEofGasSaved.Value = string.Format("{0:#,0}", Math.Round(billableChargingMeter / gasolineInKiloWatt, 2));
@@ -224,5 +226,4 @@ namespace PortalRestService.Infrastructure.Repositories
         }
     }
 }
-
 

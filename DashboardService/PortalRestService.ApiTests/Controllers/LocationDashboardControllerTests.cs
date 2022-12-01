@@ -143,7 +143,7 @@ namespace RestService.Assets.Controllers.Tests
                     ContactPersonName = "John",
                     CreatedBy = "Adam",
                     CreatedOn = DateTime.Now,
-                   
+                    DepartmentName  ="IT",
                     ModifiedBy = "Adam",
                     IsActive = false,
                     Id = 1,
@@ -152,7 +152,6 @@ namespace RestService.Assets.Controllers.Tests
                     ModifiedOn = DateTime.Now,
                     LocationAddressId = 1,
                     LocationNumber = 1,
-                    DepartmentName="IT",
                     LocationSchedule = new List<LocationSchedule>()
                     {
                         new LocationSchedule()

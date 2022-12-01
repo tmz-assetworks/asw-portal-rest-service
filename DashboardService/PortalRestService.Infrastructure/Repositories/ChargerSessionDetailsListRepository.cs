@@ -117,29 +117,37 @@ namespace PortalRestService.Infrastructure.Repositories
             }
 
 
-
-            foreach (var s in res)
+            if (res == null)
             {
-
-                if (s.EndTime.HasValue && s.StartTime.HasValue)
-                {
-                    System.TimeSpan diff1 = (TimeSpan)(s.EndTime - s.StartTime);
-                    int total_seconds = (int)diff1.TotalSeconds;
-                    int hours = total_seconds / (60 * 60);
-                    int remaining_seconds = total_seconds - hours * (60 * 60);
-                    int minutes = remaining_seconds / 60;
-                    int seconds = remaining_seconds % 60;
-
-                    s.Duration = string.Format("{0:#00}:{1:#00}:{2:#00}", hours, minutes, seconds);
-                }
+                res = new List<ChargerSessionDetailsList>();
             }
-            if (!string.IsNullOrEmpty(request.SearchParam))
-                res = res.Where(d => d.ChargeBoxId.ToLower() == request.SearchParam.ToLower()).ToList();
+            if (res.Count > 0)
+            {
+                foreach (var s in res)
+                {
 
+                    if (s.EndTime.HasValue && s.StartTime.HasValue)
+                    {
+                        System.TimeSpan diff1 = (TimeSpan)(s.EndTime - s.StartTime);
+                        int total_seconds = (int)diff1.TotalSeconds;
+                        int hours = total_seconds / (60 * 60);
+                        int remaining_seconds = total_seconds - hours * (60 * 60);
+                        int minutes = remaining_seconds / 60;
+                        int seconds = remaining_seconds % 60;
+
+                        s.Duration = string.Format("{0:#00}:{1:#00}:{2:#00}", hours, minutes, seconds);
+                    }
+                }
+                if (!string.IsNullOrEmpty(request.SearchParam))
+                    res = res.Where(d => d.ChargeBoxId.ToLower() == request.SearchParam.ToLower()).ToList();
+
+                
+            }
             var dataResult = PagedList<ChargerSessionDetailsList>.ToPagedList(res,
               request.PageNumber,
               request.PageSize);
             return await Task.FromResult(dataResult);
+
 
 
 

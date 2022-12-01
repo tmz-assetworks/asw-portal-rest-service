@@ -47,12 +47,14 @@ namespace PortalRestService.Infrastructure.Repositories
             //EventLogLocationResponse eventLogLocationResponse = new EventLogLocationResponse();
 
             List<AlertResponse>? res = new List<AlertResponse>();
+            List<AlertResponse>? tasknotification = new List<AlertResponse>();
             DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+            
+            TaskCount _taskCount = new TaskCount(); 
             try
             {
                 List<string> str = new List<string>();
 
-                
                 string callingMethoddispenser = APIConstant.GetDispenserByLocations;
                 string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
                 {
@@ -65,32 +67,61 @@ namespace PortalRestService.Infrastructure.Repositories
                 var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
 
                 dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-
-                  res = (from s in operatorAlertRequest.chargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.ToList().Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.OcppEventLogs.ToList().Where(o => o.DeviceId != null)
+                
+                res = (from s in operatorAlertRequest.chargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.ToList().Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.OcppEventLogs.ToList().Where(o => o.DeviceId != null)
 
                        join c in dispenserByLocationIdResponse.data.ToList()
                                   on s.DeviceId.ToLower() equals c.ChargeBoxId.ToLower()
                        select new AlertResponse
+                       {
+                           EventLogId = s.Id,
+                           ChargeBoxId = c.ChargeBoxId,
+                           Category = "OCPP",
+                           MessageType = s.RequestType,
+                           DateTime = s.CreatedAt,
+                           IPAddress = OccpIp == null ? "" : OccpIp,
+                           LocationsName = c.LocationName,
+                           RequestPayload = s.RequestPayload == null ? "" : s.RequestPayload.Replace(",", ",\r\n"),
+                           ResponsePayload = s.ResponsePayload == null ? "" : s.ResponsePayload.Replace(",", ",\r\n"),
+                           IsRead = s.IsRead == false ? false:true,
+                           Flag="OCPP"
+                           
+
+                           }).OrderByDescending(a => a.DateTime).DistinctBy(d => d.EventLogId).Where(r => r.ChargeBoxId != null).ToList<AlertResponse>();
+
+                tasknotification = (from s in _dbContext.TaskNotifications
+                           select new AlertResponse
                            {
                                EventLogId = s.Id,
-                               ChargeBoxId = c.ChargeBoxId,
-                               Category = "OCPP",
-                               MessageType = s.RequestType,
+                               ChargeBoxId = "",
+                               Category = s.Category,
+                               MessageType = s.Messagetype,
                                DateTime = s.CreatedAt,
-                               IPAddress = OccpIp==null?"":OccpIp,
-                               LocationsName = c.LocationName,
-                               RequestPayload = s.RequestPayload == null ? "" : s.RequestPayload.Replace(",", ",\r\n"),
-                               ResponsePayload = s.ResponsePayload == null ? "" : s.ResponsePayload.Replace(",", ",\r\n")
+                               IPAddress = s.Ipaddress == null ? "" : s.Ipaddress,
+                               LocationsName = "",
+                               RequestPayload = "",
+                               ResponsePayload = s.Content,
+                               IsRead = s.IsRead == false ? false : true,
+                               UserId = s.UserId==null?"": s.UserId,
+                               Flag="ASSET"
+                                
+                           }).Distinct().OrderByDescending(a => a.DateTime)
+                           //.Where(e=>e.UserId.Equals(_tokenBase.getObjectId()))
+                           .ToList<AlertResponse>();
 
-                           }).DistinctBy(d => d.EventLogId).Where(r => r.ChargeBoxId != null).ToList<AlertResponse>();
-               
+                res.AddRange(tasknotification);
+                if (res != null)
+                {
+                    _taskCount =(new TaskCount() {Counts = res.Where(s => s.IsRead==false).Count() });
+                }
+                
 
                 if (res != null && res.Count > 0)
                 {
                     res = res != null ? res.OrderByDescending(a => a.DateTime).ToList() : res;
                     if (!string.IsNullOrEmpty(operatorAlertRequest.SearchParam))
                         res = res.Where(d => d.MessageType.ToLower().Contains( operatorAlertRequest.SearchParam.ToLower())
-                     ).ToList<AlertResponse>();
+                     ).OrderByDescending(a => a.DateTime).ToList<AlertResponse>();
                     //Paging on Records           
 
                     var dataResult = PagedList<AlertResponse>.ToPagedList(res,
@@ -101,6 +132,7 @@ namespace PortalRestService.Infrastructure.Repositories
                         operatorAlertResponse.StatusMessage = RespnoseMessage.Record_found;
                         operatorAlertResponse.StatusCode = 200;
                         operatorAlertResponse.data = dataResult;
+                        operatorAlertResponse.TaskCount = _taskCount;
                         operatorAlertResponse.paginationResponse = new PaginationResponse()
                         {
                             TotalCount = dataResult.TotalCount,

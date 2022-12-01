@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PortalRestService.Core.Models;
+using PortalRestService.Infrastructure.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,8 +24,10 @@ namespace PortalRestService.Infrastructure.DBContext
        
         public virtual DbSet<OcppEventLog> OcppEventLogs { get; set; } = null!;
         public virtual DbSet<ChargerStatus>  ChargerStatuses { get; set; } = null!;
-
-
+        public virtual DbSet<TaskNotifications> TaskNotifications { get; set; } = null!;
+        public virtual DbSet<ErrorSeverity> ErrorSeverity { get; set; } = null!;
+        public virtual DbSet<FaultyErrorCode> FaultyErrorCode { get; set; } = null!;
+        public DbSet<Charger> Charger { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 

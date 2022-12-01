@@ -19,6 +19,7 @@ using PortalRestService.Core.PagingHelper;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
 using PortalRestService.Core.ConstantResponse;
+using Serilog;
 
 namespace PortalRestService.Api.Controllers
 {
@@ -67,6 +68,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 alLocationQueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 alLocationQueryResponse.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
@@ -99,6 +101,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 locationsDispenserformapResponce.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 locationsDispenserformapResponce.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
@@ -145,6 +148,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 locationsDispenserDetailsResponce.StatusCode = RespnoseCode.Bad_Request;
 
@@ -171,6 +175,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -189,6 +194,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -205,6 +211,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -221,6 +228,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -238,6 +246,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -254,6 +263,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -274,6 +284,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -315,7 +326,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
-
+                Log.Information("error occurred :" + ex.Message);
                 QueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 QueryResponse.StatusCode = RespnoseCode.Bad_Request;
 
@@ -351,10 +362,35 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
+        [HttpPost("UpdateNotificationIsRead")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<SaveNotificationResponse>> UpdateNotificationIsRead([FromBody] NotificationCommand notificationCommand)
+        {
+            try
+            {
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
+                if (ModelState.IsValid)
+                {
+                   
+                    var result = await _mediator.Send(new UpdateNotificationIsReadQuery(notificationCommand));
+                    return result == null ? NotFound() : this.Ok(result);
+                }
+                else
+                {
+                    return this.Ok(ModelState);
+                }
 
+            }
+            catch (Exception ex)
+            {
+                Log.Information("error occurred :" + ex.Message);
+                return this.BadRequest($"Exception: {ex.Message}");
+            }
+        }
         [HttpPost("UpdateOcppEventLogIsRead")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<Core.Responses.EventLogLocationResponse>> UpdateOcppEventLogIsRead([FromBody] int id)
@@ -376,7 +412,15 @@ namespace PortalRestService.Api.Controllers
             }
             return QueryResponse;
         }
+        [HttpPost("GetNotificationCountsByUserid")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<NotificationResponse>> GetNotificationCountsByUserid()
+        {
+             NotificationRequest notificationRequest=new NotificationRequest();
+            _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
+            return await _mediator.Send(new GetNotificationCountQuery(notificationRequest));
 
+        }
 
         ///// <summary>
         ///// Auther: Pradeep, Date 08/08/2022
@@ -416,7 +460,7 @@ namespace PortalRestService.Api.Controllers
 
 
         //}
-        
+
         /*[HttpPost("GetChargerSessionDetailsList")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<Core.Responses.ChargerSessionDetailsListResponse>> GetChargerSessionDetailsList([FromBody] ChargerSessionListRequest ChargerSessionRequest)

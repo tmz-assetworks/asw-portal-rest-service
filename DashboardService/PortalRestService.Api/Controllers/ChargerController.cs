@@ -12,6 +12,7 @@ using PortalRestService.Helpers;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
 using PortalRestService.Core.ConstantResponse;
+using Serilog;
 
 namespace RestService.Assets.Controllers
 {
@@ -95,6 +96,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 QueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 QueryResponse.StatusCode = RespnoseCode.Bad_Request;
                 QueryResponse.data = new List<ChartDetailsList>();
@@ -138,6 +140,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 QueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 QueryResponse.StatusCode = RespnoseCode.Bad_Request;
                 QueryResponse.data = new List<ChargerSessionDetailsList>();
@@ -156,6 +159,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -239,6 +243,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 dispensersDetailResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 dispensersDetailResponse.StatusCode = (int)HttpStatusCode.BadRequest;
             }
@@ -255,5 +260,6 @@ namespace RestService.Assets.Controllers
             QueryResponse = await _mediator.Send(new GetChargeBoxIDQuery());         
             return QueryResponse;
         }
+        
     }
 }
