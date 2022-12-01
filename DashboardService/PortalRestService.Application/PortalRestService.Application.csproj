@@ -19,6 +19,7 @@
   <ItemGroup>
     <Folder Include="Commands\Assets\" />
     <Folder Include="Handlers\Assets\CommandHandlers\" />
+    <Folder Include="Handlers\CommandHandlers\" />
     <Folder Include="Mapper\Assets\" />
     <Folder Include="Responses\Assets\" />
   </ItemGroup>

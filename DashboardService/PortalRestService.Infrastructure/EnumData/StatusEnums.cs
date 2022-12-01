@@ -24,7 +24,9 @@ namespace PortalRestService.Application
             [Display(Name = "Faulted")]
             Faulted = 6,
             [Display(Name = "Busy")]
-            Busy = 7
+            Busy = 7,
+            [Display(Name = "Unavailable")]
+            Unavailable = 8
 
         }
 
@@ -62,7 +64,7 @@ namespace PortalRestService.Application
         public enum Errors
         {
             Critical = 1,
-            High = 2,
+            High = 2, 
             Medium = 3
         }
          public enum EventlogRequest
@@ -116,7 +118,8 @@ namespace PortalRestService.Application
             [Display(Name = "BootNotification")]
             BootNotification = 24
         }
+        
 
-      
     }
+    
 }

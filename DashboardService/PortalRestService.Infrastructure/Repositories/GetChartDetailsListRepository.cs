@@ -33,7 +33,8 @@ namespace PortalRestService.Infrastructure.Repositories
             string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
             {
                 operatorid = "",
-                LocationIds = request.LocationIds
+                LocationIds = request.LocationIds,
+                ChargeBoxId = request.ChargeBoxId,
             });
 
             StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
@@ -53,7 +54,6 @@ namespace PortalRestService.Infrastructure.Repositories
                            select new ChartDetailsList
                            {
                                Id = s.Id,
-
                                ChargerName = c.ChargeBoxId,
                                UID = "",
                                ChargerType = c.ConnectorType,
@@ -62,7 +62,15 @@ namespace PortalRestService.Infrastructure.Repositories
                                TimeReported = s.StartTime,
                                LocationId = c.LocationId,
                                LocationName = c.LocationName,
-                               ChargingStatus = s.ChargingStatus,
+                               ChargingStatus = (request.ChartType.ToLower() == "chargerinuse" ?
+                               (
+                                                                s.ChargingStatus.ToLower().Equals("completed") ? "Available" :
+                                                                s.ChargingStatus.ToLower().Equals("cancelled") ? "Available" :
+                                                                s.ChargingStatus.ToLower().Equals("Interrupted") ? "Available" : "Unavailable"
+                                                        ) : s.ChargingStatus
+
+
+                               ),
                                ChargeBoxId = c.ChargeBoxId,
                                StartTime = s.StartTime,
                                EndTime = s.EndTime,
@@ -85,8 +93,8 @@ namespace PortalRestService.Infrastructure.Repositories
                             {
                                 res = res.Where(o => request.status.Contains(o.ChargingStatus)).ToList();
                             }
-                        //}
                     }
+                    
                 }
                 else
                 {
@@ -105,7 +113,15 @@ namespace PortalRestService.Infrastructure.Repositories
                                TimeReported = s.StartTime,
                                LocationId = c.LocationId,
                                LocationName = c.LocationName,
-                               ChargingStatus = s.ChargingStatus,
+                               ChargingStatus = (request.ChartType.ToLower() == "chargerinuse" ?
+                               (
+                                                                s.ChargingStatus.ToLower().Equals("completed") ? "Available" :
+                                                                s.ChargingStatus.ToLower().Equals("cancelled") ? "Available" :
+                                                                s.ChargingStatus.ToLower().Equals("Interrupted") ? "Available" : "Unavailable"
+                                                        ) : s.ChargingStatus
+
+
+                               ),
                                ChargeBoxId = c.ChargeBoxId,
                                StartTime = s.StartTime,
                                EndTime = s.EndTime,
@@ -116,6 +132,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                ReasoneForStop = s.ReasonForStop
                            }).OrderByDescending(a => a.TimeReported).ToList<ChartDetailsList>();
                 }
+                
             }
             else if (request.Flag.ToLower() == "locationstatus".ToLower())
             {
@@ -144,17 +161,7 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 res=new List<ChartDetailsList>();
             }
-            //if (request.IsExport == true)
-            //{
-
-            //     dataResult = res;
-            //        return await Task.FromResult(res);
-            //}
-            //else
-            //{
-            //     dataResult = PagedList<ChartDetailsList>.ToPagedList(res, request.PageNumber, request.PageSize);
-            //       // return await Task.FromResult(dataResult);
-            //}
+           
 
             return res;
 

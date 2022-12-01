@@ -50,7 +50,6 @@ namespace PortalRestService.Infrastructure.Repositories
                              dispenser.data[0].ChargerStatuses.ToList().Where(x => x.ConnectorStatus.ToLower() == "faulted").ToList().Count > 0 ? "Faulted" :
                              dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1.ToLower() == "unavailable" ? "Connected" :
                              dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1;
-
                     chargerInformationResponse.data.ChargerType = RespnoseMessage.Record_not_found;
                     chargerInformationResponse.data.City = dispenser.data[0].location.LocationAddress.CityName;
                     chargerInformationResponse.data.Country = dispenser.data[0].location.LocationAddress.CountryName;

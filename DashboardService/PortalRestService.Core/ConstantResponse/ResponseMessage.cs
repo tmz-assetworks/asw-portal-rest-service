@@ -21,7 +21,7 @@ namespace PortalRestService.Core.ConstantResponse
     }
     public static class RespnoseMessage
     {
-        public static readonly string Record_found = "Record Found ";
+        public static readonly string Record_found = "Record Found";
         public static readonly string Record_not_found = "Record Not Found";
         public static readonly string Record_Updated_Successfully = "Record updated successfully.";
         public static readonly string Record_Save_Successfully = "Record save successfully.";

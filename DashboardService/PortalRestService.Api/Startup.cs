@@ -119,6 +119,8 @@ namespace RestService.Assets
             services.AddTransient<IGetSummaryStatusRepository, GetSummaryStatusRepository>();
             services.AddTransient<IGetAllChargeBoxIDRepository, GetAllChargeBoxIDRepository>();
             services.AddTransient<IRfIdReaderRepository, RfIdReaderRepository>();
+            services.AddTransient<IUpdateIsNotificationRepository, UpdateNotificationIsReadRepository>();
+            services.AddTransient<INotificationRepository, NotificationRespository>();
             services.AddScoped<PortalRestService.Infrastructure.Helper.TokenBase>();
             services.AddHealthChecks()
                 .AddCheck<PortalHealthCheck>("example_health_check");
@@ -142,7 +144,7 @@ namespace RestService.Assets
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader();
-            });
+            }); 
 
             app.UseRouting();
             app.UseAuthentication();

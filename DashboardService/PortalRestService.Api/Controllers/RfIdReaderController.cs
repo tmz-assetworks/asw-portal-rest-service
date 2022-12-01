@@ -12,6 +12,7 @@ using PortalRestService.Helpers;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
 using PortalRestService.Core.ConstantResponse;
+using Serilog;
 
 namespace RestService.Assets.Controllers
 {
@@ -63,6 +64,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 rfIdReaderResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 rfIdReaderResponse.StatusCode = RespnoseCode.Bad_Request;
 
@@ -97,6 +99,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 rfIdReaderRespnse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 rfIdReaderRespnse.StatusCode = RespnoseCode.Bad_Request;
             }

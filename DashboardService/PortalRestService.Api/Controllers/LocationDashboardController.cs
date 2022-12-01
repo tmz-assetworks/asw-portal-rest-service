@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
 using PortalRestService.Core.ConstantResponse;
+using Serilog;
 
 namespace RestService.Assets.Controllers
 {
@@ -59,6 +60,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 getLocatinByIdResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 getLocatinByIdResponse.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
@@ -91,6 +93,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 locationStatusQueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 locationStatusQueryResponse.StatusCode = RespnoseCode.Bad_Request;
                 locationStatusQueryResponse.data = new List<AllLocationStatusChartBO>();
@@ -112,6 +115,7 @@ namespace RestService.Assets.Controllers
             }
             catch (Exception ex)
             {
+                Log.Information("error occurred :" + ex.Message);
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }

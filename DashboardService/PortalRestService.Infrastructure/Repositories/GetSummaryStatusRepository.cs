@@ -1,19 +1,25 @@
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PortalRestService.Application;
 using PortalRestService.Core.ConstantResponse;
+using PortalRestService.Core.Models;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.EnumData;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static PortalRestService.Application.Status_Indication;
+using ChargerStatus = PortalRestService.Core.Models.ChargerStatus;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
@@ -173,14 +179,44 @@ namespace PortalRestService.Infrastructure.Repositories
                 {
                     cardData = new CardData();
                     if (locationId == 0)
-                        cardData.Type = "Errors";
+                        cardData.Type = "Active Errors";
                     else cardData.Type = "Alerts";
                     cardData.Count = 10;
+                    
+                    var chargerid = string.Join(",", _dbContext.ChargerStatuses.Where(r => r.ConnectorStatus.ToLower() == "Faulted").Distinct().Select(p => p.ChargerId.ToString()));
+                    var chargeboxid = string.Join(",", _dbContext.Charger.Where(o => chargerid.Contains(o.Id.ToString())).Distinct().Select(p => p.ChargeBoxId.ToString()));
+                    var faualtlist = (from cs in _dbContext.ErrorSeverity join l in _dbContext.FaultyErrorCode on cs.Id equals l.ErrorSeverityId where  cs.IsActive==true select l).ToList();
+                    
+
+                    List<OcppEventLog> objlogs= (from v in _dbContext.OcppEventLogs.ToList()
+                                                 select new OcppEventLog
+                                                 {
+                                                     Id = v.Id,
+                                                    RequestType = v.RequestType==null?"": v.RequestType,
+                                                    DeviceId = v.DeviceId==null?"": v.DeviceId,
+                                                    ResponsePayload=   v.ResponsePayload,
+                                                    RequestPayload= geterror(v.RequestPayload, v.RequestType == null ? "" : v.RequestType)
+
+
+                                                 }).Distinct().Where(o => chargeboxid.Contains(o.DeviceId == null ? "" : o.DeviceId.ToString())
+                                                && o.RequestType.ToLower() == "StatusNotification".ToLower()
+                                                ).ToList<OcppEventLog>();
+
+                   
+                    //Errors 
+                    var mediumlist = faualtlist.Where(o => (Errors) o.ErrorSeverityId == Errors.Medium).Select(p=>p.Names).ToList();
+                    var highlist = faualtlist.Where(o => (Errors)o.ErrorSeverityId == Errors.High).Select(p => p.Names).ToList();
+                    var criticallist = faualtlist.Where(o => (Errors)o.ErrorSeverityId == Errors.Critical).Select(p => p.Names).ToList();
+                    int Mediumcount = objlogs.ToList<OcppEventLog>().Where(r => mediumlist.Contains(r.RequestPayload, StringComparer.InvariantCultureIgnoreCase)).ToList<OcppEventLog>().Count();
+                    int Criticalcount = objlogs.ToList<OcppEventLog>().Where(r => criticallist.Contains(r.RequestPayload, StringComparer.InvariantCultureIgnoreCase)).ToList<OcppEventLog>().Count();
+                    int Highcount = objlogs.ToList<OcppEventLog>().Where(r => highlist.Contains(r.RequestPayload, StringComparer.InvariantCultureIgnoreCase)).ToList<OcppEventLog>().Count();
+                    cardData.Count = Mediumcount + Criticalcount + Highcount;
+                    
                     List<StatusData> ErrorStatusData = new List<StatusData>()
                     {
-                        new StatusData { Key = Status_Indication.Errors.Critical.ToString(), Value = "05" , Color = ColorsEnum.ErrorsColor.Critical.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.Errors.High.ToString(), Value = "02" , Color = ColorsEnum.ErrorsColor.High.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.Errors.Medium.ToString(), Value = "03" , Color = ColorsEnum.ErrorsColor.Medium.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.Errors.Critical.ToString(), Value = Criticalcount.ToString() , Color = ColorsEnum.ErrorsColor.Critical.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.Errors.High.ToString(), Value = Highcount.ToString() , Color = ColorsEnum.ErrorsColor.High.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.Errors.Medium.ToString(), Value = Mediumcount.ToString() , Color = ColorsEnum.ErrorsColor.Medium.GetEnumDisplayName()  },
                     };
                     cardData.StatusData = ErrorStatusData;
                     data.Add(cardData);
@@ -195,6 +231,21 @@ namespace PortalRestService.Infrastructure.Repositories
             if (dataResponse.data == null)
                 dataResponse.StatusCode = (int)HttpStatusCode.NotFound;
             return Task.FromResult(dataResponse).Result;
+        }
+        public string geterror(string str, string RequestType)
+        {
+            string ex1 = "";
+            if (RequestType.ToLower() == "StatusNotification".ToLower())
+            {
+                JArray jObj = JArray.Parse(str);
+                string[] ex = jObj[3].ToString().Split(",");
+                 ex1 = ex[2].ToString().Split(":")[1];
+                Regex rgx = new Regex("[^a-zA-Z0-9 -]");
+                ex1 = rgx.Replace(ex1, "").Trim();
+            }
+           
+
+            return ex1;
         }
     }
 }

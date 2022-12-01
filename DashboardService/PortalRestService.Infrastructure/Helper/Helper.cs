@@ -32,12 +32,12 @@ namespace PortalRestService.Helpers
         // private static readonly string AssetBaseOCPPAPIAddress = "https://localhost:6003/api/";
         //private static readonly string AssetBaseAssetAPIAddress = "https://localhost:7200/api/";
 
-        // private static readonly string AssetBaseOCPPAPIAddress = "https://qa-ocpp-core.azurewebsites.net/api/";
-        //private static readonly string AssetBaseAssetAPIAddress = "http://qa-assets-service.azurewebsites.net//api/";
+        //private static readonly string AssetBaseOCPPAPIAddress = "https://qa-ocpp-core.azurewebsites.net/api/";
+        //private static readonly string AssetBaseAssetAPIAddress = "https://qa-assets-service.azurewebsites.net/api/";
 
         private static readonly string AssetBaseOCPPAPIAddress = Environment.GetEnvironmentVariable("OCPPAPI");
         private static readonly string AssetBaseAssetAPIAddress = Environment.GetEnvironmentVariable("ASSETAPI");
-         public static async Task<HttpResponseMessage> GetCallAssetAuthAPIAsync(string apiUrl,string token)
+        public static async Task<HttpResponseMessage> GetCallAssetAuthAPIAsync(string apiUrl,string token)
         {
 
             using (var client = new HttpClient())

@@ -51,6 +51,7 @@ namespace PortalRestService.Core.Responses
     public class LocationOpratorRequest
     {
         public List<int> LocationIds { get; set; }
+        public string? ChargeBoxId { get; set; }
         public string? operatorid { get; set; }
 
     }
@@ -283,9 +284,8 @@ namespace PortalRestService.Core.Responses
     }
     public class ChartDetailsListRequest : QueryStringParameters
     {
-       
-
         public List<int> LocationIds { get; set; }
+        public string? ChargeBoxId { get; set; }
         public string? Duration { get; set; }
         public string? Opratorid { get; set; }
         public string? Flag { get; set; }
@@ -294,6 +294,7 @@ namespace PortalRestService.Core.Responses
         public List<string>? status { get; set; }
 
         public bool? IsExport { get; set; }
+        public string? ChartType { get; set; }
 
 
     }

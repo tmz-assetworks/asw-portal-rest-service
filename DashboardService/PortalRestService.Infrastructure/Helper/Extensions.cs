@@ -104,6 +104,10 @@ namespace PortalRestService.Helper
             {
                 return ColorsEnum.ChargerStatus.Busy.GetEnumDisplayName();
             }
+            if (Status_Indication.ChargerStatus.Unavailable.GetEnumDisplayName().ToLower() == value.ToLower())
+            {
+                return ColorsEnum.ChargerStatus.Unavailable.GetEnumDisplayName();
+            }
             return "";
         }
 

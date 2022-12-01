@@ -9,8 +9,6 @@ namespace PortalRestService.Core.Responses
         public LocationAddress LocationAddress { get; set; }
         public int LocationStatusId { get; set; }
         public LocationStatus LocationStatus { get; set; }
-        //public Department Department { get; set; }
-        //public int LocationId { get; set; }
         public string DepartmentName { get; set; }
         public string ContactPersonName { get; set; }
         public string ContactPersonNumber { get; set; }
@@ -50,9 +48,15 @@ namespace PortalRestService.Core.Responses
 
 
     }
+    public class TaskCount
+    {
 
+        public int Counts { get; set; }
+
+    }
     public class AlertResponse
     {
+       
         public int EventLogId { get; set; }
         public string? ChargeBoxId { get; set; }
         public string? Category { get; set; }
@@ -62,6 +66,12 @@ namespace PortalRestService.Core.Responses
         public string LocationsName { get; set; }
         public string RequestPayload { get; set; }
         public string ResponsePayload { get; set; }
+        public bool IsRead { get; set; }
+
+        public string Flag { get; set; }
+        public string UserId { get; set; }
+
+
     }
 
     public class OperatorAlertResponse
@@ -72,6 +82,7 @@ namespace PortalRestService.Core.Responses
         }
         public int? StatusCode { get; set; }
         public string? StatusMessage { get; set; }
+        public TaskCount TaskCount { get; set; }
         public List<AlertResponse> data { get; set; }
 
         public PaginationResponse paginationResponse { get; set; }
@@ -306,7 +317,6 @@ namespace PortalRestService.Core.Responses
 
         public DateTime ModifiedOn { get; set; }
         public bool IsOpenAlldays { get; set; }
-
     }
 
     public partial class OperatorUserMapper
@@ -575,5 +585,18 @@ namespace PortalRestService.Core.Responses
         public string StatusMessage { get; set; }
         public List<ChargeBoxIDList> data { get; set; }
 
+    }
+    
+    public class SaveNotificationResponse
+    {
+        
+        public int? StatusCode { get; set; }
+        public string? StatusMessage { get; set; }       
+    }
+    public class NotificationCommand
+    {
+
+        public int Id { get; set; }
+        public string flag { get; set; }
     }
 }
