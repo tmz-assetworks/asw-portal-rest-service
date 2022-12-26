@@ -34,16 +34,7 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                string callingMethoddispenser = APIConstant.GetDispenserByLocations;
-                string dd = JsonConvert.SerializeObject(new Core.Responses.LocationOpratorRequest()
-                {
-                    operatorid = "",
-                    LocationIds = location
-                });
-                StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
-                var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-                dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
+                
                 string laveltype = "time";
                 TimeSpan interval = new TimeSpan(4, 0, 0);
                 if (duration == "7")
@@ -65,15 +56,19 @@ namespace PortalRestService.Infrastructure.Repositories
                     interval = new TimeSpan(24, 0, 0);
                     laveltype = "month";
                 }
-                List<EnergyUsedChartBO> res = (from s in _dbContext.ChargingSessions.ToList()
+                List<EnergyUsedChartBO> res = (from s in _dbContext.ChargingSessions
                                                where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now && s.EndMeterValue>0
-                                               join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
-                                               on s.ChargerId equals c.DispenserId
+                                               join charger in !string.IsNullOrEmpty(chargeBoxId) == true ? _dbContext.Charger.Where(x => chargeBoxId.ToLower().Equals(x.ChargeBoxId.ToLower())) : _dbContext.Charger on s.ChargerId equals charger.Id
+                                               join locations in location.Count>0? _dbContext.Locations.Where(x=>location.Contains((int)x.Id)): _dbContext.Locations on charger.LocationId equals locations.Id
+                                               join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
+                                               join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
+                                               join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                               on locations.Id equals userMap.LocationId
                                                select new EnergyUsedChartBO
                                                {
                                                    StartMeterValue = s.StartMeterValue.Value,
                                                    EndMeterValue = s.EndMeterValue.Value,
-                                                   chargeboxId = c.ChargeBoxId,
+                                                   chargeboxId = charger.ChargeBoxId,
                                                    //times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
                                                    svalue = (s.StartTime.HasValue == true ?
                                                      laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
@@ -89,24 +84,23 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 List<EnergyUsedsResponse> finalon = null;
 
-                if (!string.IsNullOrEmpty(chargeBoxId))
+                if (res.Count <= 0)
                 {
-                    if (res != null)
+                    finalon = getstatus(duration);
+                }
+                else
+                {
+                    finalon = res
+                    .GroupBy(x => new { x.times })
+                    .Select(y => new EnergyUsedsResponse()
                     {
-                        res = res.Where(f => f.chargeboxId ==chargeBoxId).ToList();
+
+                        svalue = y.Max(f => f.svalue),
+                        times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
+                        EndMeterValue = Convert.ToInt32(y.Sum(c => c.EndMeterValue) - y.Sum(c => c.StartMeterValue <= 0 ? 0 : c.StartMeterValue))/1000,
                     }
+                    ).OrderBy(t => t.svalue).ToList<EnergyUsedsResponse>();
                 }
-                finalon = res
-                .GroupBy(x => new { x.times })
-                .Select(y => new EnergyUsedsResponse()
-                {
-
-                    svalue = y.Max(f => f.svalue),
-                    times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
-                    EndMeterValue = y.Sum(c => c.EndMeterValue) - y.Sum(c => c.StartMeterValue <= 0 ? 0 : c.StartMeterValue),
-                }
-                ).OrderBy(t =>t.svalue).ToList<EnergyUsedsResponse>();
-
 
                 obj.StatusMessage = RespnoseMessage.Record_found;
                 obj.StatusCode = 200;
@@ -120,6 +114,59 @@ namespace PortalRestService.Infrastructure.Repositories
             }
 
             return obj;
+        }
+        public List<EnergyUsedsResponse> getstatus(string duration)
+        {
+            List<EnergyUsedsResponse> chargingSessionByLocationBOs = new List<EnergyUsedsResponse>();
+
+            string laveltype = "time";
+            TimeSpan interval = new TimeSpan(4, 0, 0);
+            if (duration == "1")
+            {
+                duration = "1";
+                interval = new TimeSpan(4, 0, 0);
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = "04", EndMeterValue = 0, svalue = "04" });
+
+
+            }
+            if (duration == "6")
+            {
+                duration = "6";
+                interval = new TimeSpan(24, 0, 0);
+                laveltype = "day";
+
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-1).ToString("dddd"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-2).ToString("dddd"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-3).ToString("dddd"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-4).ToString("dddd"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+
+            }
+            else
+            if (duration == "28")
+            {
+
+                interval = new TimeSpan(24 * 7, 0, 0);
+                laveltype = "date";
+
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-6).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-12).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-18).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-18).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-24).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-24).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+            }
+            else
+            if (duration == "90")
+            {
+                interval = new TimeSpan(24, 0, 0);
+                laveltype = "month";
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddMonths(-1).ToString("MMMM"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddMonths(-2).ToString("MMMM"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddMonths(-3).ToString("MMMM"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddMonths(-4).ToString("MMMM"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+
+
+            }
+            return chargingSessionByLocationBOs;
+
         }
     }
 }

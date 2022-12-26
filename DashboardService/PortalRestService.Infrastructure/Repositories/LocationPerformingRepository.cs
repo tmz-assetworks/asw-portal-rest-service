@@ -7,6 +7,7 @@ using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.EnumData;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -24,29 +25,13 @@ namespace PortalRestService.Infrastructure.Repositories
         {
             _tokenBase = tokenBase;
         }
-        async Task<LocationPerformingChartResponse> ILocationPerformingRepository.GetLocationPerforming(List<int> location, string duration, int orderby)
+        async Task<LocationPerformingChartResponse> ILocationPerformingRepository.GetLocationPerforming(List<int> locations, string duration, int orderby)
         {
             List<LocationPerformingResponse> finalon = null;
             LocationPerformingChartResponse obj = new LocationPerformingChartResponse();
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                
-                if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
-                    duration = "1";
-
-
-                string callingMethoddispenser = APIConstant.GetDispenserByLocations;
-                string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
-                {
-                    operatorid = "",
-                    LocationIds = location
-                });
-                StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
-                var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-
-                dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
                 if (duration == "7")
                 {
                     duration = "6";
@@ -61,12 +46,16 @@ namespace PortalRestService.Infrastructure.Repositories
                 
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
-                                                         join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
-                                                         on s.ChargerId equals c.DispenserId
+                                                         join charger in _dbContext.Charger on s.ChargerId equals charger.Id
+                                                        join location in locations.Count > 0 ? _dbContext.Locations.Where(x => locations.Contains((int)(x.Id))) : _dbContext.Locations on charger.LocationId equals location.Id
+                                                         join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                                                         join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
+                                                         join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                                         on location.Id equals userMap.LocationId
                                                          select new ChargingSessionByLocationBO
                                                          {
                                                              Id = s.Id,
-                                                             ChargerId = s.ChargerId,
+                                                             ChargerId = (long)s.ChargerId,
                                                              StartMeterValue = s.StartMeterValue,
                                                              StartSoc = s.StartSoc,
                                                              StartTime = s.StartTime,
@@ -74,42 +63,49 @@ namespace PortalRestService.Infrastructure.Repositories
                                                              EndSoc = s.EndSoc,
                                                              EndTime = s.EndTime,
 
-                                                             LocationId = c.LocationId,
-                                                             LocationName = c.LocationName,
-                                                             LocationStatusName = c.LocationStatusName,
-                                                             LocationStatusId = c.LocationStatusId,
-                                                             ChargeBoxId = c.ChargeBoxId,
+                                                             LocationId = location.Id,
+                                                             LocationName = location.LocationName,
+                                                             LocationStatusName = Status.LocationStatusName,
+                                                             LocationStatusId = location.LocationStatusId,
+                                                             ChargeBoxId = charger.ChargeBoxId,
                                                              times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
 
-                                                             SerialNumber = c.SerialNumber,
+                                                             SerialNumber = "",
                                                          }).ToList<ChargingSessionByLocationBO>();
-
-                if (orderby > 0)
+                if (res.Count <= 0)
                 {
-                    finalon = res
-                .GroupBy(x => new { x.LocationName, x.LocationStatusName })
-                .Select(y => new LocationPerformingResponse()
-                {
-                    LocationName = y.Key.LocationName,
-                    MeterValue = y.Sum(c => c.EndMeterValue) - y.Sum(c => c.StartMeterValue),
-                    Orderby = "TOP",
-                }
-                ).OrderByDescending(t => t.MeterValue).Take(5).ToList<LocationPerformingResponse>();
+                    finalon = getstatus();
                 }
                 else
                 {
-                    finalon = res
-                    .GroupBy(x => new { x.LocationName, x.LocationStatusId, x.LocationStatusName })
+                    if (orderby > 0)
+                    {
+                        finalon = res
+                    .GroupBy(x => new { x.LocationName, x.LocationStatusName })
                     .Select(y => new LocationPerformingResponse()
                     {
-
                         LocationName = y.Key.LocationName,
-                        MeterValue = y.Sum(c => c.EndMeterValue) - y.Sum(c => c.StartMeterValue),
-                        Orderby = "BOTTOM",
-
+                        MeterValue = Convert.ToInt32((y.Sum(c => c.EndMeterValue) - y.Sum(c => c.StartMeterValue))/1000),
+                        Orderby = "TOP",
                     }
-                ).OrderBy(t => t.MeterValue).Take(5).ToList<LocationPerformingResponse>();
+                    ).OrderByDescending(t => t.MeterValue).Take(5).ToList<LocationPerformingResponse>();
+                    }
+                    else
+                    {
+                        finalon = res
+                        .GroupBy(x => new { x.LocationName, x.LocationStatusId, x.LocationStatusName })
+                        .Select(y => new LocationPerformingResponse()
+                        {
+
+                            LocationName = y.Key.LocationName,
+                            MeterValue = Convert.ToInt32((y.Sum(c => c.EndMeterValue) - y.Sum(c => c.StartMeterValue)) / 1000),
+                            Orderby = "BOTTOM",
+
+                        }
+                    ).OrderBy(t => t.MeterValue).Take(5).ToList<LocationPerformingResponse>();
+                    }
                 }
+                
                 if (finalon != null && finalon.Count > 0)
                 {
                     Dictionary<int, string> locationcolors = CommonHelpers.LocationStaticColorList();
@@ -135,6 +131,17 @@ namespace PortalRestService.Infrastructure.Repositories
                 obj.data = new List<LocationPerformingResponse>();
             }
             return obj;
+        }
+        public List<LocationPerformingResponse> getstatus()
+        {
+            List<LocationPerformingResponse> chargingSessionByLocationBOs = new List<LocationPerformingResponse>();
+
+
+            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP", LocationName = "Philadelphia", MeterValue = 0 });
+            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP",LocationName = "Austin Public Works", MeterValue = 0 });
+            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP", LocationName = "Alaska", MeterValue = 0 });
+            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP",LocationName = "Fleet Services", MeterValue = 0 });
+            return chargingSessionByLocationBOs;
         }
     }
 }

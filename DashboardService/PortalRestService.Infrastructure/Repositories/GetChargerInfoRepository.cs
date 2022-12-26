@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using PortalRestService.Core.ConstantResponse;
+using PortalRestService.Core.Models;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
@@ -47,10 +48,13 @@ namespace PortalRestService.Infrastructure.Repositories
                     chargerInformationResponse.data.ConnectorIds = dispenser.data[0].Ports.Count() > 0 ? String.Join(", ", (dispenser.data[0].Ports).Select(s => s.ConnectorId)) : "";
                     // getting the ChargerStatus from OCPP service
                     chargerInformationResponse.data.ChargerStatus = dispenser.data[0].ChargerStatuses == null || dispenser.data[0].ChargerStatuses.Count == 0 ? "Offline" :
-                             dispenser.data[0].ChargerStatuses.ToList().Where(x => x.ConnectorStatus.ToLower() == "faulted").ToList().Count > 0 ? "Faulted" :
-                             dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1.ToLower() == "unavailable" ? "Connected" :
+                     dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1.ToLower() == "charging" ? "Busy" :
+                              dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1.ToLower() == "suspendedev" ||
+                              dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1.ToLower() == "uspendedevse" ||
+                               dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1.ToLower() == "finishing" ||
+                              dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1.ToLower() == "preparing" ? "Occupied" :
                              dispenser.data[0].ChargerStatuses.ToList()[0].ChargerStatus1;
-                    chargerInformationResponse.data.ChargerType = RespnoseMessage.Record_not_found;
+                    chargerInformationResponse.data.ChargerType = dispenser.data[0].Ports.Count() > 0 ? String.Join(",",(dispenser.data[0].Ports).Select(s => s.ChargerType.ChargerTypeName)) : "";
                     chargerInformationResponse.data.City = dispenser.data[0].location.LocationAddress.CityName;
                     chargerInformationResponse.data.Country = dispenser.data[0].location.LocationAddress.CountryName;
                     chargerInformationResponse.data.State = dispenser.data[0].location.LocationAddress.StateName;

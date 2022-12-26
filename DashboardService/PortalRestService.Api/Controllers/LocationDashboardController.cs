@@ -37,26 +37,10 @@ namespace RestService.Assets.Controllers
             GetLocatinByIdResponse getLocatinByIdResponse = new GetLocatinByIdResponse();
             try
             {
-                
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-                string callingMethod = APIConstant.GetLocationById + id;
-                HttpResponseMessage response = await Helper.GetCallAssetAuthAPIAsync(callingMethod,_tokenBase.acces_token);
-               
-                if (response.IsSuccessStatusCode)
-                {
-                    var locationinfo = await response.Content.ReadAsStringAsync();
-                    getLocatinByIdResponse = JsonConvert.DeserializeObject<GetLocatinByIdResponse>(locationinfo);
-
-                    if (getLocatinByIdResponse != null && getLocatinByIdResponse.data!=null) 
-                     getLocatinByIdResponse.data.Id= (int)id;
-
-                }
-                else
-                {
-                    getLocatinByIdResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
-                }
-
-                return getLocatinByIdResponse == null ? NotFound() : this.Ok(getLocatinByIdResponse);
+                LocationRequest vf= new LocationRequest();
+                vf.Id = (int)id;
+                getLocatinByIdResponse = await _mediator.Send(new GetLocationByIdQuery(vf));
             }
             catch (Exception ex)
             {
@@ -65,8 +49,8 @@ namespace RestService.Assets.Controllers
                 getLocatinByIdResponse.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
             }
+            return this.Ok(getLocatinByIdResponse);
         }
-
 
         [HttpPost("LocationStatus")]
         [Produces("application/json")]

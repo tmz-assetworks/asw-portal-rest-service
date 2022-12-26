@@ -28,42 +28,24 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
 
 
-            string eventlogre = JsonConvert.SerializeObject(new OcppEventLogRequest()
-            {
-
-                chargerboxid = request.chargerboxid
-            });
-           
-            List<int> myList = new List<int>();
-            string callingMethoddispenser = APIConstant.GetDispenserByLocations;
-            string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
-            {
-                operatorid = "",
-                LocationIds = myList
-            });
-            StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-
-            HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent, _tokenBase.acces_token);
-
-            var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-
-            dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-
 
             string zero = "0000000000";
             if (!string.IsNullOrEmpty(request.Fromdate) || !string.IsNullOrEmpty(request.Todate) || request.status.Count > 0)
             {
-                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
-
-                       join s in dispenserByLocationIdResponse.data.ToList()
-                                  on c.ChargerId equals s.DispenserId
+                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId, StringComparer.InvariantCultureIgnoreCase) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+                       join charger in _dbContext.Charger on c.ChargerId equals charger.Id
+                       join location in  _dbContext.Locations on charger.LocationId equals location.Id
+                       join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                       join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
+                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                       on location.Id equals userMap.LocationId
                        select new ChargerSessionDetailsList
                        {
                            Id = c.Id,
                            Duration = "",
                            Sessionid = zero.Substring(0,(10- c.Id.ToString().Length))+ c.Id.ToString(),
                            ChargingStatus = c.ChargingStatus,
-                           Usage = (Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)),
+                           Usage = Math.Round((Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue))/1000,2),
                            StartTime = c.StartTime,
                            EndTime = c.EndTime,
                            ChargeBoxId = c.DeviceId,
@@ -76,32 +58,35 @@ namespace PortalRestService.Infrastructure.Repositories
                          
                            ReasoneForStop=c.ReasonForStop
                            
-                       }).DistinctBy(d => d.Id).Where(s => s.ChargeBoxId != null).ToList();
+                       }).DistinctBy(d => d.Id).OrderByDescending(a => a.ModifiedAt).Where(s => s.ChargeBoxId != null).ToList();
                 if (res != null)
                 {
                     if (!string.IsNullOrEmpty(request.Fromdate))
                     {
-                        res = res.Where(o => o.StartTime >= Convert.ToDateTime(request.Fromdate) && o.EndTime <= Convert.ToDateTime(request.Todate)).ToList();
+                        res = res.Where(o => o.StartTime >= Convert.ToDateTime(request.Fromdate) && o.StartTime <= Convert.ToDateTime(request.Todate)).ToList();
                     }
                     if (request.status.Count > 0)
                     {
-                        res = res.Where(o => request.status.Contains(o.ChargingStatus)).ToList();
+                        res = res.Where(o => request.status.Contains(o.ChargingStatus, StringComparer.InvariantCultureIgnoreCase)).ToList();
                     }
                 }
 
             }
             else
             {
-                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
-
-                       join s in dispenserByLocationIdResponse.data.ToList()
-                                  on c.ChargerId equals s.DispenserId
+                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId, StringComparer.InvariantCultureIgnoreCase) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+                       join charger in  _dbContext.Charger on c.ChargerId equals charger.Id
+                       join location in _dbContext.Locations on charger.LocationId equals location.Id
+                       join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                       join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
+                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                       on location.Id equals userMap.LocationId
                        select new ChargerSessionDetailsList
                        {
                            Id = c.Id,
                            Duration = "",
                            Sessionid = zero.Substring(0,(10- c.Id.ToString().Length))+ c.Id.ToString(),
-                           Usage = (Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)),
+                           Usage = Math.Round((Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)) / 1000, 2),
                            StartTime = c.StartTime,
                            EndTime = c.EndTime,
                            ChargingStatus = c.ChargingStatus,
@@ -113,7 +98,7 @@ namespace PortalRestService.Infrastructure.Repositories
                            Startsoc = c.StartSoc,
                            EndSoc = c.EndSoc,
                            ReasoneForStop = c.ReasonForStop
-                       }).DistinctBy(d => d.Id).Where(s => s.ChargeBoxId != null).ToList();
+                       }).DistinctBy(d => d.Id).OrderByDescending(a => a.ModifiedAt).Where(s => s.ChargeBoxId != null).ToList();
             }
 
 

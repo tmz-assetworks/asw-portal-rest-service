@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -28,6 +28,7 @@ namespace PortalRestService.ApiTests.Controllers
         {
             _mediator = new Mock<IMediator>();
             TokenBase token = new TokenBase();
+            token.acces_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IjJaUXBKM1VwYmpBWVhZR2FYRUpsOGxWMFRPSSIsImtpZCI6IjJaUXBKM1VwYmpBWVhZR2FYRUpsOGxWMFRPSSJ9.eyJhdWQiOiJzcG46NzY5OGNiZWQtN2Q5Zi00M2IzLWI5Y2QtYTRmMDliOWI1NWVkIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvNzQ0YWE4YjAtYmI5OS00OTgyLTkwM2YtNTIzMjgyMTZiNGJlLyIsImlhdCI6MTY2OTg4Njk0NCwibmJmIjoxNjY5ODg2OTQ0LCJleHAiOjE2Njk4OTIyMzIsImFjciI6IjEiLCJhaW8iOiJBVFFBeS84VEFBQUExQTlEbHBoOVBJM3BEcUpWZjFOUktNRHpPV2RoU3piRkdUWDZINm0zR3hXVWVpNmZWSGdaMWRzZ3hlOUtPR3pCIiwiYW1yIjpbInB3ZCJdLCJhcHBpZCI6Ijc2OThjYmVkLTdkOWYtNDNiMy1iOWNkLWE0ZjA5YjliNTVlZCIsImFwcGlkYWNyIjoiMSIsImZhbWlseV9uYW1lIjoib3BlcmF0b3IiLCJnaXZlbl9uYW1lIjoib3BlcmF0b3IiLCJpcGFkZHIiOiI1Mi4xNDIuMTcyLjIyIiwibmFtZSI6Im9wZXJhdG9yIiwib2lkIjoiZjRlOWI0MTktYzdkYy00MmI2LTkyYmMtZjIwNzcwNzE2N2YyIiwicmgiOiIwLkFWVUFzS2hLZEptN2drbVFQMUl5Z2hhMHZ1M0xtSGFmZmJORHVjMms4SnViVmUySUFPdy4iLCJyb2xlcyI6WyJPcGVyYXRvciJdLCJzY3AiOiJBcHBSb2xlQXNzaWdubWVudC5SZWFkV3JpdGUuQWxsIERpcmVjdG9yeS5BY2Nlc3NBc1VzZXIuQWxsIERpcmVjdG9yeS5SZWFkLkFsbCBEaXJlY3RvcnkuUmVhZFdyaXRlLkFsbCBEaXJlY3RvcnkuV3JpdGUuUmVzdHJpY3RlZCBlbWFpbCBHcm91cC5SZWFkLkFsbCBHcm91cC5SZWFkV3JpdGUuQWxsIElkZW50aXR5VXNlckZsb3cuUmVhZFdyaXRlLkFsbCBvZmZsaW5lX2FjY2VzcyBvcGVuaWQgcHJvZmlsZSBUZWFtU2V0dGluZ3MuUmVhZFdyaXRlLkFsbCBVc2VyLkV4cG9ydC5BbGwgVXNlci5JbnZpdGUuQWxsIFVzZXIuTWFuYWdlSWRlbnRpdGllcy5BbGwgVXNlci5SZWFkIFVzZXIuUmVhZC5BbGwgVXNlci5SZWFkQmFzaWMuQWxsIFVzZXIuUmVhZFdyaXRlIFVzZXIuUmVhZFdyaXRlLkFsbCBVc2VyQXV0aGVudGljYXRpb25NZXRob2QuUmVhZCBVc2VyQXV0aGVudGljYXRpb25NZXRob2QuUmVhZC5BbGwgVXNlckF1dGhlbnRpY2F0aW9uTWV0aG9kLlJlYWRXcml0ZSBVc2VyQXV0aGVudGljYXRpb25NZXRob2QuUmVhZFdyaXRlLkFsbCIsInN1YiI6IksyYW43OF9kSEx1T2tjdWtMdEFjanAxZlg5Tk9ZZTZKei02SGRacWI4MVkiLCJ0aWQiOiI3NDRhYThiMC1iYjk5LTQ5ODItOTAzZi01MjMyODIxNmI0YmUiLCJ1bmlxdWVfbmFtZSI6Im9wZXJhdG9yQGRldm9wc3Rla21pbmR6Lm9ubWljcm9zb2Z0LmNvbSIsInVwbiI6Im9wZXJhdG9yQGRldm9wc3Rla21pbmR6Lm9ubWljcm9zb2Z0LmNvbSIsInV0aSI6IldnMzVaeTBSWVU2dnJMRmN2ajhOQWciLCJ2ZXIiOiIxLjAifQ.g3DPuouxmb2VODht1ylRGr7l7PuHDoyGejBEMceTmcJyM-jo_ZAiEnFLRrWEsCfSqTuDE8HZvG7auxd447uVEbhaQV_qsWp2MQbS2KTDMQMZw2PAWclcWHp-A51FKWbwcVUqlvevFRW9u-isA95C9zRuL6hbhxlonarn1v8BKa5CtNfXvkIqfJvrV5NwHT1z62fMWrL6CfsykB8lQUnwu1UvgKkw--qOxSfAgtRpPZ2CiozWpdoIaVkeTAT75eOY0D_jCaR3mfMDv0VUUpNBxRXCFYa7WIRua6IxhbP7cBjZ30Fl5FjMcMwAgAfNY-3tNWMfcUDrXHAmPcvED5D_HA";
             //this._configuration = configuration;
             _configuration = new ConfigurationBuilder()
                .AddInMemoryCollection()
@@ -172,15 +173,23 @@ namespace PortalRestService.ApiTests.Controllers
             //Arrange
             var _ChartDetailsListRequest = new PortalRestService.Core.Responses.ChartDetailsListRequest()
             {
-                LocationIds= new List<int> { },
-                Duration="90",
-                Flag= "chargerSession",
-                Opratorid = "",
-                PageNumber = 0,
-                PageSize = 0,
-                SearchParam = "",
-                OrderBy = ""
-            };
+                LocationIds = new List<int>(new int[] { }), 
+            Opratorid = "",
+
+            OrderBy = "",
+            PageNumber = 0,
+            SearchParam = "",
+            PageSize = 0,
+            Fromdate = "",
+            Todate = "",
+
+            ChargeBoxId = "",
+            status = new List<string>(new string[] { }),
+            Flag = "chargersession",
+            Duration = "90",
+            IsExport = false,
+            ChartType = "",
+        };
             var _ChartDetailsListResponse = new ChartDetailsListResponse()
             {
                 StatusCode = 200,
@@ -197,7 +206,15 @@ namespace PortalRestService.ApiTests.Controllers
                          TimeReported=DateTime.Now,
                          LocationId=90,
                          LocationName="",
-                         ChargeBoxId=""
+                         ChargeBoxId="",
+                         ChargingStatus="",
+                         Endmetervalue="0",
+                         EndSoc=0,
+                         EndTime="",
+                         ReasoneForStop="",
+                         Startmetervalue="0",
+                         Startsoc = 0,
+                         StartTime="",
                     }
                 },
                 paginationResponse = new PaginationResponse()
@@ -210,10 +227,11 @@ namespace PortalRestService.ApiTests.Controllers
                     TotalPages = 10
                 }
             };
-            _mediator.Setup(md => md.Send(It.IsAny< PagedList<GetChartDetailsListQuery>>(), It.IsAny<CancellationToken>())).ReturnsAsync(_ChartDetailsListResponse);
 
+            _mediator.Setup(md => md.Send(It.IsAny<ChartDetailsList>(), It.IsAny<CancellationToken>())).ReturnsAsync(_ChartDetailsListResponse);
+            var actionresult =  chargerController.GetChartDetailsList(_ChartDetailsListRequest).Result as ActionResult<ChartDetailsListResponse>;
             //Act
-            var actionresult = await chargerController.GetChartDetailsList(_ChartDetailsListRequest) as ActionResult<PortalRestService.Core.Responses.ChartDetailsListResponse>;
+            //var actionresult = await chargerController.GetChartDetailsList(_ChartDetailsListRequest) as ActionResult<PortalRestService.Core.Responses.ChartDetailsListResponse>;
 
             // Assert
             Assert.IsNotNull(actionresult);

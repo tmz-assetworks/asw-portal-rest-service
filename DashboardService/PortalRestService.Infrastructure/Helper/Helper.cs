@@ -33,7 +33,7 @@ namespace PortalRestService.Helpers
         //private static readonly string AssetBaseAssetAPIAddress = "https://localhost:7200/api/";
 
         //private static readonly string AssetBaseOCPPAPIAddress = "https://qa-ocpp-core.azurewebsites.net/api/";
-        //private static readonly string AssetBaseAssetAPIAddress = "https://qa-assets-service.azurewebsites.net/api/";
+        //private static readonly string AssetBaseAssetAPIAddress = "https://assets-service.azurewebsites.net/api/";
 
         private static readonly string AssetBaseOCPPAPIAddress = Environment.GetEnvironmentVariable("OCPPAPI");
         private static readonly string AssetBaseAssetAPIAddress = Environment.GetEnvironmentVariable("ASSETAPI");

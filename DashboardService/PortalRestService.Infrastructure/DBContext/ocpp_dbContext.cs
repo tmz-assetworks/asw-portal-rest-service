@@ -27,7 +27,22 @@ namespace PortalRestService.Infrastructure.DBContext
         public virtual DbSet<TaskNotifications> TaskNotifications { get; set; } = null!;
         public virtual DbSet<ErrorSeverity> ErrorSeverity { get; set; } = null!;
         public virtual DbSet<FaultyErrorCode> FaultyErrorCode { get; set; } = null!;
-        public DbSet<Charger> Charger { get; set; }
+        public virtual DbSet<ChargerStatusHistory> ChargerStatusHistory { get; set; } = null!;
+        public virtual DbSet<LocationAddress> LocationAddress { get; set; }
+
+        public virtual DbSet<OperatorUserMapper> OperatorUserMapper { get; set; }
+        public virtual DbSet<Location> Locations { get; set; }
+        public virtual DbSet<LocationStatus> LocationStatus { get; set; }
+        public virtual DbSet<Charger> Charger { get; set; }
+        public virtual DbSet<Users> Users { get; set; }
+        public virtual DbSet<Port> Port { get; set; }
+        public virtual DbSet<VehicleRFID> VehicleRFID { get; set; }
+        public virtual DbSet<Vehicle> Vehicle { get; set; }
+        public virtual DbSet<SubscriptionsGroupDetails> SubscriptionsGroupDetails { get; set; }
+        public virtual DbSet<SubscriptionPlan> SubscriptionPlan { get; set; }
+        public virtual DbSet<PaymentTransaction> PaymentTransaction { get; set; }
+        public virtual DbSet<LocationSchedule> LocationSchedule { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 

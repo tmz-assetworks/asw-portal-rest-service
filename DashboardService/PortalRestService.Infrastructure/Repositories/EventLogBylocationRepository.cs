@@ -31,63 +31,31 @@ namespace PortalRestService.Infrastructure.Repositories
             try
             {
 
-                if (request.LocationIds != null && request.LocationIds.Count() > 0)
-                {
-                    string callingMethoddispensers = APIConstant.GetDispenserByLocations;
-                    string locationRequest = JsonConvert.SerializeObject(new LocationOpratorRequest()
-                    {
-                        operatorid = "",
-                        LocationIds = request.LocationIds
-                    });
-                   
-                }
-                string eventlogre = JsonConvert.SerializeObject(new OcppEventLogRequest()
-                {
-                    chargerboxid = request.ChargerBoxIds
-                });
-                StringContent httpContenteventlog = new StringContent(eventlogre, Encoding.UTF8, "application/json");
-                //string EventLogMethodName = APIConstant.GetEventLogByLocationAll;
-                //HttpResponseMessage responseSession = await Helpers.Helper.GetCallOCPPWithBodyAPIAsync(EventLogMethodName, httpContenteventlog);
+                res = (from s in request.ChargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.OcppEventLogs.Where(o => o.DeviceId != null)
+                       join charger in _dbContext.Charger on s.DeviceId equals charger.ChargeBoxId
+                       join locations in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)x.Id)) : _dbContext.Locations on charger.LocationId equals locations.Id
+                       join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
+                       join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
+                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                       on locations.Id equals userMap.LocationId
+                       select new EventLogLocation
+                       {
+                           Id = s.Id,
+                           CreatedAt = s.CreatedAt,
+                           DeviceId = s.DeviceId,
+                           EventLogDataSource = s.EventLogDataSource,
+                           ModifiedAt = s.ModifiedAt,
+                           RequestId = s.RequestId,
+                           RequestPayload = s.RequestPayload == null ? "" : s.RequestPayload.Replace(",", ",\r\n"),
+                           RequestType = s.RequestType,
+                           ResponsePayload = s.ResponsePayload == null ? "" : s.ResponsePayload.Replace(",", ",\r\n"),
+                           LocationId = locations.LocationId.ToString(),
+                           LocationName = locations.LocationName,
+                           RequestTypeColor = Extensions.GetEventlogColorCodes(s.RequestType == null ? "" : s.RequestType),
+                           IsRead = s.IsRead.HasValue == true ? s.IsRead.Value : false
+                       }).AsEnumerable()
+                       .DistinctBy(d => d.Id).Where(s => s.DeviceId != null).ToList();
 
-                //var EventLogData = await responseSession.Content.ReadAsStringAsync();
-                //EventLogLocationres = JsonConvert.DeserializeObject<EventLogLocationResponse>(EventLogData);
-
-                string callingMethoddispenser = APIConstant.GetDispenserByLocations;
-                string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
-                {
-                    operatorid = "",
-                    LocationIds = request.LocationIds
-                });
-                StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
-
-                var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-
-                dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-                if (dispenserByLocationIdResponse.data.Count > 0)
-                {
-                    res = (from s in request.ChargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.ToList().Where(o => request.ChargerBoxIds.Contains(o.DeviceId) && o.DeviceId!=null) : _dbContext.OcppEventLogs.ToList().Where(o =>o.DeviceId != null)
-
-                           join c in dispenserByLocationIdResponse.data.ToList()
-                                      on s.DeviceId.ToLower() equals c.ChargeBoxId.ToLower()
-                           select new EventLogLocation
-                           {
-                               Id = s.Id,
-                               CreatedAt = s.CreatedAt,
-                               DeviceId = s.DeviceId,
-                               EventLogDataSource = s.EventLogDataSource,
-                               ModifiedAt = s.ModifiedAt,
-                               RequestId = s.RequestId,
-                               RequestPayload = s.RequestPayload == null ? "" : s.RequestPayload.Replace(",", ",\r\n"),
-                               RequestType = s.RequestType,
-                               ResponsePayload = s.ResponsePayload == null ? "" : s.ResponsePayload.Replace(",", ",\r\n"),
-                               LocationId = c.LocationId.ToString(),
-                               LocationName = c.LocationName,
-                               RequestTypeColor = Extensions.GetEventlogColorCodes(s.RequestType==null?"": s.RequestType),
-                               IsRead= s.IsRead.HasValue == true ? s.IsRead.Value :false 
-                           }).DistinctBy(d=>d.Id).Where(s => s.DeviceId!=null ).ToList();
-
-                }
             }
             catch (Exception ex)
             {

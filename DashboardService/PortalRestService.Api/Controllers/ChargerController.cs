@@ -35,7 +35,9 @@ namespace RestService.Assets.Controllers
             ChartDetailsListResponse QueryResponse = new ChartDetailsListResponse();
             try
             {
-                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
+                // _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
+
+                _tokenBase.acces_token = HttpContext != null ? await HttpContext.GetTokenAsync("access_token") : _tokenBase.acces_token;
                 if (chartDetailsListRequest.PageSize == 0) chartDetailsListRequest.PageSize = 10;
                 if (chartDetailsListRequest.PageNumber == 0) chartDetailsListRequest.PageNumber = 1;
                 var result = await _mediator.Send(new GetChartDetailsListQuery(chartDetailsListRequest));
@@ -47,7 +49,7 @@ namespace RestService.Assets.Controllers
                         QueryResponse.data = result;
                         QueryResponse.StatusCode = RespnoseCode.OK;
                         QueryResponse.StatusMessage = RespnoseMessage.Record_found;
-                        QueryResponse.paginationResponse = new  PaginationResponse();
+                        QueryResponse.paginationResponse = new PaginationResponse();
                     }
                     else
                     {
@@ -62,14 +64,14 @@ namespace RestService.Assets.Controllers
                     if (!string.IsNullOrEmpty(chartDetailsListRequest.SearchParam))
                         result = result.Where(d => d.LocationName.ToLower() == chartDetailsListRequest.SearchParam.ToLower() || d.ChargeBoxId.ToLower() == chartDetailsListRequest.SearchParam.ToLower()).ToList();
 
-                       var dataResult = PagedList<ChartDetailsList>.ToPagedList(result,
-                        chartDetailsListRequest.PageNumber,
-                        chartDetailsListRequest.PageSize);
+                    var dataResult = PagedList<ChartDetailsList>.ToPagedList(result,
+                     chartDetailsListRequest.PageNumber,
+                     chartDetailsListRequest.PageSize);
 
-                    
+
                     if (dataResult != null)
                     {
-                        
+
                         QueryResponse.data = dataResult;
                         QueryResponse.paginationResponse = new PortalRestService.Core.PagingHelper.PaginationResponse
                         {
@@ -131,7 +133,7 @@ namespace RestService.Assets.Controllers
                     QueryResponse.StatusCode = (int)HttpStatusCode.OK;
                 }
                 else
-                {   
+                {
                     QueryResponse.StatusCode = (int)HttpStatusCode.OK;
                     QueryResponse.StatusMessage = RespnoseMessage.Record_not_found;
                     QueryResponse.data = new List<ChargerSessionDetailsList>();
@@ -154,7 +156,7 @@ namespace RestService.Assets.Controllers
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-                var result = await _mediator.Send(new GetChargerInformationQuery(chargerInformationRequest.ChargeBoxId,chargerInformationRequest.OperatorId));
+                var result = await _mediator.Send(new GetChargerInformationQuery(chargerInformationRequest.ChargeBoxId, chargerInformationRequest.OperatorId));
                 return result == null ? NotFound() : this.Ok(result);
             }
             catch (Exception ex)
@@ -170,7 +172,7 @@ namespace RestService.Assets.Controllers
             CommandListResponse QueryResponse = new CommandListResponse();
             List<CommandList> lin = new List<CommandList>();
             _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-            lin.Add(new CommandList() {Id= 1, value= "Authorize" });
+            lin.Add(new CommandList() { Id = 1, value = "Authorize" });
             lin.Add(new CommandList() { Id = 2, value = "BootNotification" });
             lin.Add(new CommandList() { Id = 3, value = "Heartbeat" });
             lin.Add(new CommandList() { Id = 4, value = "StatusNotification" });
@@ -199,13 +201,13 @@ namespace RestService.Assets.Controllers
             lin.Add(new CommandList() { Id = 28, value = "Data Transfer - CSMS" });
             lin.Add(new CommandList() { Id = 29, value = "Reset" });
             lin.Add(new CommandList() { Id = 30, value = "RemoteStartTransaction" });
-            
+
             QueryResponse.StatusMessage = RespnoseMessage.Record_found;
-                    QueryResponse.data = lin;
-                    QueryResponse.StatusCode = (int)HttpStatusCode.OK;
-                
-                
-            
+            QueryResponse.data = lin;
+            QueryResponse.StatusCode = (int)HttpStatusCode.OK;
+
+
+
             return QueryResponse;
         }
         /// <summary>
@@ -221,25 +223,39 @@ namespace RestService.Assets.Controllers
             DispensersDetailResponse? dispensersDetailResponse = new DispensersDetailResponse();
             try
             {
-               
-                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(dispensersDetailRequest), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
 
-                if (response.IsSuccessStatusCode)
-                { 
-                    var dispenserdetails = await response.Content.ReadAsStringAsync();
-                    dispensersDetailResponse = JsonConvert.DeserializeObject<DispensersDetailResponse>(dispenserdetails);
+                _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
+                //  StringContent httpContent = new StringContent(JsonConvert.SerializeObject(dispensersDetailRequest), Encoding.UTF8, "application/json");
+                //  HttpResponseMessage response = await Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
+                if (dispensersDetailRequest.PageSize == 0) dispensersDetailRequest.PageSize = 10;
+                if (dispensersDetailRequest.PageNumber == 0) dispensersDetailRequest.PageNumber = 1;
+                var dispensers = await _mediator.Send(new GetDispensersDetailQuery(dispensersDetailRequest));
+                if (dispensers != null && dispensers.Count > 0)
+                {
+                    // var dispenserdetails = await response.Content.ReadAsStringAsync();
+                    // dispensersDetailResponse = JsonConvert.DeserializeObject<DispensersDetailResponse>(dispenserdetails);
                     dispensersDetailResponse.StatusCode = (int)HttpStatusCode.OK;
-                    if (dispensersDetailResponse.data.Count() > 0)
-                        dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_found;
-                    else
-                        dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                    dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_found;
+                    dispensersDetailResponse.data = dispensers;
+                    dispensersDetailResponse.paginationResponse = new PortalRestService.Core.PagingHelper.PaginationResponse
+                    {
+                        TotalCount = dispensers.TotalCount,
+                        PageSize = dispensers.PageSize,
+                        CurrentPage = dispensers.CurrentPage,
+                        TotalPages = dispensers.TotalPages,
+                        HasNext = dispensers.HasNext,
+                        HasPrevious = dispensers.HasPrevious
+                    };
+                    // if (dispensersDetailResponse.data.Count() > 0)
+                    //     dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_found;
+                    // else
+                    //     dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_not_found;
                 }
                 else
-                { 
+                {
+                    dispensersDetailResponse.StatusCode = (int)HttpStatusCode.OK;
                     dispensersDetailResponse.StatusMessage = RespnoseMessage.Record_not_found;
-                }                
+                }
             }
             catch (Exception ex)
             {
@@ -257,9 +273,9 @@ namespace RestService.Assets.Controllers
             ChargeBoxIDListResponse QueryResponse = new ChargeBoxIDListResponse();
             List<CommandList> lin = new List<CommandList>();
             _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-            QueryResponse = await _mediator.Send(new GetChargeBoxIDQuery());         
+            QueryResponse = await _mediator.Send(new GetChargeBoxIDQuery());
             return QueryResponse;
         }
-        
+
     }
 }

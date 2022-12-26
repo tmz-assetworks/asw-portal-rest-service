@@ -6,6 +6,7 @@ namespace PortalRestService.Core.Responses
     {
         public int Id { get; set; }
         public int LocationAddressId { get; set; }
+        public Location Location { get; set; }
         public LocationAddress LocationAddress { get; set; }
         public int LocationStatusId { get; set; }
         public LocationStatus LocationStatus { get; set; }
@@ -32,6 +33,7 @@ namespace PortalRestService.Core.Responses
         public string FuelProtectType { get; set; }
         public string TimeZone { get; set; }
         public List<LocationSchedule> LocationSchedule { get; set; }
+        public List<OperatorUserMapper>? OperatorUserMapper { get; set; }
     }
 
     public class GetLocatinByIdResponse
@@ -39,6 +41,7 @@ namespace PortalRestService.Core.Responses
         public int StatusCode { get; set; }
         public string StatusMessage { get; set; }
         public Data data { get; set; }
+
     }
     public class OperatorAlertRequest : QueryStringParameters
     {
@@ -90,6 +93,10 @@ namespace PortalRestService.Core.Responses
 
     public class AllLocationQueryResponse
     {
+        public AllLocationQueryResponse()
+        {
+            data = new List<LocationData>();
+        }
         public int StatusCode { get; set; }
         public string StatusMessage { get; set; }
 
@@ -235,10 +242,10 @@ namespace PortalRestService.Core.Responses
         public string LandlineNumber { get; set; }
 
 
-        public string Latitude { get; set; }
+        public double Latitude { get; set; }
 
 
-        public string Longitude { get; set; }
+        public double Longitude { get; set; }
 
         public string ModifiedBy { get; set; }
 
@@ -499,14 +506,14 @@ namespace PortalRestService.Core.Responses
         public long LocationId { get; set; }
         public string LocationName { get; set; }
         public string ChargeBoxId { get; set; }
-        public string ChargingStatus { get; set; }
-        public DateTime? StartTime { get; set; }
-        public DateTime? EndTime { get; set; }
+        public string? ChargingStatus { get; set; }
+        public string? StartTime { get; set; }
+        public string? EndTime { get; set; }
         public int? Startsoc { get; set; }
         public int? EndSoc { get; set; }
         public string? ReasoneForStop { get; set; }
-        public int? Startmetervalue { get; set; }
-        public int? Endmetervalue { get; set; }
+        public string? Startmetervalue { get; set; }
+        public string? Endmetervalue { get; set; }
     }
 
     public class ChartDetailsListResponse
@@ -598,5 +605,11 @@ namespace PortalRestService.Core.Responses
 
         public int Id { get; set; }
         public string flag { get; set; }
+    }
+    public class LocationRequest
+    {
+
+        public int Id { get; set; }
+
     }
 }

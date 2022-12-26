@@ -23,3 +23,6 @@
 
 
 
+/DashboardService/PortalRestService.Api/logs
+/DashboardService/PortalRestService.ApiTests/bin
+/DashboardService/PortalRestService.ApiTests/obj
