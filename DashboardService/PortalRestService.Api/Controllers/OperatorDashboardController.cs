@@ -51,59 +51,39 @@ namespace PortalRestService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<AllLocationQueryResponse>> GetAllLocation()
         {
+           
             AllLocationQueryResponse alLocationQueryResponse = new AllLocationQueryResponse();
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-                string callingMethod = APIConstant.GetAllLocationName;
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetAuthAPIAsync(callingMethod,_tokenBase.acces_token);
+                alLocationQueryResponse = await _mediator.Send(new GetGetAllLocationQuery());
                 
-                if (response.IsSuccessStatusCode)
-                {
-                    var locationinfo = await response.Content.ReadAsStringAsync();
-                    return Ok(JsonConvert.DeserializeObject<AllLocationQueryResponse>(locationinfo));
-                }
-               
-                return alLocationQueryResponse == null ? NotFound() : this.Ok(alLocationQueryResponse);
             }
             catch (Exception ex)
             {
                 Log.Information("error occurred :" + ex.Message);
                 alLocationQueryResponse.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 alLocationQueryResponse.StatusCode = RespnoseCode.Bad_Request;
-                return this.BadRequest($"Exception: {ex.Message}");
+               
             }
-
-
+            return alLocationQueryResponse;
         }
 
         [HttpPost]
         [Route("GetLocationsDispenserformap")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<LocationsDispenserformapResponce>> GetLocationsDispenserformap([FromBody] LocationOpratorRequest request)
+        public async Task<ActionResult<LocationsDispenserpResponce>> GetLocationsDispenserformap([FromBody] LocationOpratorRequest request)
         {
-            LocationsDispenserformapResponce? locationsDispenserformapResponce = new LocationsDispenserformapResponce();
+            LocationsDispenserpResponce? locationsDispenserformapResponce = new LocationsDispenserpResponce();
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-                string callingMethod = APIConstant.Getlocationsdispenserformap;
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(request.LocationIds), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var locationdispenserformapinfo = await response.Content.ReadAsStringAsync();
-                    locationsDispenserformapResponce = JsonConvert.DeserializeObject<LocationsDispenserformapResponce>(locationdispenserformapinfo);
-
-                }
-                
-                return locationsDispenserformapResponce == null ? NotFound() : this.Ok(locationsDispenserformapResponce);
+                var result = await _mediator.Send(new LocationOpratorQuery(request));
+                return result == null ? NotFound() : this.Ok(result);
             }
             catch (Exception ex)
             {
                 Log.Information("error occurred :" + ex.Message);
-                locationsDispenserformapResponce.StatusMessage = RespnoseMessage.Opeartion_Failed;
-                locationsDispenserformapResponce.StatusCode = RespnoseCode.Bad_Request;
                 return this.BadRequest($"Exception: {ex.Message}");
             }
         }
@@ -125,25 +105,51 @@ namespace PortalRestService.Api.Controllers
                 
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 string callingMethod = APIConstant.GetLocationsDispenserDetails;
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
+                //StringContent httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+                //HttpResponseMessage response = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethod, httpContent,_tokenBase.acces_token);   // Returens Data with Pagination
+                if (request.PageSize == 0) request.PageSize = 10;
+                if (request.PageNumber == 0) request.PageNumber = 1;
+                var location = await _mediator.Send(new GetLocationsDispenserDetailsQuery(request));
 
-                if (response.IsSuccessStatusCode)
+                // Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+                if (location != null && location.Count > 0)
                 {
+                    locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_found;
+                    locationsDispenserDetailsResponce.data = location;
+                    locationsDispenserDetailsResponce.paginationResponse = new Core.PagingHelper.PaginationResponse
+                    {
+                        TotalCount = location.TotalCount,
+                        PageSize = location.PageSize,
+                        CurrentPage = location.CurrentPage,
+                        TotalPages = location.TotalPages,
+                        HasNext = location.HasNext,
+                        HasPrevious = location.HasPrevious
+                    };
                     locationsDispenserDetailsResponce.StatusCode = (int)HttpStatusCode.OK;
-
-                    var locationdispenserdetailsinfo = await response.Content.ReadAsStringAsync();
-                    locationsDispenserDetailsResponce = JsonConvert.DeserializeObject<LocationsDispenserDetailsResponce>(locationdispenserdetailsinfo);
-                    if (locationsDispenserDetailsResponce.data.Count() > 0)
-                        locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_found;
-                    else locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_not_found;
-
                 }
                 else
                 {
-                    locationsDispenserDetailsResponce.StatusCode = (int)HttpStatusCode.OK;
                     locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_not_found;
+                    locationsDispenserDetailsResponce.data = null;
+                    locationsDispenserDetailsResponce.paginationResponse = new PaginationResponse();
                 }
+
+                //if (response.IsSuccessStatusCode)
+                //{
+                //    locationsDispenserDetailsResponce.StatusCode = (int)HttpStatusCode.OK;
+
+                //    var locationdispenserdetailsinfo = await response.Content.ReadAsStringAsync();
+                //    locationsDispenserDetailsResponce = JsonConvert.DeserializeObject<LocationsDispenserDetailsResponce>(locationdispenserdetailsinfo);
+                //    if (locationsDispenserDetailsResponce.data.Count() > 0)
+                //        locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_found;
+                //    else locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_not_found;
+
+                //}
+                //else
+                //{
+                //    locationsDispenserDetailsResponce.StatusCode = (int)HttpStatusCode.OK;
+                //    locationsDispenserDetailsResponce.StatusMessage = RespnoseMessage.Record_not_found;
+                //}
                 
             }
             catch (Exception ex)

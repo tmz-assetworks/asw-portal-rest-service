@@ -71,6 +71,10 @@ namespace PortalRestService.Helper
             {
                 return ColorsEnum.ChargingSessionsColor.Charging.GetEnumDisplayName();
             }
+            if (Status_Indication.ChargingSessionStatus.Aborted.GetEnumDisplayName().ToLower() == value.ToLower())
+            {
+                return ColorsEnum.ChargingSessionsColor.Aborted.GetEnumDisplayName();
+            }
             return "";
         }
         public static string GetColorCodesByCharger(this string value)

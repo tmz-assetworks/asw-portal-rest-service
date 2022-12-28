@@ -53,7 +53,7 @@ namespace PortalRestService.Core.Responses
         public string stationName { get; set; }
         public int vendorId { get; set; }
         public Vendor vendor { get; set; }
-        public List<Port> Ports { get; set; }
+        public List<PortDTO> Ports { get; set; }
         public DateTime InstallationDate { get; set; }
         public List<ChargerStatus> ChargerStatuses { get; set; }
     }
@@ -70,7 +70,7 @@ namespace PortalRestService.Core.Responses
         public DateTime? ReservationExpiryDate { get; set; }
         public string IdTag { get; set; }
     }
-    public class Port
+    public class PortDTO
     {
         public long Id { get; set; }
         public long DispenserId { get; set; }
@@ -87,6 +87,18 @@ namespace PortalRestService.Core.Responses
         public string PortName { get; set; }
         public long Power { get; set; }
         public long ConnectorType { get; set; }
+        public ChargerType ChargerType { get; set; }
+        public long ChargerTypeId { get; set; }
+    }
+    public class ChargerType
+    {
+        public long Id { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public bool IsActive { get; set; }
+        public string ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
+        public string ChargerTypeName { get; set; }
     }
 
     public class Connector
@@ -151,12 +163,17 @@ namespace PortalRestService.Core.Responses
     public class Location
     {
         public int Id { get; set; }
-        public int LocationAddressId { get; set; }
-        public LocationAddress LocationAddress { get; set; }
-        public int LocationStatusId { get; set; }
-        public LocationStatus LocationStatus { get; set; }
+        public string DepartmentName { get; set; }
+        public string FuelProtectType { get; set; }
+        public string AlternateMobileNumber { get; set; }
+        public string Email { get; set; }
+        
+        public LocationAddress? LocationAddress { get; set; }
+       
+        public LocationStatus? LocationStatus { get; set; }
         public string LocationId { get; set; }
         public string ContactPersonName { get; set; }
+        public string ContactPersonNumber { get; set; }
         public string GlobalTax { get; set; }
         public string TotalCapacity { get; set; }
         public string UtilityService { get; set; }
@@ -173,8 +190,8 @@ namespace PortalRestService.Core.Responses
         public int SubNetworkId { get; set; }
         public string SubNetworkName { get; set; }
         public string TimeZone { get; set; }
-        public List<LocationSchedule> LocationSchedule { get; set; }
-
+        public List<LocationSchedule>? LocationSchedule { get; set; }
+        public List<OperatorUserMapper>? OperatorUserMapper { get; set; }
     }
     public class TotalLocationAndChargerResponse
     {
@@ -238,5 +255,43 @@ namespace PortalRestService.Core.Responses
         public string ContactNo { get; set; }
         public string ContactName { get; set; }
         public DateTime CreatedOn { get; set; }
+    }
+    public class LocationsDispenserpResponce
+    {
+        public LocationsDispenserpResponce()
+        {
+            data = new List<LocationsDispenser>();
+        }
+        public int StatusCode { get; set; }
+        public string StatusMessage { get; set; }
+        public List<LocationsDispenser> data { get; set; }
+    }
+    public class DispenserByLocations
+    {
+        public long DispenserId { get; set; }
+        public long LocationId { get; set; }
+
+        public string LocationName { get; set; }
+        // public string DispenserName { get; set; }
+        public string ContactPersonName { get; set; }
+
+        public string AddressLine1 { get; set; }
+
+        public string LocationStatusName { get; set; }
+
+        public long LocationStatusId { get; set; }
+
+        public string ChargeBoxId { get; set; }
+
+        public string SerialNumber { get; set; }
+
+        public string DispenserMake { get; set; }
+        public string ProtocolName { get; set; }
+        public string ChargerStatus { get; set; }
+        public string DispenserModel { get; set; }
+        public string ConnectorType { get; set; }
+        public string NoofPort { get; set; }
+
+
     }
 }

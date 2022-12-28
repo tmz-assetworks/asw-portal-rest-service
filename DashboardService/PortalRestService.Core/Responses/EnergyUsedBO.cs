@@ -10,8 +10,8 @@ namespace PortalRestService.Core.Entities.Charger
     public class EnergyUsedChartBO
     {
 
-        public int StartMeterValue { get; set; }
-        public int EndMeterValue { get; set; }
+        public double StartMeterValue { get; set; }
+        public double EndMeterValue { get; set; }
         public string chargeboxId { get; set; }
         public string? svalue { get; set; }
         public string? times { get; set; }

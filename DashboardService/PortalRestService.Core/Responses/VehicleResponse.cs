@@ -19,7 +19,7 @@ namespace PortalRestService.Core.Responses
     {
         public string Active { get; set; }
         public string Inactive { get; set; }
-        public List<Vehicle> data { get; set; }
+        public PagedList<Vehicle> data { get; set; }
         public PaginationResponse paginationResponse { get; set; }
 
     }
@@ -46,6 +46,10 @@ namespace PortalRestService.Core.Responses
         public string VehicleMacAddress { get; set; }
         public string RFIDCardAssigned { get; set; }
         public bool Status { get; set; }
+        public bool IsActive { get; set; }
+        public string? UnitNumber { get; set; }
+        public virtual ICollection<VehicleRFID> vehicleRFID { get; set; }
+        public List<ApplicableSubscriptionPlanDTO> applicableSubscriptionPlans { get; set; }
     }
 
     public class AllVehicle

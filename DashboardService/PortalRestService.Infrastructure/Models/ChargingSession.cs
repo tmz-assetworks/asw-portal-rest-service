@@ -6,7 +6,7 @@ namespace PortalRestService.Core.Models
     public partial class ChargingSession
     {
         public int Id { get; set; }
-        public int ChargerId { get; set; }
+        public int? ChargerId { get; set; }
         public int? ChargingCost { get; set; }
         public string? ChargingStatus { get; set; }
         public int? ConnectorId { get; set; }

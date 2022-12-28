@@ -34,6 +34,7 @@ namespace RestService.Assets.Controllers
         /// </summary>
         /// <param name="rfIdReaderRequest"></param>
         /// <returns></returns>
+        //not in use--abhishek
         [HttpPost("GetAllRfIdReaders")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<RfIdReaderResponse>> GetAllRfIdReaders([FromBody] RfIdReaderRequest rfIdReaderRequest)
@@ -78,6 +79,7 @@ namespace RestService.Assets.Controllers
         /// </summary>
         /// <param name="Id"></param>
         /// <returns></returns>
+         //not in use--abhishek
         [HttpGet("GetRfIdReaderById/{Id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<RfIdReaderDetailsResponse>> GetRfIdReaderById(long Id)

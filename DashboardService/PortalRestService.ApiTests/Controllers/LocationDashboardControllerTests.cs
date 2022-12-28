@@ -138,7 +138,7 @@ namespace RestService.Assets.Controllers.Tests
                 StatusCode = 1,
                 StatusMessage = "Ok",
                 data = new Data()
-                {
+            {
                     LocationName = "Noida",
                     ContactPersonName = "John",
                     CreatedBy = "Adam",
@@ -150,7 +150,7 @@ namespace RestService.Assets.Controllers.Tests
                     Description = "Desc",
                     GlobalTax = "100",
                     ModifiedOn = DateTime.Now,
-                    LocationAddressId = 1,
+                   // LocationAddressId = 1,
                     LocationNumber = 1,
                     LocationSchedule = new List<LocationSchedule>()
                     {
@@ -178,7 +178,7 @@ namespace RestService.Assets.Controllers.Tests
                         CreatedOn = DateTime.Now,
                         ModifiedOn = DateTime.Now,
                     },
-                    LocationStatusId = 1,
+                    //LocationStatusId = 1,
                     FuelProtectType = "FullProtect",
                     TimeZone = "UTC",
                     TotalCapacity = "100",
@@ -197,8 +197,8 @@ namespace RestService.Assets.Controllers.Tests
                         CountryName = "India",
                         CreatedOn = DateTime.Now,
                         LandlineNumber = "1020",
-                        Latitude = "10",
-                        Longitude = "20",
+                        Latitude = 10,
+                        Longitude = 20,
                         ModifiedOn = DateTime.Now,
                         PinCode = "121222",
                         StateId = 1,

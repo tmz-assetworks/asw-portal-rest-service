@@ -5,11 +5,28 @@ namespace PortalRestService.Core.Models
 {
     public partial class Connector
     {
-        public int Id { get; set; }
-        public int ChargerId { get; set; }
-        public int ConnectorId { get; set; }
-        public bool? Isactive { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public DateTime? ModifiedAt { get; set; }
+     
+
+       
+        public long Id { get; set; }
+
+       
+        public string CreatedBy { get; set; }
+
+       
+        public string ConnectorType { get; set; }
+
+     
+        public string Color { get; set; }
+
+       
+        public DateTime CreatedOn { get; set; }
+
+       
+        public string ModifiedBy { get; set; }
+
+
+       
+        public DateTime ModifiedOn { get; set; }
     }
 }

@@ -53,22 +53,22 @@ namespace PortalRestService.Api.Controllers.Tests
             Assert.IsNotNull(allLocationResponse);
         }
 
-        [TestMethod()]
-        public void GetLocationsDispenserformapTest()
-        {
-            // Arrange 
-            // Act
-            LocationOpratorRequest locationDispenserRequest = new LocationOpratorRequest();
-            locationDispenserRequest.LocationIds = new List<int> { };
-            locationDispenserRequest.operatorid = "1";
-            var actionResult = _operatorDashboardController.GetLocationsDispenserformap(locationDispenserRequest).Result as ActionResult<LocationsDispenserformapResponce>;
+        //[TestMethod()]
+        //public void GetLocationsDispenserformapTest()
+        //{
+        //    // Arrange 
+        //    // Act
+        //    LocationOpratorRequest locationDispenserRequest = new LocationOpratorRequest();
+        //    locationDispenserRequest.LocationIds = new List<int> { };
+        //    locationDispenserRequest.operatorid = "1";
+        //    var actionResult = _operatorDashboardController.GetLocationsDispenserformap(locationDispenserRequest).Result as ActionResult<LocationsDispenserformapResponce>;
 
-            // Assert
-            Assert.IsNotNull(actionResult);
-            Assert.AreEqual(200, ((actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as LocationsDispenserformapResponce).StatusCode);
-            var allLocationResponse = ((actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as LocationsDispenserformapResponce).StatusCode;
-            Assert.IsNotNull(allLocationResponse);
-        }
+        //    // Assert
+        //    Assert.IsNotNull(actionResult);
+        //    Assert.AreEqual(200, ((actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as LocationsDispenserformapResponce).StatusCode);
+        //    var allLocationResponse = ((actionResult.Result as Microsoft.AspNetCore.Mvc.OkObjectResult).Value as LocationsDispenserformapResponce).StatusCode;
+        //    Assert.IsNotNull(allLocationResponse);
+        //}
 
         [TestMethod()]
         public void GetLocationsDispenserDetailsTest()

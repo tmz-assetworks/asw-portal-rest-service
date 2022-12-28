@@ -1,0 +1,80 @@
+﻿using Microsoft.Extensions.Configuration;
+using PortalRestService.Core.ConstantResponse;
+using PortalRestService.Core.Models;
+using PortalRestService.Core.Repositories;
+using PortalRestService.Core.Responses;
+using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Repositories.Repository;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PortalRestService.Infrastructure.Repositories
+{
+    public class LocationsDispenserRepository : OcppRepository<LocationsDispenserpResponce>, ILocationsDispenserRepository
+    {
+        TokenBase _tokenBase;
+        private readonly IConfiguration _configuration;
+        private readonly string OccpIp = String.Empty;
+        public LocationsDispenserRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token, IConfiguration configuration) : base(dbContext)
+        {
+            _tokenBase = token;
+            this._configuration = configuration;
+            OccpIp = this._configuration.GetSection("OccpIp").GetSection("ip").Value;
+        }
+
+        public async Task<LocationsDispenserpResponce> GetLocationsDispenserformap(LocationOpratorRequest request)
+        {
+           // LocationsDispenserformapResponce obj = new LocationsDispenserformapResponce();
+            LocationsDispenserpResponce query = new LocationsDispenserpResponce();
+            DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+
+            try
+            {
+               
+                query.data = (from Charger in  request.ChargeBoxId.Count() > 0 ? _dbContext.Charger.Where(o => request.ChargeBoxId.Contains(o.ChargeBoxId)) : _dbContext.Charger
+                                                         join location in request.LocationIds.Count() > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)(x.Id))) : _dbContext.Locations on Charger.LocationId equals location.Id
+                                                         join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                                                         join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
+                                                         join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                                         on location.Id equals userMap.LocationId
+                                                         select new LocationsDispenser
+                                                         {
+                                                             CityName = location.LocationAddress.CityName,
+                                                             CountryName = location.LocationAddress.CountryName,
+                                                             StateName = location.LocationAddress.StateName,
+                                                             locationId = location.Id,
+                                                             Latitude = location.LocationAddress.Latitude.ToString(),
+                                                             Longitude = location.LocationAddress.Longitude.ToString(),
+                                                             LocationName = location.LocationName,
+                                                             DispenserId = Charger.Id,
+                                                             ChargeBoxid = Charger.ChargeBoxId,
+                                                             status = Charger.ChargerStatuses == null || Charger.ChargerStatuses.Count == 0 ? "Offline" :
+                                Charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
+                              .Replace("finishing", "Busy").Replace("preparing", "Busy"),
+
+                                                         }).ToList<LocationsDispenser>();
+
+               
+
+
+                if (query.data.Count > 0)
+                    query.StatusMessage = RespnoseMessage.Record_found;
+                else
+                    query.StatusMessage = RespnoseMessage.Record_not_found;
+                query.StatusCode = 200;
+               
+            }
+            catch (Exception ex)
+            {
+                query.StatusMessage = RespnoseMessage.Opeartion_Failed;
+                query.StatusCode = RespnoseCode.Bad_Request;
+                query.data = new List<LocationsDispenser>();
+            }
+            return query;
+        }
+    }
+}

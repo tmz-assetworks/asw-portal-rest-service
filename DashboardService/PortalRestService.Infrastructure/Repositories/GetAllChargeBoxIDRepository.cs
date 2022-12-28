@@ -4,6 +4,7 @@ using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -24,39 +25,33 @@ namespace PortalRestService.Infrastructure.Repositories
         public async Task<ChargeBoxIDListResponse> GetAllChargeBoxID()
         {
             ChargeBoxIDListResponse re = new ChargeBoxIDListResponse();
-            DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
-            string callingMethoddispenser = APIConstant.GetDispenserByLocations;
-            List<int> myList = new List<int>();
-            string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
-            {
-                operatorid = "",
-                LocationIds = myList
-            });
-            StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-            HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
-
-            var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-            ChargeBoxIDList chargeBoxIDList = new ChargeBoxIDList();
             try
-            {
-                dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
-                if (dispenserByLocationIdResponse.data.Count > 0)
-                {
-                    re.data = (from v in dispenserByLocationIdResponse.data
+            {               
+                    re.data = (from  charger in _dbContext.Charger 
+                               join location in _dbContext.Locations on charger.LocationId equals location.Id
+                               join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                               join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
+                               join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                               on location.Id equals userMap.LocationId
                                select new ChargeBoxIDList
                                {
-                                   id = v.LocationId,
-                                   chargeboxid = v.ChargeBoxId
+                                   id = charger.Id,
+                                   chargeboxid = charger.ChargeBoxId
 
                                }).Distinct().OrderByDescending(a => a.chargeboxid).ToList<ChargeBoxIDList>();
+
+                    
+                
+            if (re.data.Count > 0)
+            {
                     re.StatusCode = 200;
                     re.StatusMessage = RespnoseMessage.Record_found;
                 }
-                else
-                {
-                    re.StatusCode = 200;
-                    re.StatusMessage = RespnoseMessage.Record_not_found;
-                }
+            else
+            {
+                re.StatusCode = 200;
+                re.StatusMessage = RespnoseMessage.Record_not_found;
+            }
             }
             catch (Exception ex)
             {

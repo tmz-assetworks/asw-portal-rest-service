@@ -57,7 +57,10 @@ namespace PortalRestService.Application
             [Display(Name = "Completed")]
             Completed = 3,
             [Display(Name = "Charging")]
-            Charging = 4
+            Charging = 4,
+            [Display(Name = "Aborted")]
+            Aborted = 5
+
         }
 
 

@@ -20,6 +20,7 @@ namespace PortalRestService.Core.Responses
     }
     public class VehicleByIdData
     {
+        public long Id { get; set; }
         public string VIN { get; set; }
         public string department { get; set; }
 
@@ -34,13 +35,13 @@ namespace PortalRestService.Core.Responses
         public long ModelYear { get; set; }
 
         public string ModelName { get; set; }
-        public bool Status { get; set; }       
-
-       public string rfId { get; set; }
-        public List<ApplicableSubscriptionPlan> applicableSubscriptionPlans { get; set; }
+        public bool Status { get; set; }
+        public string? UnitNumber { get; set; }
+        public string rfId { get; set; }
+        public List<ApplicableSubscriptionPlanDTO> applicableSubscriptionPlans { get; set; }
 
     }
-    public class ApplicableSubscriptionPlan
+    public class ApplicableSubscriptionPlanDTO
     {
         public string SubscriptionPlanName { get; set; }
         public string Type { get; set; }
@@ -74,7 +75,7 @@ namespace PortalRestService.Core.Responses
         public SubscriptionPlan SubscriptionPlan { get; set; }
         public  int vehicleRFIDid { get; set; }
         public List<VehicleRFID> vehicleRFID { get; set; }
-        public List<ApplicableSubscriptionPlan> applicableSubscriptionPlans { get; set; }
+        public List<ApplicableSubscriptionPlanDTO> applicableSubscriptionPlans { get; set; }
     }
 
     public class VehicleMake

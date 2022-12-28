@@ -176,10 +176,10 @@ namespace PortalRestService.Core.Responses
         public int? ConnectorId { get; set; }
         public string DeviceId { get; set; }
         public string ReasonForStop { get; set; }
-        public int? StartMeterValue { get; set; }
+        public double? StartMeterValue { get; set; }
         public int? StartSoc { get; set; }
         public DateTime? StartTime { get; set; }
-        public int? EndMeterValue { get; set; }
+        public double? EndMeterValue { get; set; }
         public int? EndSoc { get; set; }
         public DateTime? EndTime { get; set; }
         public DateTime? CreatedAt { get; set; }
@@ -241,6 +241,7 @@ namespace PortalRestService.Core.Responses
         public List<string> ChargerBoxIds { get; set; }
 
     }
+
     public class EventLogRequestBO
     {
         public long Id { get; set; }

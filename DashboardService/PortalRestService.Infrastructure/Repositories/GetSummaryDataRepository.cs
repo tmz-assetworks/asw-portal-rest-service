@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using PortalRestService.Core.ConstantResponse;
@@ -6,12 +7,15 @@ using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.EnumData;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -125,45 +129,68 @@ namespace PortalRestService.Infrastructure.Repositories
                 }
 
                 // Type = "Revenue";
+
                 var todayChargingsession = (from data in objChargingSession.Where(c => c.CreatedAt != null && c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year) select data).ToList();       // AS-701
 
-                double startChargingMeter = (double)(from data in objChargingSession where data.StartMeterValue != null select data.StartMeterValue.Value).Sum();
-                double endChargingMeter = (double)(from data in objChargingSession where data.EndMeterValue != null select data.EndMeterValue.Value).Sum();
+                double startChargingMeter = Math.Round((double)(from data in objChargingSession where data.StartMeterValue != null select data.StartMeterValue.Value).Sum() / 1000, 2);
+                double endChargingMeter = Math.Round((double)(from data in objChargingSession where data.EndMeterValue != null select data.EndMeterValue.Value).Sum() / 1000, 2);
+
+                //double startChargingMeter =(double)(from data in objChargingSession where data.StartMeterValue != null select data.StartMeterValue.Value).Sum();
+                //double endChargingMeter = (double)(from data in objChargingSession where data.EndMeterValue != null select data.EndMeterValue.Value).Sum();
+
 
                 double billableChargingMeter = endChargingMeter - startChargingMeter;
                 if (billableChargingMeter < 0)
                     billableChargingMeter = 0;
-                double todayStartChargingMeter = (from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum();    // AS-701
-                double todayEndChargingMeter = (from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.EndMeterValue != null) select data.EndMeterValue.Value).Sum();        // AS-701
+
+                double todayStartChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum()/1000,2);    // AS-701
+                double todayEndChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.EndMeterValue != null) select data.EndMeterValue.Value).Sum() / 1000, 2);        // AS-701
+                //double todayStartChargingMeter = (double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum();    // AS-701
+                //double todayEndChargingMeter = (double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.EndMeterValue != null) select data.EndMeterValue.Value).Sum();        // AS-701
+
+              
+
+
                 if (todayEndChargingMeter < 0)
                     todayEndChargingMeter = 0;
                 double todayBillableChargingMeter = todayEndChargingMeter - todayStartChargingMeter;
 
                 int chargingSessionGroupBydateCount = objChargingSession.Where(c => c.CreatedAt != null).GroupBy(s => s.CreatedAt.Value.Date).ToList().Count;
                 //TotalRevenue
-                Revenue totalRevenue = new Revenue();
-                totalRevenue.Key = EnumControlTexts.DisplayingLabels.TotalRevenue.GetEnumDisplayName();
-                totalRevenue.Value = string.Format("{0:#,0}", Math.Round(billableChargingMeter * perkwtRate, 2));
-
+                ///
                 summaryDetail.Revenue = new List<Revenue>();
+                var today = DateTime.Today;
+                var thismonthStart=new DateTime(today.Year ,today.Month,1);
+                Revenue totalRevenue = new Revenue(); 
+                totalRevenue.Key = EnumControlTexts.DisplayingLabels.TotalRevenue.GetEnumDisplayName();
+                var totalRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Sum(o => o.trans.TotalAmount);
+                totalRevenue.Value= string.Format("{0:#,0}", totalRevenueValue.ToString());
                 summaryDetail.Revenue.Add(totalRevenue);
 
                 // Daily Revenue
                 Revenue dailyRevenue = new Revenue();
                 dailyRevenue.Key = EnumControlTexts.DisplayingLabels.DailyRevenue.GetEnumDisplayName();
-                if (billableChargingMeter > 0)
-                    dailyRevenue.Value = string.Format("{0:#,0}", Math.Round((billableChargingMeter / chargingSessionGroupBydateCount) * perkwtRate)); //Auther:Pradeep , Date:27/07/2022,  AS-701
-                else dailyRevenue.Value = "0";
+                if (totalRevenue.Value != "0")
+                {
+                    DateTime eaeliestDate = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Min(o => o.trans.CreatedOn);
+                    DateTime currentdateTime=DateTime.Now;
+                    int totalNumberofDays = (currentdateTime - eaeliestDate).Days + 1;
+                    decimal dailyAverage = Math.Round(totalRevenueValue / totalNumberofDays,2);
+                    dailyRevenue.Value = string.Format("{0:#,0}",dailyAverage.ToString());
 
+                }
+                else
+                {
+                    dailyRevenue.Value = "0";
+
+                }
                 summaryDetail.Revenue.Add(dailyRevenue);
 
                 // Today 's Revenue
                 Revenue todaysRevenue = new Revenue();
                 todaysRevenue.Key = EnumControlTexts.DisplayingLabels.TodaysRevenue.GetEnumDisplayName();
-                if (todayChargingsession.Count > 0)
-                    todaysRevenue.Value = string.Format("{0:#,0}", Math.Round(todayBillableChargingMeter * perkwtRate, 2)); ///(double)(from data in objChargingSession.Where(c => c.CreatedAt == DateTime.Now) select data.EndMeterValue.Value).Sum();   //objChargingSession.GroupBy(c => c.EndMeterValue).Sum();  //.Sum(r => r.EndMeterValue);
-                else todaysRevenue.Value = "0";
-
+               var todaysRevenueValue =  _dbContext.Users.Where(u=> u.ObjectId==_tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id,opmapper=> opmapper.UserId,(user, opmapper)=>new { user, opmapper }).Join(_dbContext.PaymentTransaction,userlocation=> userlocation.opmapper.LocationId,trans=>trans.LocationId,(userlocation, trans)=>new { userlocation, trans }).Where(o=> o.trans.CreatedOn>=today).Sum(o => o.trans.TotalAmount);
+                todaysRevenue.Value = string.Format("{0:#,0}", todaysRevenueValue.ToString());
                 summaryDetail.Revenue.Add(todaysRevenue);
 
                 //2  EnergyUsed

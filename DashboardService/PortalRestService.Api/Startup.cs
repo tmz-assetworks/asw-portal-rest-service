@@ -40,32 +40,27 @@ namespace RestService.Assets
                     {"AzureAd:audience",Environment.GetEnvironmentVariable("AZUREAD_AUD")},
                 };
             IConfiguration configurationENV = new ConfigurationBuilder().AddInMemoryCollection(myConfiguration).Build();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-             .AddMicrosoftIdentityWebApi(configurationENV.GetSection("AzureAd"));
-            //.AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
-            //services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            //.AddJwtBearer(options =>
-            //{
-            //    options.TokenValidationParameters = new TokenValidationParameters
-            //    {
-            //        ValidateIssuer = true,
-            //        ValidateAudience = true,
-            //        ValidateLifetime = true,
-            //        ValidateIssuerSigningKey = true,
-            //        ValidIssuer = Configuration["Jwt:Issuer"],
-            //        ValidAudience = Configuration["Jwt:Audience"],
-            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
-            //    };
-            //});
-            services.AddControllers();
             var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
             var dbName = Environment.GetEnvironmentVariable("DB_NAME");
-            var dbPassword = Environment.GetEnvironmentVariable("DB_SA_PASSWORD");
+            var dbPassword = Environment.GetEnvironmentVariable("DB_USER_PASSWORD");
             var dbUserName = Environment.GetEnvironmentVariable("DB_LOGIN_USERNAME");
             var connectionString = $"Data Source={dbHost};Initial Catalog={dbName};User ID={dbUserName};Password={dbPassword}";
+            if (dbHost == null)
+            {
+                connectionString = Configuration.GetConnectionString("AssetsDB");
+                configurationENV = new ConfigurationBuilder().AddInMemoryCollection(myConfiguration).Build();
+                services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
+                services.AddControllers();
+                Environment.SetEnvironmentVariable("ASSETAPI", Configuration["ApplicationUrl:AssetBaseUrl"].ToString());
+            }
+            else
+            {
+                services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApi(configurationENV.GetSection("AzureAd"));
+                services.AddControllers();
+            }
             services.AddDbContext<PortalRestService.Infrastructure.DBContext.ocpp_dbContext>(
-
-            //m => m.UseSqlServer(Configuration.GetConnectionString("OcppDB")), ServiceLifetime.Transient);
             m => m.UseSqlServer(connectionString), ServiceLifetime.Transient);
 
             services.AddCors();
@@ -121,6 +116,10 @@ namespace RestService.Assets
             services.AddTransient<IRfIdReaderRepository, RfIdReaderRepository>();
             services.AddTransient<IUpdateIsNotificationRepository, UpdateNotificationIsReadRepository>();
             services.AddTransient<INotificationRepository, NotificationRespository>();
+            services.AddTransient<ILocationsDispenserRepository, LocationsDispenserRepository>();
+            services.AddTransient<ILocationRepository, LocationRepository>();
+            services.AddTransient<IDispenserDetailRepository, DispensersDetailRepository>();
+            services.AddTransient<IGetLocationByIdRepository, GetLocationByIdRepository>();
             services.AddScoped<PortalRestService.Infrastructure.Helper.TokenBase>();
             services.AddHealthChecks()
                 .AddCheck<PortalHealthCheck>("example_health_check");

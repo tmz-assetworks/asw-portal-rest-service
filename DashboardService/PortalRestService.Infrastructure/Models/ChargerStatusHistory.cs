@@ -7,10 +7,10 @@ namespace PortalRestService.Core.Models
     {
         public int Id { get; set; }
         public int ChargerId { get; set; }
-        public string ChargerStatus { get; set; } = null!;
+        public string ChargerStatus { get; set; }
         public int? ConnectorId { get; set; }
-        public string? ConnectorStatus { get; set; }
-        public string Operation { get; set; } = null!;
-        public DateTime? CreatedAt { get; set; }
+        public string ConnectorStatus { get; set; }
+        public string Operation { get; set; }
+        public DateTime? CreatedOn { get; set; }
     }
 }

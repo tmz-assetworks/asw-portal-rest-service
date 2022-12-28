@@ -72,6 +72,8 @@ namespace PortalRestService.Infrastructure.EnumData
             Completed = 3,
             [Display(Name = "#0062A6")]
             Charging = 4,
+            [Display(Name = "#8962A6")]
+            Aborted = 5,
 
         }
         public enum ErrorsColor

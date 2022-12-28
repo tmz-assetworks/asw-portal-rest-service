@@ -5,6 +5,7 @@ using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -18,13 +19,13 @@ namespace PortalRestService.Infrastructure.Repositories
     {
         private IConfiguration Configuration;
         TokenBase _tokenBase;
-        public MilesAddedByLocationRepository(IConfiguration iConfig, Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token) : base(dbContext)
+        public MilesAddedByLocationRepository(IConfiguration iConfig, Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token) : base(dbContext)
         {
             Configuration = iConfig;
-            _tokenBase = token; 
+            _tokenBase = token;
         }
 
-        async Task<MilesAddedByLocationChartResponse> IMilesAddedByLocationQueryRepository.GetMilesAddedByLocation(List<int> location, string duration, string chargeBoxId)
+        async Task<MilesAddedByLocationChartResponse> IMilesAddedByLocationQueryRepository.GetMilesAddedByLocation(List<int> locations, string duration, string chargeBoxId)
         {
             List<MilesAddedByLocationResponse> finalon = null;
             MilesAddedByLocationChartResponse obj = new MilesAddedByLocationChartResponse();
@@ -33,19 +34,6 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
                     duration = "1";
-                string callingMethoddispenser = APIConstant.GetDispenserByLocations;
-                string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
-                {
-                    operatorid = "",
-                    LocationIds = location
-                });
-                StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent,_tokenBase.acces_token);
-
-                var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-
-                dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
                 string laveltype = "time";
                 TimeSpan interval = new TimeSpan(4, 0, 0);
                 if (duration == "7")
@@ -69,12 +57,16 @@ namespace PortalRestService.Infrastructure.Repositories
                 }
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
-                                                         join c in dispenserByLocationIdResponse.data.ToList<DispenserByLocation>()
-                                                         on s.ChargerId equals c.DispenserId
+                                                         join charger in _dbContext.Charger on s.ChargerId equals charger.Id
+                                                         join location in locations.Count > 0 ? _dbContext.Locations.Where(x => locations.Contains((int)(x.Id))) : _dbContext.Locations on charger.LocationId equals location.Id
+                                                         join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                                                         join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
+                                                         join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                                         on location.Id equals userMap.LocationId
                                                          select new ChargingSessionByLocationBO
                                                          {
                                                              Id = s.Id,
-                                                             ChargerId = s.ChargerId,
+                                                             ChargerId = (long)s.ChargerId,
                                                              StartMeterValue = s.StartMeterValue,
                                                              StartSoc = s.StartSoc,
                                                              StartTime = s.StartTime,
@@ -82,11 +74,11 @@ namespace PortalRestService.Infrastructure.Repositories
                                                              EndSoc = s.EndSoc,
                                                              EndTime = s.EndTime,
 
-                                                             LocationId = c.LocationId,
-                                                             LocationName = c.LocationName,
-                                                             LocationStatusName = c.LocationStatusName,
-                                                             LocationStatusId = c.LocationStatusId,
-                                                             ChargeBoxId = c.ChargeBoxId,
+                                                             LocationId = location.Id,
+                                                             LocationName = location.LocationName,
+                                                             LocationStatusName = Status.LocationStatusName,
+                                                             LocationStatusId = location.LocationStatusId,
+                                                             ChargeBoxId = charger.ChargeBoxId,
                                                              //times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
                                                              svalue = (s.StartTime.HasValue == true ?
                                                      laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
@@ -99,7 +91,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                                      laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") :
                                                      (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
 
-                                                             SerialNumber = c.SerialNumber,
+                                                             SerialNumber = "",
                                                          }).ToList<ChargingSessionByLocationBO>();
 
                 string fuleeffersiancy = this.Configuration.GetSection("Variable")["fuleeffersiancy"];
@@ -111,21 +103,28 @@ namespace PortalRestService.Infrastructure.Repositories
                         res = res.Where(f => f.ChargeBoxId == chargeBoxId).ToList();
                     }
                 }
-
-                finalon = res
+                if (res.Count <= 0)
+                {
+                    finalon = getstatus(duration);
+                }
+                else
+                {
+                    finalon = res
                 .GroupBy(x => new { x.times })
                 .Select(y => new MilesAddedByLocationResponse()
                 {
-                   // Times = y.Key.times.Length == 2 ? y.Key.times : "0" + y.Key.times,
+                    // Times = y.Key.times.Length == 2 ? y.Key.times : "0" + y.Key.times,
                     svalue = y.Max(f => f.svalue),
                     Times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
-                    RangeAdded = Math.Round((Convert.ToDouble(y.Sum(t => t.EndMeterValue)) - (Convert.ToDouble(y.Sum(t => t.StartMeterValue)) <= 0 ? 0 : Convert.ToDouble(y.Sum(t => t.StartMeterValue)))) / (100 * Convert.ToDouble(fuleeffersiancy)), 2)
+                    RangeAdded = Math.Round(((Convert.ToDouble(y.Sum(t => t.EndMeterValue)) - (Convert.ToDouble(y.Sum(t => t.StartMeterValue)) <= 0 ? 0 : Convert.ToDouble(y.Sum(t => t.StartMeterValue)))) / (100 * Convert.ToDouble(fuleeffersiancy)))/1000, 2)
 
                 }
                 ).OrderBy(t => t.svalue).ToList<MilesAddedByLocationResponse>();
+                }
+               
 
-               if(finalon.Count > 0)
-                obj.StatusMessage = RespnoseMessage.Record_found;
+                if (finalon.Count > 0)
+                    obj.StatusMessage = RespnoseMessage.Record_found;
                 else
                     obj.StatusMessage = RespnoseMessage.Record_not_found;
                 obj.StatusCode = 200;
@@ -138,6 +137,59 @@ namespace PortalRestService.Infrastructure.Repositories
                 obj.data = new List<MilesAddedByLocationResponse>();
             }
             return obj;
+        }
+        public List<MilesAddedByLocationResponse> getstatus(string duration)
+        {
+            List<MilesAddedByLocationResponse> chargingSessionByLocationBOs = new List<MilesAddedByLocationResponse>();
+
+            string laveltype = "time";
+            TimeSpan interval = new TimeSpan(4, 0, 0);
+            if (duration == "1")
+            {
+                duration = "1";
+                interval = new TimeSpan(4, 0, 0);
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = "04", svalue = "04", RangeAdded = 0 });
+
+
+            }
+            if (duration == "6")
+            {
+                duration = "6";
+                interval = new TimeSpan(24, 0, 0);
+                laveltype = "day";
+
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-1).ToString("dddd"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-2).ToString("dddd"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-3).ToString("dddd"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-4).ToString("dddd"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+
+            }
+            else
+            if (duration == "28")
+            {
+
+                interval = new TimeSpan(24 * 7, 0, 0);
+                laveltype = "date";
+
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-6).ToString("dd-MM-yyyy"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-12).ToString("dd-MM-yyyy"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-18).ToString("dd-MM-yyyy"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-18).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddDays(-24).ToString("dd-MM-yyyy"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddDays(-24).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+            }
+            else
+            if (duration == "90")
+            {
+                interval = new TimeSpan(24, 0, 0);
+                laveltype = "month";
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddMonths(-1).ToString("MMMM"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddMonths(-2).ToString("MMMM"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddMonths(-3).ToString("MMMM"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new MilesAddedByLocationResponse() { Times = DateTime.Now.AddMonths(-4).ToString("MMMM"), RangeAdded = 0, svalue = (new DateTime((DateTime.Now.AddMonths(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+
+
+            }
+            return chargingSessionByLocationBOs;
+
         }
     }
 }

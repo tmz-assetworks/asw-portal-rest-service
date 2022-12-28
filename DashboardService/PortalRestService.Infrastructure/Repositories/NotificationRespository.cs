@@ -45,34 +45,25 @@ namespace PortalRestService.Infrastructure.Repositories
                 operatorAlertRequest.LocationIds = new List<int>();
                 operatorAlertRequest.operatorId = "";
                 operatorAlertRequest.chargerBoxIds = new List<string>();
-                List<string> str = new List<string>();
-
-                string callingMethoddispenser = APIConstant.GetDispenserByLocations;
-                string dd = JsonConvert.SerializeObject(new LocationOpratorRequest()
-                {
-                    operatorid = operatorAlertRequest.operatorId,
-                    LocationIds = operatorAlertRequest.LocationIds
-                });
-                StringContent httpContent = new StringContent(dd, Encoding.UTF8, "application/json");
-                HttpResponseMessage responsedispenser = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethoddispenser, httpContent, _tokenBase.acces_token);
-
-                var DispenserByLocation = await responsedispenser.Content.ReadAsStringAsync();
-
-                dispenserByLocationIdResponse = JsonConvert.DeserializeObject<DispenserByLocationIdResponse>(DispenserByLocation);
+                
 
                 res = (from s in operatorAlertRequest.chargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.ToList().Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.OcppEventLogs.ToList().Where(o => o.DeviceId != null)
 
-                       join c in dispenserByLocationIdResponse.data.ToList()
-                                  on s.DeviceId.ToLower() equals c.ChargeBoxId.ToLower()
+                       join charger in _dbContext.Charger on s.DeviceId equals charger.ChargeBoxId
+                       join locations in _dbContext.Locations on charger.LocationId equals locations.Id
+                       join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
+                       join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
+                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                       on locations.Id equals userMap.LocationId
                        select new AlertResponse
                        {
                            EventLogId = s.Id,
-                           ChargeBoxId = c.ChargeBoxId,
+                           ChargeBoxId = charger.ChargeBoxId,
                            Category = "OCPP",
                            MessageType = s.RequestType,
                            DateTime = s.CreatedAt,
                            IPAddress = OccpIp == null ? "" : OccpIp,
-                           LocationsName = c.LocationName,
+                           LocationsName = locations.LocationName,
                            RequestPayload = s.RequestPayload == null ? "" : s.RequestPayload.Replace(",", ",\r\n"),
                            ResponsePayload = s.ResponsePayload == null ? "" : s.ResponsePayload.Replace(",", ",\r\n"),
                            IsRead = s.IsRead == false ? false : true,
