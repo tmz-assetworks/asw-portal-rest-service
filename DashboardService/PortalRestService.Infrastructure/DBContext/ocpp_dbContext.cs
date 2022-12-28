@@ -36,6 +36,7 @@ namespace PortalRestService.Infrastructure.DBContext
         public virtual DbSet<Charger> Charger { get; set; }
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<Port> Port { get; set; }
+        public virtual DbSet<ChargerType> ChargerType { get; set; }
         public virtual DbSet<VehicleRFID> VehicleRFID { get; set; }
         public virtual DbSet<Vehicle> Vehicle { get; set; }
         public virtual DbSet<SubscriptionsGroupDetails> SubscriptionsGroupDetails { get; set; }

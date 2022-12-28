@@ -53,7 +53,7 @@ namespace PortalRestService.Infrastructure.Repositories
                         LocationName = m.LocationName,
                         TimeZone = m.TimeZone,
                         LocationAddress = (from obls in _dbContext.LocationAddress.Where(x => x.Id == m.LocationAddressId)
-                                           select new LocationAddress
+                                           select new LocationAddressDTO
                                            {
                                                Id = obls.Id,
                                                AddressLine1 = obls.AddressLine1,

@@ -22,7 +22,7 @@ namespace PortalRestService.Core.Models
 
         public bool IsAutomatic { get; set; }
         public string? MakeName { get; set; }
-
+        //public LocationAddress LocationAddress { get; set; }
         public string? ModelName { get; set; }
         public string? MeterType { get; set; }
         public bool MultiplePorts { get; set; }
@@ -30,7 +30,7 @@ namespace PortalRestService.Core.Models
         public bool FleetStation { get; set; }
         public string? ReadingSchedule { get; set; }
         public long? LocationId { get; set; }
-        public virtual Location Location { get; set; }
+         public  Location? Location { get; set; }
         public string ChargeBoxId { get; set; }
         public long? RFIDReaderId { get; set; }
         public long? PowerCabinetId { get; set; }
@@ -51,7 +51,7 @@ namespace PortalRestService.Core.Models
         public string? ModifiedBy { get; set; }
         public DateTime? ModifiedOn { get; set; }
         public virtual ICollection<Port> Ports { get; set; }
-        public virtual ICollection<ChargerStatus> ChargerStatuses { get; set; }
+        public virtual List<ChargerStatus> ChargerStatuses { get; set; }
         public virtual ICollection<ChargerStatusHistory> ChargerStatusHistories { get; set; }
     }
 

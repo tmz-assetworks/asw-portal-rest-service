@@ -39,7 +39,7 @@ namespace PortalRestService.Core.Responses
         public long WarrantyDuration { get; set; }
         public DateTime WarrantyExpiryDate { get; set; }
         public long LocationId { get; set; }
-        public virtual Location Location { get; set; }
+        public virtual LocationDTO Location { get; set; }
         public DateTime WarrantyStartDate { get; set; }
     }
     public class Status

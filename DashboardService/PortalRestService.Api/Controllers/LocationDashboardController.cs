@@ -10,6 +10,7 @@ using PortalRestService.Infrastructure.Helper;
 using Microsoft.AspNetCore.Authentication;
 using PortalRestService.Core.ConstantResponse;
 using Serilog;
+using PortalRestService.Core.PagingHelper;
 
 namespace RestService.Assets.Controllers
 {
@@ -90,12 +91,42 @@ namespace RestService.Assets.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<LocationDispenserForLocationResponse>> GetDispenserByLocation([FromBody] LocationDispensersRequest request)
         {
+            if (request.PageSize == 0) request.PageSize = 10;
+            if (request.PageNumber == 0) request.PageNumber = 1;
             LocationDispenserForLocationResponse locationStatusQueryResponse = new LocationDispenserForLocationResponse();
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
                 var result = await _mediator.Send(new GetDispenserByLocationIdQuery(request));
-                return result == null ? NotFound() : this.Ok(result);
+
+                var dataResult = PagedList<LocationDispenserForLocation>.ToPagedList(result.data,request.PageNumber,request.PageSize);
+
+                if (dataResult != null)
+                {
+
+                    locationStatusQueryResponse.data = dataResult;
+                    locationStatusQueryResponse.paginationResponse = new PortalRestService.Core.PagingHelper.PaginationResponse
+                    {
+                        TotalCount = dataResult.TotalCount,
+                        PageSize = dataResult.PageSize,
+                        CurrentPage = dataResult.CurrentPage,
+                        TotalPages = dataResult.TotalPages,
+                        HasNext = dataResult.HasNext,
+                        HasPrevious = dataResult.HasPrevious
+                    };
+                    locationStatusQueryResponse.StatusCode = RespnoseCode.OK;
+                    locationStatusQueryResponse.StatusMessage = RespnoseMessage.Record_found;
+                }
+                else
+                {
+
+                    locationStatusQueryResponse.StatusCode = RespnoseCode.OK;
+                    locationStatusQueryResponse.StatusMessage = RespnoseMessage.Record_not_found;
+                    locationStatusQueryResponse.data = new List<LocationDispenserForLocation>();
+                    locationStatusQueryResponse.paginationResponse = new PaginationResponse();
+                }
+
+                return result == null ? NotFound() : this.Ok(locationStatusQueryResponse);
             }
             catch (Exception ex)
             {
