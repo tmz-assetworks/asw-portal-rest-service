@@ -328,7 +328,7 @@ namespace PortalRestService.Core.Responses
         public string Charger { get; set; }
         public string ChargerType { get; set; }
         public string ChargerStatus { get; set; }
-        public DateTime InstalledDate { get; set; }
+        public DateTime? InstalledDate { get; set; }
         public string Address { get; set; }
         public string Country { get; set; }
         public string State { get; set; }

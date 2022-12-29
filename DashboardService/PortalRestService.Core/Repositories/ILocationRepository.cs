@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PortalRestService.Core.Repositories
 {
-    public interface ILocationRepository : IRepository<Location>
+    public interface ILocationRepository : IRepository<LocationDTO>
     {
         Task<PagedList<Core.Responses.LocationsDispenserDetails>> GetLocationsDispenserDetails(LocationDispenserDetailRequest locationDispenserRequest);
         Task<AllLocationQueryResponse> GetAllLocation();

@@ -183,7 +183,7 @@ namespace RestService.Assets.Controllers.Tests
                     TimeZone = "UTC",
                     TotalCapacity = "100",
                     UtilityService = "1",
-                    LocationAddress = new LocationAddress()
+                    LocationAddress = new LocationAddressDTO()
                     {
                         Id = 1,
                         IsActive = !true,

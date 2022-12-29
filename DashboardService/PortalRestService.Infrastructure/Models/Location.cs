@@ -11,8 +11,8 @@ namespace PortalRestService.Infrastructure.Models
        
         public long Id { get; set; }
 
-      
         public long LocationAddressId { get; set; }
+                    
         public LocationAddress LocationAddress { get; set; }
 
         
@@ -66,7 +66,7 @@ namespace PortalRestService.Infrastructure.Models
 
         public string LocationName { get; set; }
 
-   
+        
         public string TimeZone { get; set; }
 
         public string FuelProtectType { get; set; }

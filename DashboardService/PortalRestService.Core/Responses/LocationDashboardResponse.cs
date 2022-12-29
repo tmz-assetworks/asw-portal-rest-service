@@ -6,8 +6,7 @@ namespace PortalRestService.Core.Responses
     {
         public int Id { get; set; }
         public int LocationAddressId { get; set; }
-        public Location Location { get; set; }
-        public LocationAddress LocationAddress { get; set; }
+        public LocationAddressDTO LocationAddress { get; set; }
         public int LocationStatusId { get; set; }
         public LocationStatus LocationStatus { get; set; }
         public string DepartmentName { get; set; }
@@ -206,7 +205,7 @@ namespace PortalRestService.Core.Responses
 
     //}
 
-    public partial class LocationAddress
+    public partial class LocationAddressDTO
     {
 
         public long Id { get; set; }

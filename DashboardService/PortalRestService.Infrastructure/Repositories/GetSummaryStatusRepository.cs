@@ -60,12 +60,17 @@ namespace PortalRestService.Infrastructure.Repositories
                 HttpResponseMessage locatoinResponse = null;
                 if (locationId == 0 && isChargersReq == false)  // not for Chargers
                 {
-                    locatoinResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetAllLocation,_tokenBase.acces_token);
-                    AllLocationStatusQueryResponse Location = new AllLocationStatusQueryResponse();                // Location Status
-                    if (locatoinResponse != null && locatoinResponse.IsSuccessStatusCode)
+                    
+                    AllLocationStatusQueryResponse Location = new AllLocationStatusQueryResponse();
+                    Location.data = ((from ob in _dbContext.Locations
+                                      select new LocationStatusData
+                                      {
+                                          Id = ob.Id,
+                                          LocationName = ob.LocationName,
+                                          LocationStatus = ob.LocationStatus.LocationStatusName,
+                                      }).ToList());
+                    if (Location != null)
                     {
-                        var locationDataContent = await locatoinResponse.Content.ReadAsStringAsync();
-                        Location = JsonConvert.DeserializeObject<AllLocationStatusQueryResponse>(locationDataContent);
                         cardData = new CardData();
                         cardData.Type = "Locations";
                         cardData.Count = Location.data != null ? Location.data.Count : 0;
@@ -83,19 +88,73 @@ namespace PortalRestService.Infrastructure.Repositories
                         }
                     }
                 }
-
+                DispenserResponse objDispenser = new DispenserResponse();
                 // Getting Charger/Dispenser data
                 HttpResponseMessage dispenserResponse = null;
                 if (locationId == 0)
-                    dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetAllDispenser,_tokenBase.acces_token);
-                else dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetDispenserByLocation + "" + locationId,_tokenBase.acces_token);
-                if (dispenserResponse.IsSuccessStatusCode)
+                {
+                    //dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetAllDispenser, _tokenBase.acces_token);
+                    objDispenser.data = _dbContext.Charger.Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), m => m.LocationId, n => n.LocationId,
+                (m, n) => new Dispenser
+                {
+                    id = m.Id,
+                    assetId = m.AssetId,
+                    ChargerStatus = ((from ob in _dbContext.ChargerStatuses.Where(x => x.ChargerId == m.Id)
+                                         select new ChargerStatusDTO
+                                         {
+                                             Id = ob.Id,
+                                             ChargerId = ob.ChargerId,
+                                             ChargerStatus1 = ob.Chargerstatus,
+                                             ConnectorId = ob.ConnectorId,
+                                             ConnectorStatus = ob.ConnectorStatus,
+                                             ReservationExpiryDate = ob.ReservationExpiryDate,
+                                             IdTag = ob.IdTag != null ? "" : ob.IdTag,
+                                             ReservationId = ob.ReservationId,
+                                             ModifiedoN = ob.ModifiedAt
+
+                                         }).ToList()),
+
+
+                }).ToList();
+                }
+                else
+                {
+                    //dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetDispenserByLocation + "" + locationId, _tokenBase.acces_token);
+
+                    objDispenser.data = (from location in _dbContext.Locations
+                                                                 join charger in _dbContext.Charger
+                                                                 on location.Id equals charger.LocationId
+                                                                 join address in _dbContext.LocationAddress
+                                                                 on location.LocationAddressId equals address.Id
+                                                                 join Status in _dbContext.LocationStatus
+                                                                 on location.LocationStatusId equals Status.Id
+                                                                 where location.Id.Equals(locationId)
+                                                                 select new Dispenser
+                                                                 {
+                                                                     id = charger.Id,
+                                                                     ChargerStatus = ((from ob in _dbContext.ChargerStatuses.Where(x => x.ChargerId == charger.Id)
+                                                                                          select new ChargerStatusDTO
+                                                                                          {
+                                                                                              Id = ob.Id,
+                                                                                              ChargerId = ob.ChargerId,
+                                                                                              ChargerStatus1 = ob.Chargerstatus,
+                                                                                              ConnectorId = ob.ConnectorId,
+                                                                                              ConnectorStatus = ob.ConnectorStatus,
+                                                                                              ReservationExpiryDate = ob.ReservationExpiryDate,
+                                                                                              IdTag = ob.IdTag != null ? "" : ob.IdTag,
+                                                                                              ReservationId = ob.ReservationId,
+                                                                                              ModifiedoN = ob.ModifiedAt
+
+                                                                                          }).ToList()),
+                                                                 }
+                    ).ToList();
+
+
+                }
+                if (objDispenser.data.Count>0)
                 {
                     cardData = new CardData();
-                    var dispenserData = await dispenserResponse.Content.ReadAsStringAsync();
-                    DispenserResponse objDispenser = new DispenserResponse();
-
-                    objDispenser = JsonConvert.DeserializeObject<DispenserResponse>(dispenserData);
+                   
                     cardData.Type = "Chargers";
                     cardData.Count = objDispenser.data != null ? objDispenser.data.Count : 0;
 
@@ -103,9 +162,9 @@ namespace PortalRestService.Infrastructure.Repositories
                     {
                         List<StatusData> StatusData = new List<StatusData>()
                     {
-                        new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatuses !=null && d.ChargerStatuses.Count >0 && d.ChargerStatuses[0].ChargerStatus1.ToLower().Equals(Status_Indication.ChargerStatus.Available.ToString().ToLower())).ToList().Count).ToString(), Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatuses !=null && d.ChargerStatuses.Count>0  && d.ChargerStatuses[0].ChargerStatus1.Replace("Unavailable","Connected").ToLower().Equals(Status_Indication.ChargerStatus.Connected.GetEnumDisplayName().ToLower())).ToList().Count).ToString()  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatuses ==null || d.ChargerStatuses.Count==0).ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
+                        new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus!=null && d.ChargerStatus.Count >0 && d.ChargerStatus[0].ChargerStatus1.ToLower().Equals(Status_Indication.ChargerStatus.Available.ToString().ToLower())).ToList().Count).ToString(), Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus !=null && d.ChargerStatus.Count>0  && d.ChargerStatus[0].ChargerStatus1.Replace("Unavailable","Connected").ToLower().Equals(Status_Indication.ChargerStatus.Connected.GetEnumDisplayName().ToLower())).ToList().Count).ToString()  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
+                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus==null || d.ChargerStatus.Count==0).ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
                        
                       };
                         cardData.StatusData = StatusData;
@@ -140,16 +199,30 @@ namespace PortalRestService.Infrastructure.Repositories
                        
                    };
                 LocationDispenserForLocationResponse locationsResponse = new LocationDispenserForLocationResponse();
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(locationIds), Encoding.UTF8, "application/json");
+              
+                    locationsResponse.data = (from location in locationId >0 ?_dbContext.Locations.Where(x => x.Id == locationId): _dbContext.Locations
+                                         join charger in _dbContext.Charger
+                                         on location.Id equals charger.LocationId
+                                         join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                         on location.Id equals userMap.LocationId
+                                         select new LocationDispenserForLocation
+                                         {
+                                             locationId = location.Id,
+                                             DispenserId = charger.Id,
+                                             ChargeBoxId = charger.ChargeBoxId,
+                                             ProtocolName = charger.ProtocolName,
+                                             ChargerStatus = charger.ChargerStatuses == null || charger.ChargerStatuses.Count == 0 ? "Offline" :
+                                             charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
+                                            .Replace("finishing", "Busy").Replace("preparing", "Busy"),
+                                             NoofPort = charger.Ports.Where(t => t.ChargerId.Equals(charger.Id)).ToList().Count == 0 ? "0" : charger.Ports.Where(t => t.ChargerId.Equals(charger.Id)).ToList().Count.ToString(),
+                                             DispenserMake = charger.MakeName,
+                                             DispenserModel = charger.ModelName,
+                                             ConnectorType = _dbContext.Port.FirstOrDefault(p => p.ChargerId == charger.Id).Connector.ConnectorType,
 
-                string callingMethodLocation = APIConstant.Getdispenserbylocation;
-                HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethodLocation, httpContent, _tokenBase.acces_token);
-
-                var locationData = await responseSession.Content.ReadAsStringAsync();
-                locationsResponse = JsonConvert.DeserializeObject<LocationDispenserForLocationResponse>(locationData);
-
+                                         }).ToList<LocationDispenserForLocation>();
                 
-                      if (objChargingSession != null)
+                
+                if (objChargingSession != null)
                     {
                         List<LocationDispenserForLocation> datalocations = locationsResponse.data.ToList();
                         var chargingSessionsData = (from cs in objChargingSession join l in datalocations on cs.ChargerId equals l.DispenserId where l.ChargeBoxId == cs.DeviceId select cs).ToList();

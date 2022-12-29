@@ -49,39 +49,50 @@ namespace PortalRestService.Infrastructure.Repositories
                 summaryDetails = new List<SummaryDetail>();
                 List<PortalRestService.Core.Models.ChargingSession> objChargingSession = _dbContext.ChargingSessions.ToList();
 
-                List<int> locationIds = new List<int>()
-                             {
-                                 locationId
-                             };
-                if (locationId == 0)
-                    locationIds = new List<int>()
-                    {
-
-                    };
                 LocationDispenserForLocationResponse locationsResponse = new LocationDispenserForLocationResponse();
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(locationIds), Encoding.UTF8, "application/json");
 
-                string callingMethodLocation = APIConstant.Getdispenserbylocation;
-                HttpResponseMessage responseSession = await Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(callingMethodLocation, httpContent, _tokenBase.acces_token);
+                if (_tokenBase.getRole().ToLower() == "admin")
+                {
+                    locationsResponse.data = (from location in _dbContext.Locations.Where(x => locationId == x.Id)
+                                              join charger in _dbContext.Charger
+                                              on location.Id equals charger.LocationId
+                                              select new LocationDispenserForLocation
+                                              {
+                                                  DispenserId = charger.Id,
+                                                  locationId = location.Id,
+                                                  ChargeBoxId = charger.ChargeBoxId + " (" + location.LocationName + ")",
+                                              }).ToList<LocationDispenserForLocation>();
+                }
+                else
+                {
+                    locationsResponse.data = (from location in locationId>0 ?_dbContext.Locations.Where(x => locationId == x.Id): _dbContext.Locations
+                                              join charger in _dbContext.Charger
+                                              on location.Id equals charger.LocationId
 
-                var locationData = await responseSession.Content.ReadAsStringAsync();
-                locationsResponse = JsonConvert.DeserializeObject<LocationDispenserForLocationResponse>(locationData);
+                                              join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                             on location.Id equals userMap.LocationId
+                                              select new LocationDispenserForLocation
+                                              {
+                                                  DispenserId = charger.Id,
+                                                  locationId = location.Id,
+                                                  ChargeBoxId = charger.ChargeBoxId,
+                                              }).ToList<LocationDispenserForLocation>();
+                }
                 if (locationsResponse != null && locationsResponse.data != null)
                 {
                     List<LocationDispenserForLocation> datalocations = locationsResponse.data.ToList();
-                    objChargingSession = (from cs in objChargingSession join l in datalocations on cs.ChargerId equals l.DispenserId where l.ChargeBoxId == cs.DeviceId select cs).ToList();
+                    objChargingSession = (from cs in objChargingSession join l in datalocations on cs.ChargerId equals l.DispenserId where l.ChargeBoxId == cs.DeviceId select cs).Where(t=>t.EndMeterValue>t.StartMeterValue).ToList();
                 }
 
                 SummaryDetail summaryDetail = new SummaryDetail();
 
                 //Type  chargingInfustructure
                 TotalLocationAndChargerResponse totalLocationAndChargerResponse = new TotalLocationAndChargerResponse();
-                HttpResponseMessage chargingInfustructureResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetTotalLocationAndCharger, _tokenBase.acces_token);
+                totalLocationAndChargerResponse.TotalLocations = _dbContext.Locations.Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.Id, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
+                totalLocationAndChargerResponse.TotalDispenser = _dbContext.Charger.Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.LocationId, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
 
-                var dataCharginInfraData = await chargingInfustructureResponse.Content.ReadAsStringAsync();
-                totalLocationAndChargerResponse = JsonConvert.DeserializeObject<TotalLocationAndChargerResponse>(dataCharginInfraData);
 
-                if (totalLocationAndChargerResponse != null && totalLocationAndChargerResponse.StatusCode == (int)HttpStatusCode.OK)
+                if (totalLocationAndChargerResponse != null)
                 {
                     summaryDetail.chargingInfustructure = new List<ChargingInfustructure>();
                     if (locationId == 0)
@@ -94,24 +105,6 @@ namespace PortalRestService.Infrastructure.Repositories
                     }
                     if (locationId > 0)
                     {
-                        //List<int> locationIds = new List<int>()
-                        //     {
-                        //         locationId
-                        //     };
-                        //ChargingInfustructure chargingInfustructureTotalSites = new ChargingInfustructure();
-                        //chargingInfustructureTotalSites.Key = "Total Locations";
-                        //chargingInfustructureTotalSites.Value = 0;
-                        //summaryDetail.chargingInfustructure.Add(chargingInfustructureTotalSites);
-
-                        //LocationDispenserForLocationResponse locationsResponse = new LocationDispenserForLocationResponse();
-                        //StringContent httpContent = new StringContent(JsonConvert.SerializeObject(locationIds), Encoding.UTF8, "application/json");
-
-                        //HttpResponseMessage dispenserResponse = null;
-                        //dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetWithBodyAuthAPIAsync(APIConstant.Getdispenserbylocation, httpContent,_tokenBase.acces_token);
-                        //var dispenserData = await dispenserResponse.Content.ReadAsStringAsync();
-                        //DispenserResponse objDispenser = new DispenserResponse();
-
-                        //locationsResponse = JsonConvert.DeserializeObject<DispenserResponse>(dispenserData);
                         ChargingInfustructure chargingInfustructureTotalLocations = new ChargingInfustructure();
                         chargingInfustructureTotalLocations.Key = "Total Chargers";
                         if (locationsResponse != null && locationsResponse.data != null)
@@ -135,22 +128,11 @@ namespace PortalRestService.Infrastructure.Repositories
                 double startChargingMeter = Math.Round((double)(from data in objChargingSession where data.StartMeterValue != null select data.StartMeterValue.Value).Sum() / 1000, 2);
                 double endChargingMeter = Math.Round((double)(from data in objChargingSession where data.EndMeterValue != null select data.EndMeterValue.Value).Sum() / 1000, 2);
 
-                //double startChargingMeter =(double)(from data in objChargingSession where data.StartMeterValue != null select data.StartMeterValue.Value).Sum();
-                //double endChargingMeter = (double)(from data in objChargingSession where data.EndMeterValue != null select data.EndMeterValue.Value).Sum();
-
-
                 double billableChargingMeter = endChargingMeter - startChargingMeter;
                 if (billableChargingMeter < 0)
                     billableChargingMeter = 0;
-
-                double todayStartChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum()/1000,2);    // AS-701
+                double todayStartChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum() / 1000, 2);    // AS-701
                 double todayEndChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.EndMeterValue != null) select data.EndMeterValue.Value).Sum() / 1000, 2);        // AS-701
-                //double todayStartChargingMeter = (double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum();    // AS-701
-                //double todayEndChargingMeter = (double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.EndMeterValue != null) select data.EndMeterValue.Value).Sum();        // AS-701
-
-              
-
-
                 if (todayEndChargingMeter < 0)
                     todayEndChargingMeter = 0;
                 double todayBillableChargingMeter = todayEndChargingMeter - todayStartChargingMeter;
@@ -160,11 +142,11 @@ namespace PortalRestService.Infrastructure.Repositories
                 ///
                 summaryDetail.Revenue = new List<Revenue>();
                 var today = DateTime.Today;
-                var thismonthStart=new DateTime(today.Year ,today.Month,1);
-                Revenue totalRevenue = new Revenue(); 
+                var thismonthStart = new DateTime(today.Year, today.Month, 1);
+                Revenue totalRevenue = new Revenue();
                 totalRevenue.Key = EnumControlTexts.DisplayingLabels.TotalRevenue.GetEnumDisplayName();
                 var totalRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Sum(o => o.trans.TotalAmount);
-                totalRevenue.Value= string.Format("{0:#,0}", totalRevenueValue.ToString());
+                totalRevenue.Value = string.Format("{0:#,0}", totalRevenueValue.ToString());
                 summaryDetail.Revenue.Add(totalRevenue);
 
                 // Daily Revenue
@@ -173,10 +155,10 @@ namespace PortalRestService.Infrastructure.Repositories
                 if (totalRevenue.Value != "0")
                 {
                     DateTime eaeliestDate = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Min(o => o.trans.CreatedOn);
-                    DateTime currentdateTime=DateTime.Now;
+                    DateTime currentdateTime = DateTime.Now;
                     int totalNumberofDays = (currentdateTime - eaeliestDate).Days + 1;
-                    decimal dailyAverage = Math.Round(totalRevenueValue / totalNumberofDays,2);
-                    dailyRevenue.Value = string.Format("{0:#,0}",dailyAverage.ToString());
+                    decimal dailyAverage = Math.Round(totalRevenueValue / totalNumberofDays, 2);
+                    dailyRevenue.Value = string.Format("{0:#,0}", dailyAverage.ToString());
 
                 }
                 else
@@ -189,7 +171,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 // Today 's Revenue
                 Revenue todaysRevenue = new Revenue();
                 todaysRevenue.Key = EnumControlTexts.DisplayingLabels.TodaysRevenue.GetEnumDisplayName();
-               var todaysRevenueValue =  _dbContext.Users.Where(u=> u.ObjectId==_tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id,opmapper=> opmapper.UserId,(user, opmapper)=>new { user, opmapper }).Join(_dbContext.PaymentTransaction,userlocation=> userlocation.opmapper.LocationId,trans=>trans.LocationId,(userlocation, trans)=>new { userlocation, trans }).Where(o=> o.trans.CreatedOn>=today).Sum(o => o.trans.TotalAmount);
+                var todaysRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Where(o => o.trans.CreatedOn >= today).Sum(o => o.trans.TotalAmount);
                 todaysRevenue.Value = string.Format("{0:#,0}", todaysRevenueValue.ToString());
                 summaryDetail.Revenue.Add(todaysRevenue);
 

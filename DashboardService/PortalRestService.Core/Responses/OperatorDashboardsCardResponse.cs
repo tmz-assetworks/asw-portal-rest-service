@@ -47,20 +47,30 @@ namespace PortalRestService.Core.Responses
         public string readingSchedule { get; set; }
         public string serialNumber { get; set; }
         public int locationId { get; set; }
-        public Location location { get; set; }
+        public LocationDTO? LocationDTO { get; set; }
         public int stationId { get; set; }
         public string chargeBoxId { get; set; }
         public string stationName { get; set; }
         public int vendorId { get; set; }
         public Vendor vendor { get; set; }
         public List<PortDTO> Ports { get; set; }
-        public DateTime InstallationDate { get; set; }
-        public List<ChargerStatus> ChargerStatuses { get; set; }
+        public DateTime? InstallationDate { get; set; }
+        public List<ChargerStatusDTO> ChargerStatus { get; set; }
+        public LocationAddressDTO LocationAddress { get; set; }
     }
-    public partial class ChargerStatus
+    public partial class ChargerStatusDTO
     {
         public int Id { get; set; }
+        public long LocationId { get; set; }
+        public string LocationName { get; set; }
+        public string ContactPersonName { get; set; }
+        public string AddressLine1 { get; set; }
+
+        public string LocationStatusName { get; set; }
         public int? ChargerId { get; set; }
+        public long LocationStatusId { get; set; }
+
+        public string ChargeBoxId { get; set; }
         public string ChargerStatus1 { get; set; }
         public int? ConnectorId { get; set; }
         public string ConnectorStatus { get; set; }
@@ -76,7 +86,7 @@ namespace PortalRestService.Core.Responses
         public long DispenserId { get; set; }
         public int ConnectorId { get; set; }
         public string CreatedBy { get; set; }
-        public Connector Connector { get; set; }
+        public ConnectorDTO? ConnectorDTO { get; set; }
         public DateTime CreatedOn { get; set; }
         public long IncrementalPower { get; set; }
         public bool IsActive { get; set; }
@@ -87,10 +97,10 @@ namespace PortalRestService.Core.Responses
         public string PortName { get; set; }
         public long Power { get; set; }
         public long ConnectorType { get; set; }
-        public ChargerType ChargerType { get; set; }
+        public ChargerTypeDTO? ChargerTypeDTO { get; set; }
         public long ChargerTypeId { get; set; }
     }
-    public class ChargerType
+    public class ChargerTypeDTO
     {
         public long Id { get; set; }
         public string CreatedBy { get; set; }
@@ -101,7 +111,7 @@ namespace PortalRestService.Core.Responses
         public string ChargerTypeName { get; set; }
     }
 
-    public class Connector
+    public class ConnectorDTO
     {
         public long Id { get; set; }
         public string CreatedBy { get; set; }
@@ -157,20 +167,16 @@ namespace PortalRestService.Core.Responses
     {
         public int StatusCode { get; set; }
         public string? StatusMessage { get; set; }
-        public List<Location> data { get; set; }   //  Location Or Site
+        public List<LocationDTO> data { get; set; }   //  Location Or Site
     }
 
-    public class Location
+    public class LocationDTO
     {
         public int Id { get; set; }
-        public string DepartmentName { get; set; }
-        public string FuelProtectType { get; set; }
-        public string AlternateMobileNumber { get; set; }
-        public string Email { get; set; }
-        
-        public LocationAddress? LocationAddress { get; set; }
-       
-        public LocationStatus? LocationStatus { get; set; }
+        //public int LocationAddressId { get; set; }
+        public LocationAddressDTO LocationAddress { get; set; }
+        public int LocationStatusId { get; set; }
+        public LocationStatus LocationStatus { get; set; }
         public string LocationId { get; set; }
         public string ContactPersonName { get; set; }
         public string ContactPersonNumber { get; set; }

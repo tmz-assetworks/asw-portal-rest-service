@@ -38,6 +38,6 @@ namespace PortalRestService.Core.Responses
         public string ConnectorType { get; set; }
         public string NoofPort { get; set; }
 
-
+        public DateTime? ModifiedAt { get; set; }
     }
 }
