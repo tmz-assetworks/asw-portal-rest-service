@@ -31,7 +31,7 @@ namespace PortalRestService.Infrastructure.Models
 
 
       
-        public long IncrementalPower { get; set; }
+        public string IncrementalPower { get; set; }
 
 
        
@@ -39,11 +39,11 @@ namespace PortalRestService.Infrastructure.Models
 
 
      
-        public long MaxPower { get; set; }
+        public string MaxPower { get; set; }
 
 
        
-        public long MinPower { get; set; }
+        public string MinPower { get; set; }
 
 
       
@@ -60,6 +60,6 @@ namespace PortalRestService.Infrastructure.Models
         public string PortName { get; set; }
 
 
-        public long Power { get; set; }
+        public string Power { get; set; }
     }
 }

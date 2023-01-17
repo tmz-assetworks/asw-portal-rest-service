@@ -285,7 +285,7 @@ namespace PortalRestService.Core.Responses
     }
     public class ChartDetailsListRequest : QueryStringParameters
     {
-        public List<int> LocationIds { get; set; }
+        public List<long> LocationIds { get; set; }
         public string? ChargeBoxId { get; set; }
         public string? Duration { get; set; }
         public string? Opratorid { get; set; }

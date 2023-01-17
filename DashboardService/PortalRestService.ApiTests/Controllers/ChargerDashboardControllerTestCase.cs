@@ -78,9 +78,8 @@ namespace PortalRestService.ApiTests.Controllers
 
             //checking defualt paging parameter handle or not 
             ChartDetailsListResponse QueryResponse = new ChartDetailsListResponse();
-
             ChartDetailsListRequest ChartDetailsListRequest = new ChartDetailsListRequest();
-            ChartDetailsListRequest.LocationIds = new List<int>(new int[] { 43 }); ;
+            ChartDetailsListRequest.LocationIds = new List<long>(new long[] { 43 }); ;
             ChartDetailsListRequest.Opratorid = "";
 
             ChartDetailsListRequest.OrderBy = null;
@@ -173,7 +172,7 @@ namespace PortalRestService.ApiTests.Controllers
             //Arrange
             var _ChartDetailsListRequest = new PortalRestService.Core.Responses.ChartDetailsListRequest()
             {
-                LocationIds = new List<int>(new int[] { }), 
+                LocationIds = new List<long>(new long[] { }), 
             Opratorid = "",
 
             OrderBy = "",
