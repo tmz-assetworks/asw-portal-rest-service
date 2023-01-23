@@ -154,6 +154,7 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 res = (from location in request.LocationIds.Count>0 ? _dbContext.Locations.Where(x=> request.LocationIds.Contains(x.Id)) : _dbContext.Locations
                        join disp in _dbContext.Charger  on location.Id equals disp.LocationId
+                       join locationstatus in _dbContext.LocationStatus on location.LocationStatusId equals locationstatus.Id
                        join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
                         on location.Id equals userMap.LocationId
                        select new ChartDetailsList
@@ -170,6 +171,7 @@ namespace PortalRestService.Infrastructure.Repositories
                            LocationId = disp.LocationId.Value,
                            LocationName = location.LocationName,
                            ChargeBoxId = disp.ChargeBoxId,
+                           LocationStatus = locationstatus.LocationStatusName
                        }
                ).OrderByDescending(a => a.LocationName).ToList<ChartDetailsList>();
 

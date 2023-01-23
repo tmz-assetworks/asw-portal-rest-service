@@ -20,6 +20,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PortalRestService.Core.PagingHelper;
+using PortalRestService.Core.Models;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
@@ -52,7 +53,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                    ChargerStatus = charger.ChargerStatuses == null || charger.ChargerStatuses.Count == 0 ? "Offline" :
                                     charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
                                   .Replace("finishing", "Busy").Replace("preparing", "Busy"),
-                                   ConnectorType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == charger.Id).Select(s => s.Connector.ConnectorType)),
+                                   ConnectorType = String.Join(",",_dbContext.Connector.Where(cnn=> charger.Ports.Where(p => p.ChargerId == charger.Id).Select(s => s.ConnectorType ).Contains(cnn.Id)).Select(z=>z.ConnectorType)),
                                    DispenserModel = charger.ModelName,
                                    ProtocolName = charger.ProtocolName,
                                    NoofPort = charger.Ports.Count.ToString(),
@@ -61,7 +62,6 @@ namespace PortalRestService.Infrastructure.Repositories
                                }
 
                            ).OrderByDescending(m => m.ModifiedAt).ToList<LocationDispenserForLocation>();
-            
             return objLocationDispneser;
         }
     }
