@@ -147,26 +147,31 @@ namespace PortalRestService.Infrastructure.Repositories
                 }
                 if (request.LocationIds.Count > 0)
                 {
-                    res = res.Where(o => request.LocationIds.Contains((int)o.LocationId)).ToList();
+                    res = res.Where(o => request.LocationIds.Contains(o.LocationId)).ToList();
                 }
             }
             else if (request.Flag.ToLower() == "locationstatus".ToLower())
             {
-                    res = dispenserByLocationIdResponse.data.Select(c => new ChartDetailsList()
-                    {
-                        Id = -1,
-                        ChargerName = c.ChargeBoxId,
-                        UID = "",
-                        ChargerType = c.ConnectorType,
-                        FaultSince = "",
-                        FaultDescription = "",
-                        TimeReported = DateTime.MinValue,
-                        LocationId = c.LocationId,
-                        LocationName = c.LocationName,
-                        ChargeBoxId = c.ChargeBoxId,
-                      
-                    }
-                 ).OrderByDescending(a => a.LocationName).ToList<ChartDetailsList>();
+                res = (from location in request.LocationIds.Count>0 ? _dbContext.Locations.Where(x=> request.LocationIds.Contains(x.Id)) : _dbContext.Locations
+                       join disp in _dbContext.Charger  on location.Id equals disp.LocationId
+                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                        on location.Id equals userMap.LocationId
+                       select new ChartDetailsList
+                       {
+                           Id = disp.Id,
+                           ChargerName = disp.ChargeBoxId,
+                           UID = "",
+                           ChargerType = "OCPP",
+                           FaultSince = disp.ChargerStatuses.ToList().Where(x => x.ConnectorStatus.ToLower() == "faulted").ToList().Count == 0 ? "" :
+                                (DateTime.Now - disp.ChargerStatusHistories.Where(x => x.ConnectorStatus.ToLower() == "faulted").OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
+                           FaultDescription = "",
+                           TimeReported = disp.ChargerStatuses.ToList().Where(x => x.ConnectorStatus.ToLower() == "faulted").ToList().Count == 0 ? DateTime.MinValue :
+                                disp.ChargerStatusHistories.Where(x => x.ConnectorStatus.ToLower() == "faulted").OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn,
+                           LocationId = disp.LocationId.Value,
+                           LocationName = location.LocationName,
+                           ChargeBoxId = disp.ChargeBoxId,
+                       }
+               ).OrderByDescending(a => a.LocationName).ToList<ChartDetailsList>();
 
             }
            // var dataResult =new List<ChartDetailsList>();

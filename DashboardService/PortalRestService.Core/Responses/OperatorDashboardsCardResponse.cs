@@ -88,14 +88,14 @@ namespace PortalRestService.Core.Responses
         public string CreatedBy { get; set; }
         public ConnectorDTO? ConnectorDTO { get; set; }
         public DateTime CreatedOn { get; set; }
-        public long IncrementalPower { get; set; }
+        public string IncrementalPower { get; set; }
         public bool IsActive { get; set; }
-        public long MaxPower { get; set; }
-        public long MinPower { get; set; }
+        public string MaxPower { get; set; }
+        public string MinPower { get; set; }
         public string ModifiedBy { get; set; }
         public DateTime ModifiedOn { get; set; }
         public string PortName { get; set; }
-        public long Power { get; set; }
+        public string Power { get; set; }
         public long ConnectorType { get; set; }
         public ChargerTypeDTO? ChargerTypeDTO { get; set; }
         public long ChargerTypeId { get; set; }
