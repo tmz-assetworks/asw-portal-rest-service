@@ -99,7 +99,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                    PortName = obpo.PortName,
                                    ConnectorDTO = new ConnectorDTO()
                                    {
-                                       ConnectorType = obpo.ConnectorType.ToString(),
+                                       ConnectorType = obpo.Connector.ConnectorType,
                                        Id = obpo.Id,
                                    },
                                    ChargerTypeDTO = (from ob in _dbContext.ChargerType.Where(x => x.Id == obpo.ChargerTypeId)

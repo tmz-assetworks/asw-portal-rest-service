@@ -513,6 +513,7 @@ namespace PortalRestService.Core.Responses
         public string? ReasoneForStop { get; set; }
         public string? Startmetervalue { get; set; }
         public string? Endmetervalue { get; set; }
+        public string? LocationStatus { get; set; }
     }
 
     public class ChartDetailsListResponse
