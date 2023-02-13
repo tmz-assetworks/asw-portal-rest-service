@@ -43,9 +43,9 @@ namespace PortalRestService.Infrastructure.Repositories
                     duration = "28";
                    
                 }
-                
+                //Add condition we will get data without current charging session
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
-                                                         where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
+                                                         where s.ChargingStatus != "Charging" && s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                          join charger in _dbContext.Charger on s.ChargerId equals charger.Id
                                                         join location in locations.Count > 0 ? _dbContext.Locations.Where(x => locations.Contains((int)(x.Id))) : _dbContext.Locations on charger.LocationId equals location.Id
                                                          join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
