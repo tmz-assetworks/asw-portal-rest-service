@@ -154,11 +154,21 @@ namespace PortalRestService.Infrastructure.Repositories
                 dailyRevenue.Key = EnumControlTexts.DisplayingLabels.DailyRevenue.GetEnumDisplayName();
                 if (totalRevenue.Value != "0")
                 {
-                    DateTime eaeliestDate = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Min(o => o.trans.CreatedOn);
-                    DateTime currentdateTime = DateTime.Now;
-                    int totalNumberofDays = (currentdateTime - eaeliestDate).Days + 1;
-                    decimal dailyAverage = Math.Round(totalRevenueValue / totalNumberofDays, 2);
-                    dailyRevenue.Value = string.Format("{0:#,0}", dailyAverage.ToString());
+                        List<DateTime> list = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId())
+                        .Join(_dbContext.OperatorUserMapper, userg => userg.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).
+                        Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Select(o => o.trans.CreatedOn).ToList();
+
+                    if (list.Count > 0)
+                    {
+                        DateTime eaeliestDate = list.Min();
+
+                        DateTime currentdateTime = DateTime.Now;
+                        int totalNumberofDays = (currentdateTime - eaeliestDate).Days + 1;
+                        decimal dailyAverage = Math.Round(totalRevenueValue / totalNumberofDays, 2);
+                        dailyRevenue.Value = string.Format("{0:#,0}", dailyAverage.ToString());
+                    }
+                    else
+                    { dailyRevenue.Value = string.Format("{0:#,0}", 00); }
 
                 }
                 else
