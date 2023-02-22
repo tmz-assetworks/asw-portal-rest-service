@@ -120,6 +120,7 @@ namespace RestService.Assets
             services.AddTransient<ILocationRepository, LocationRepository>();
             services.AddTransient<IDispenserDetailRepository, DispensersDetailRepository>();
             services.AddTransient<IGetLocationByIdRepository, GetLocationByIdRepository>();
+            services.AddTransient<IChargingSessionAndPaymentTransactionRepository, ChargingSessionAndPaymentTransactionRepository>();
             services.AddScoped<PortalRestService.Infrastructure.Helper.TokenBase>();
             services.AddHealthChecks()
                 .AddCheck<PortalHealthCheck>("example_health_check");

@@ -15,6 +15,7 @@ namespace PortalRestService.Core.Models
         public int? StartMeterValue { get; set; }
         public int? StartSoc { get; set; }
         public DateTime? StartTime { get; set; }
+        public string? RfId { get; set; }
         public int? EndMeterValue { get; set; }
         public int? EndSoc { get; set; }
         public DateTime? EndTime { get; set; }
