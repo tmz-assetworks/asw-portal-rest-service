@@ -53,9 +53,8 @@ namespace PortalRestService.Infrastructure.Repositories
                                                              DispenserId = Charger.Id,
                                                              ChargeBoxid = Charger.ChargeBoxId,
                                                              status = Charger.ChargerStatuses == null || Charger.ChargerStatuses.Count == 0 ? "Offline" :
-                                Charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
-                              .Replace("finishing", "Busy").Replace("preparing", "Busy"),
-
+                                Charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("Charging", "Busy").Replace("suspendedev", "Busy").Replace("SuspendedEV", "Busy").Replace("suspendedevse", "Busy").Replace("SuspendedEVSE", "Busy")
+                              .Replace("finishing", "Busy").Replace("Finishing", "Busy").Replace("preparing", "Busy").Replace("Preparing", "Busy"),
                                                          }).ToList<LocationsDispenser>();
 
                
