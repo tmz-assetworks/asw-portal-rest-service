@@ -28,19 +28,34 @@ namespace PortalRestService.Infrastructure.Repositories
                                                                 where port.Connectorid == session.ConnectorId
                                                                 select new SessionAndPaymentData
                                                                 {
-                                                                    AssetId = ch.AssetId,
-                                                                    ConnectorType = c.ConnectorType,
-                                                                    Cost = pt.TotalAmount,
-                                                                    CreatedDateTime = DateTime.Now,
-                                                                    EmployeeId = session.RfId,
-                                                                    EndDateTime = session.EndTime,
-                                                                    FuelingSeconds = (session.EndTime - session.StartTime).Value.TotalSeconds,
-                                                                    HoseId = port.Id.ToString(),
-                                                                    IssueDateTime = session.EndTime,
-                                                                    IssueQty = 0,
-                                                                    LocationId = ch.LocationId.ToString(),
-                                                                    Meter1Reading = 0,
-                                                                    StartDateTime = session.StartTime
+                                                                    assetId = ch.AssetId,
+                                                                    connectionType = c.ConnectorType,
+                                                                    cost =Convert.ToDouble(pt.TotalAmount),
+                                                                    createdDateTime = DateTime.Now,
+                                                                    employeeId = session.RfId,
+                                                                    endDateTime = session.EndTime.Value,
+                                                                    fuelingSeconds =Convert.ToInt32((session.EndTime - session.StartTime).Value.TotalSeconds),
+                                                                    hoseId = port.Id,
+                                                                    issueDateTime = session.EndTime.Value,
+                                                                    issueQty = null,
+                                                                    locationId = ch.LocationId.Value,
+                                                                    meter1Reading = 0,
+                                                                    startDateTime = session.StartTime.Value,
+                                                                    description = "ELECTRICITY",
+                                                                    externalTransactionId = 0,
+                                                                    fromStock = false,
+                                                                    tax = Convert.ToDouble(pt.Tax),
+                                                                    unitCost = 0,
+                                                                    meter1Good = true,
+                                                                    meter2Good = false,
+                                                                    meter2TypeId ="NONE",
+                                                                    meter1TypeId = "MILES",
+                                                                    vendorName = "AssetWorks CMS",
+                                                                    isReturn = false,
+                                                                    isReturnable = true,
+                                                                    productId = "UNL",
+                                                                    productTypeId ="FUEL"                                                                   
+                                                                    
                                                                 }).FirstOrDefaultAsync();
 
             return sessionAndPaymentDTO;

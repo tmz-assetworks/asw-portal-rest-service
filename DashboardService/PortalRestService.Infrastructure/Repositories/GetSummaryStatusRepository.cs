@@ -168,7 +168,7 @@ namespace PortalRestService.Infrastructure.Repositories
                     {
                         new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus!=null && d.ChargerStatus.Count >0 && d.ChargerStatus[0].ChargerStatus1.ToLower().Equals(Status_Indication.ChargerStatus.Available.ToString().ToLower())).ToList().Count).ToString(), Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
                         new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus !=null && d.ChargerStatus.Count>0  && d.ChargerStatus[0].ChargerStatus1.Replace("Unavailable","Connected").ToLower().Equals(Status_Indication.ChargerStatus.Connected.GetEnumDisplayName().ToLower())).ToList().Count).ToString()  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus==null || d.ChargerStatus.Count==0).ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
+                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus==null || d.ChargerStatus.Count==0 || d.ChargerStatus[0].ChargerStatus1=="Offline").ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
 
                       };
                         cardData.StatusData = StatusData;
@@ -216,8 +216,8 @@ namespace PortalRestService.Infrastructure.Repositories
                                               ChargeBoxId = charger.ChargeBoxId,
                                               ProtocolName = charger.ProtocolName,
                                               ChargerStatus = charger.ChargerStatuses == null || charger.ChargerStatuses.Count == 0 ? "Offline" :
-                                              charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
-                                             .Replace("finishing", "Busy").Replace("preparing", "Busy"),
+                                              charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("Charging", "Busy").Replace("suspendedev", "Busy").Replace("SuspendedEV", "Busy").Replace("suspendedevse", "Busy").Replace("SuspendedEVSE", "Busy")
+                                              .Replace("finishing", "Busy").Replace("Finishing", "Busy").Replace("preparing", "Busy").Replace("Preparing", "Busy"),
                                               NoofPort = charger.Ports.Where(t => t.ChargerId.Equals(charger.Id)).ToList().Count == 0 ? "0" : charger.Ports.Where(t => t.ChargerId.Equals(charger.Id)).ToList().Count.ToString(),
                                               DispenserMake = charger.MakeName,
                                               DispenserModel = charger.ModelName,

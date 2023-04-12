@@ -29,17 +29,14 @@ namespace RestService.Assets.Controllers
             _configuration= configuration;
         }
 
-        [HttpGet("GetSessionAndPaymentDetailsByPaymentTransactionId")]
+        [HttpGet("PaymentTransactionDetailsById")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<SessionAndPaymentDTO>> GetSessionAndPayment(long PaymentTransactionId)
+        [AllowAnonymous]
+        public async Task<ActionResult<SessionAndPaymentDTO>> GetSessionAndPaymentDetails(long PaymentTransactionId)
         {
             SessionAndPaymentDTO sessionAndPaymentDTO = new SessionAndPaymentDTO();
             try
-            {
-
-                sessionAndPaymentDTO = await _mediator.Send(new ChargingSessionAndPaymentTransactionQuery(PaymentTransactionId));
-                string jsonData = string.Empty;
-                jsonData = JsonConvert.SerializeObject(sessionAndPaymentDTO.sessionAndPaymentData);
+            {              
 
                 string access_token = string.Empty;
                 using (var client = new HttpClient())
@@ -51,7 +48,7 @@ namespace RestService.Assets.Controllers
                     string password = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("EXTERNAL_PASSWORD")) ? this._configuration.GetSection("ExternalAPI")["PASSWORD"] : Environment.GetEnvironmentVariable("EXTERNAL_PASSWORD");
                     string usernamePassword = "{\"username\": \"" + username + "\", \"password\": \"" + password + "\"}";
                     StringContent content = new StringContent(usernamePassword, Encoding.UTF8, "application/json");
-                    var responseTask = await client.PostAsync("api/Auth/token", content);
+                    var responseTask = await client.PostAsync("api/authentication/token", content);
                     if (responseTask.IsSuccessStatusCode)
                     {
                         string tokenresult = responseTask.Content.ReadAsStringAsync().Result;
@@ -60,6 +57,10 @@ namespace RestService.Assets.Controllers
                             access_token = tokenresult;
                             using (var assetproductissuesclient = new HttpClient())
                             {
+                                sessionAndPaymentDTO = await _mediator.Send(new ChargingSessionAndPaymentTransactionQuery(PaymentTransactionId));
+                                string jsonData = string.Empty;
+                                jsonData = JsonConvert.SerializeObject(sessionAndPaymentDTO.sessionAndPaymentData);
+
                                 Log.Information("getting token from auth api  : " + access_token);
                                 string assetproductissuesAddress = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("EXTERNAL_ASSETPRODUCTISSUES_URL")) ? this._configuration.GetSection("ExternalAPI")["ASSET_PRODUCT_ISSUES_URL"].ToString() : Environment.GetEnvironmentVariable("EXTERNAL_ASSETPRODUCTISSUES_URL").ToString();
                                 Log.Information("assetproductissues base address : " + assetproductissuesAddress);
@@ -67,7 +68,7 @@ namespace RestService.Assets.Controllers
                                 assetproductissuesclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access_token);
                                 content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
-                                var response = await assetproductissuesclient.PostAsync("api/assetproductissues", content);
+                                var response = await assetproductissuesclient.PostAsync("api/v1/assetproductissues", content);
                                 if (response.IsSuccessStatusCode)
                                 {
                                     sessionAndPaymentDTO.StatusMessage = RespnoseMessage.Record_Save_Successfully;
