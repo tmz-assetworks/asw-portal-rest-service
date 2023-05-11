@@ -41,6 +41,7 @@ namespace PortalRestService.Infrastructure.Models
         public string ModelName { get; set; }
 
         public string? UnitNumber { get; set; }
+        public string? AssetId { get; set; }
         /// <summary>
         public  ICollection<VehicleRFID> vehicleRFID { get; set; }
 
