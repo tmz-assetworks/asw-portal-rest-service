@@ -268,19 +268,31 @@ namespace PortalRestService.Infrastructure.Repositories
                     var faualtlist = (from cs in _dbContext.ErrorSeverity join l in _dbContext.FaultyErrorCode on cs.Id equals l.ErrorSeverityId where cs.IsActive == true select l).ToList();
 
 
-                    List<OcppEventLog> objlogs = (from v in _dbContext.OcppEventLogs.ToList()
+                    //List<OcppEventLog> objlogs = (from v in _dbContext.OcppEventLogs.ToList()
+                    //                              select new OcppEventLog
+                    //                              {
+                    //                                  Id = v.Id,
+                    //                                  RequestType = v.RequestType == null ? "" : v.RequestType,
+                    //                                  DeviceId = v.DeviceId == null ? "" : v.DeviceId,
+                    //                                  ResponsePayload = v.ResponsePayload,
+                    //                                  RequestPayload = geterror(v.RequestPayload, v.RequestType == null ? "" : v.RequestType)
+
+
+                    //                              }).Distinct().Where(o => chargeboxid.Contains(o.DeviceId == null ? "" : o.DeviceId.ToString())
+                    //                             && o.RequestType.ToLower() == "StatusNotification".ToLower()
+                    //                            ).ToList<OcppEventLog>();
+
+
+                    List<OcppEventLog> objlogs = (from v in _dbContext.OcppEventLogs.Where(v => v.RequestType.ToLower() == "statusnotification").ToList()
                                                   select new OcppEventLog
                                                   {
                                                       Id = v.Id,
                                                       RequestType = v.RequestType == null ? "" : v.RequestType,
                                                       DeviceId = v.DeviceId == null ? "" : v.DeviceId,
                                                       ResponsePayload = v.ResponsePayload,
-                                                      RequestPayload = geterror(v.RequestPayload, v.RequestType == null ? "" : v.RequestType)
+													  RequestPayload = geterror(v.RequestPayload, v.RequestType == null ? "" : v.RequestType)
 
-
-                                                  }).Distinct().Where(o => chargeboxid.Contains(o.DeviceId == null ? "" : o.DeviceId.ToString())
-                                                 && o.RequestType.ToLower() == "StatusNotification".ToLower()
-                                                ).ToList<OcppEventLog>();
+												  }).ToList();
 
 
                     //Errors 
