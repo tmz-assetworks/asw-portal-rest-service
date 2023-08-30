@@ -74,7 +74,8 @@ namespace PortalRestService.Infrastructure.Repositories
                                                          }).ToList<ChargingSessionByLocationBO>();
                 if (res.Count <= 0)
                 {
-                    finalon = getstatus();
+                    //17-aug-2023 no need default value
+                    //finalon = getstatus();
                 }
                 else
                 {

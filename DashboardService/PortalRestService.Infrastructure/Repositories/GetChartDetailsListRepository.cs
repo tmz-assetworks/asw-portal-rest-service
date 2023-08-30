@@ -1,9 +1,11 @@
 using Newtonsoft.Json;
+using PortalRestService.Core.Models;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System;
 using System.Collections.Generic;
@@ -29,10 +31,10 @@ namespace PortalRestService.Infrastructure.Repositories
                 if (string.IsNullOrEmpty(request.Duration) || request.Duration.ToLower() == "string")
                     request.Duration = "1";
 
-            
-            
-            //if filter use then remove defult starttime filter 
-                if (request.Flag.ToLower() == "chargerSession".ToLower())
+
+
+			//if filter use then remove defult starttime filter 
+			if (request.Flag.ToLower() == "chargerSession".ToLower())
             {
                 if (!string.IsNullOrEmpty(request.Fromdate) || !string.IsNullOrEmpty(request.Todate) || request.status.Count > 0)
                 {
@@ -54,8 +56,12 @@ namespace PortalRestService.Infrastructure.Repositories
                                Id = s.Id,
                                ChargerName = charger.ChargeBoxId,
                                UID = "",
-                               ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == charger.Id).Select(s => s.Connector.ConnectorType)),
-                               FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId==s.ChargerId && x.ConnectorId==s.ConnectorId).Count() == 0 ? "" :
+							   //ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == charger.Id).Select(s => s.Connector.ConnectorType)),
+							   ChargerType = (from var in _dbContext.Connector
+											  join pr in _dbContext.Port on var.Id equals pr.ConnectorType
+											  where pr.ChargerId == charger.Id && pr.Connectorid == s.ConnectorId
+											  select var.ConnectorType).SingleOrDefault(),
+							   FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId==s.ChargerId && x.ConnectorId==s.ConnectorId).Count() == 0 ? "" :
                                 (DateTime.Now - _dbContext.ChargerStatusHistory.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
                                FaultDescription = "",
                                TimeReported = s.StartTime,
@@ -115,7 +121,11 @@ namespace PortalRestService.Infrastructure.Repositories
                                Id = s.Id,
                                ChargerName = charger.ChargeBoxId,
                                UID = "",
-                               ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == charger.Id).Select(s => s.Connector.ConnectorType)),
+                               //ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == s.ChargerId).Select(s => s.Connector.ConnectorType)),
+                               ChargerType = (from var in _dbContext.Connector
+                                              join pr in _dbContext.Port on var.Id equals pr.ConnectorType
+                                              where pr.ChargerId == charger.Id && pr.Connectorid == s.ConnectorId
+                                              select var.ConnectorType).SingleOrDefault(),
                                FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).Count() == 0 ? "" :
                                 (DateTime.Now - _dbContext.ChargerStatusHistory.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
                                FaultDescription = "",
@@ -144,7 +154,7 @@ namespace PortalRestService.Infrastructure.Repositories
                            }).OrderByDescending(a => a.TimeReported).ToList<ChartDetailsList>();
 
                     
-                }
+                }                
                 if (request.LocationIds.Count > 0)
                 {
                     res = res.Where(o => request.LocationIds.Contains(o.LocationId)).ToList();
