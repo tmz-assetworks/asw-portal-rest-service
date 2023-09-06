@@ -57,10 +57,11 @@ namespace PortalRestService.Infrastructure.Repositories
                                ChargerName = charger.ChargeBoxId,
                                UID = "",
 							   //ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == charger.Id).Select(s => s.Connector.ConnectorType)),
-							   ChargerType = (from var in _dbContext.Connector
-											  join pr in _dbContext.Port on var.Id equals pr.ConnectorType
-											  where pr.ChargerId == charger.Id && pr.Connectorid == s.ConnectorId
-											  select var.ConnectorType).SingleOrDefault(),
+							   //ChargerType = (from var in _dbContext.Connector
+							   //	  join pr in _dbContext.Port on var.Id equals pr.ConnectorType
+							   //	  where pr.ChargerId == charger.Id && pr.Connectorid == s.ConnectorId
+							   //	  select var.ConnectorType).SingleOrDefault(),
+							   ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == charger.Id && p.Connectorid==s.ConnectorId).Select(s => s.Connector.ConnectorType)),
 							   FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId==s.ChargerId && x.ConnectorId==s.ConnectorId).Count() == 0 ? "" :
                                 (DateTime.Now - _dbContext.ChargerStatusHistory.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
                                FaultDescription = "",
@@ -121,12 +122,13 @@ namespace PortalRestService.Infrastructure.Repositories
                                Id = s.Id,
                                ChargerName = charger.ChargeBoxId,
                                UID = "",
-                               //ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == s.ChargerId).Select(s => s.Connector.ConnectorType)),
-                               ChargerType = (from var in _dbContext.Connector
-                                              join pr in _dbContext.Port on var.Id equals pr.ConnectorType
-                                              where pr.ChargerId == charger.Id && pr.Connectorid == s.ConnectorId
-                                              select var.ConnectorType).SingleOrDefault(),
-                               FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).Count() == 0 ? "" :
+							   //ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == s.ChargerId).Select(s => s.Connector.ConnectorType)),
+							   //ChargerType = (from var in _dbContext.Connector
+							   //               join pr in _dbContext.Port on var.Id equals pr.ConnectorType
+							   //               where pr.ChargerId == charger.Id && pr.Connectorid == s.ConnectorId
+							   //               select var.ConnectorType).SingleOrDefault(),
+							   ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == s.ChargerId && p.Connectorid==s.ConnectorId).Select(s => s.Connector.ConnectorType)),
+							   FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).Count() == 0 ? "" :
                                 (DateTime.Now - _dbContext.ChargerStatusHistory.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
                                FaultDescription = "",
                                TimeReported = s.StartTime,
