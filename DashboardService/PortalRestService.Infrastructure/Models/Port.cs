@@ -1,6 +1,7 @@
 ﻿using PortalRestService.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,9 +18,9 @@ namespace PortalRestService.Infrastructure.Models
        
         public int Connectorid { get; set; }
 
-       
-        public long ConnectorType { get; set; }
-        public Connector Connector { get; set; }
+		public long ConnectorType { get; set; }
+		[ForeignKey("ConnectorType")]
+		public Connector Connector { get; set; }
 
 
         public string CreatedBy { get; set; }

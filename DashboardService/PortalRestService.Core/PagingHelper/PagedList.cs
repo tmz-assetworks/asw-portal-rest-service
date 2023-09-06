@@ -31,7 +31,12 @@ namespace PortalRestService.Core.PagingHelper
             var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
             return new PagedList<T>(items, count, pageNumber, pageSize);
         }
-    }
+		public static PagedList<T> ToPageList(IEnumerable<T> source, int pageNumber, int pageSize, int count)
+		{
+			var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+			return new PagedList<T>(items, count, pageNumber, pageSize);
+		}
+	}
     public class PaginationResponse
     {
         public int TotalCount { get;  set; }

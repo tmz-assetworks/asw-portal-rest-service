@@ -28,11 +28,32 @@ namespace PortalRestService.Infrastructure.Repositories
 
             List<EventLogLocation> res = new List<EventLogLocation>();
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
-            try
+			int Rcount = 0;
+			try
             {
-
-                res = (from s in request.ChargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.OcppEventLogs.Where(o => o.DeviceId != null)
-                       join charger in _dbContext.Charger on s.DeviceId equals charger.ChargeBoxId
+				int countr = request.PageNumber * request.PageSize;
+				if (!string.IsNullOrEmpty(request.SearchParam))
+				{
+					Rcount = (from s in request.ChargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId)).Where(d => d.RequestType.ToLower().StartsWith(request.SearchParam.ToLower()) || d.DeviceId.ToLower() == request.SearchParam.ToLower()).OrderByDescending(o => o.Id) : _dbContext.OcppEventLogs.Where(o => o.DeviceId != null).Where(d => d.RequestType.ToLower().StartsWith(request.SearchParam.ToLower()) || d.DeviceId.ToLower() == request.SearchParam.ToLower()).OrderByDescending(o => o.Id)
+							  select s).Count();
+				}
+				else
+				{
+					Rcount = (from s in request.ChargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId)).OrderByDescending(o => o.Id) : _dbContext.OcppEventLogs.Where(o => o.DeviceId != null).OrderByDescending(o => o.Id)
+							  select s).Count();
+				}
+				//res = (from s in request.ChargerBoxIds.Count > 0 ? _dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId) && o.DeviceId != null) : _dbContext.OcppEventLogs.Where(o => o.DeviceId != null)
+				//Ajay 4-sep-2023 we get only needed record insted of all records
+				res = (from s in request.ChargerBoxIds.Count > 0 ? (
+					   (string.IsNullOrEmpty(request.SearchParam)) ?
+					   (_dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId)).OrderByDescending(o => o.Id).Take(countr).ToList())
+					   : (_dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId)).OrderByDescending(o => o.Id).Where(d => d.RequestType.ToLower().StartsWith(request.SearchParam.ToLower()) || d.DeviceId.ToLower() == request.SearchParam.ToLower()).Take(countr).ToList())
+					   ) : (
+					   (string.IsNullOrEmpty(request.SearchParam)) ?
+					   (_dbContext.OcppEventLogs.Where(o => o.DeviceId != null).OrderByDescending(o => o.Id).Take(countr).ToList())
+					   : (_dbContext.OcppEventLogs.Where(o => o.DeviceId != null).OrderByDescending(o => o.Id).Where(d => d.RequestType.ToLower().StartsWith(request.SearchParam.ToLower()) || d.DeviceId.ToLower() == request.SearchParam.ToLower()).Take(countr).ToList())
+					   )
+					   join charger in _dbContext.Charger on s.DeviceId equals charger.ChargeBoxId
                        join locations in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)x.Id)) : _dbContext.Locations on charger.LocationId equals locations.Id
                        join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
                        join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
@@ -62,14 +83,18 @@ namespace PortalRestService.Infrastructure.Repositories
                 
             }
 
-            res = res != null ? res.OrderByDescending(a => a.ModifiedAt).ToList() : res;
-            if (!string.IsNullOrEmpty(request.SearchParam))
-                res = res.Where(d => d.RequestType.ToLower().StartsWith( request.SearchParam.ToLower()) || d.DeviceId.ToLower()== request.SearchParam.ToLower()).ToList();
+			//res = res != null ? res.OrderByDescending(a => a.ModifiedAt).ToList() : res;
+			//if (!string.IsNullOrEmpty(request.SearchParam))
+			//    res = res.Where(d => d.RequestType.ToLower().StartsWith( request.SearchParam.ToLower()) || d.DeviceId.ToLower()== request.SearchParam.ToLower()).ToList();
 
-            var dataResult = PagedList<EventLogLocation>.ToPagedList(res,
-              request.PageNumber,
-              request.PageSize);
-            return await Task.FromResult(dataResult);
+			//var dataResult = PagedList<EventLogLocation>.ToPagedList(res,
+			//  request.PageNumber,
+			//  request.PageSize);
+			//Ajay 4-sep-2023 add new method , we pass count also
+			var dataResult = PagedList<EventLogLocation>.ToPageList(res,
+			  request.PageNumber,
+			  request.PageSize, Rcount);
+			return await Task.FromResult(dataResult);
 
         }
 
