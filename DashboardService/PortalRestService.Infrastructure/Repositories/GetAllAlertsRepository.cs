@@ -27,7 +27,7 @@ namespace PortalRestService.Infrastructure.Repositories
             this._configuration = configuration;
             OccpIp = this._configuration.GetSection("OccpIp").GetSection("ip").Value;
         }
-        public async Task<OperatorAlertResponse> GetAllAlerts(OperatorAlertRequest operatorAlertRequest)
+        public async Task<OperatorAlertResponse> GetAllAlertsOld(OperatorAlertRequest operatorAlertRequest)
         {
             OperatorAlertResponse operatorAlertResponse = new OperatorAlertResponse();
             var emptyvalue = AlertValidation(operatorAlertRequest);
@@ -153,7 +153,172 @@ namespace PortalRestService.Infrastructure.Repositories
             return operatorAlertResponse;
         }
 
-        public string AlertValidation(OperatorAlertRequest operatorAlertRequest)
+		public async Task<OperatorAlertResponse> GetAllAlerts(OperatorAlertRequest operatorAlertRequest)
+		{
+			OperatorAlertResponse operatorAlertResponse = new OperatorAlertResponse();
+			var emptyvalue = AlertValidation(operatorAlertRequest);
+			if (!string.IsNullOrEmpty(emptyvalue))
+			{
+				operatorAlertResponse.StatusMessage = emptyvalue;
+				operatorAlertResponse.StatusCode = 400;
+				return operatorAlertResponse;
+			}
+			var PaginationValidation = Helper.CommonHelpers.PagenationValidation(operatorAlertRequest);
+			if (!string.IsNullOrEmpty(PaginationValidation))
+			{
+				operatorAlertResponse.StatusMessage = PaginationValidation;
+				operatorAlertResponse.StatusCode = 400;
+				return operatorAlertResponse;
+			}
+			//EventLogLocationResponse eventLogLocationResponse = new EventLogLocationResponse();
+
+			List<AlertResponse>? res = new List<AlertResponse>();
+			List<AlertResponse>? tasknotification = new List<AlertResponse>();
+			DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+			int Rcount = 0;
+            int tcount = 0;
+			TaskCount _taskCount = new TaskCount();
+			try
+			{
+				var allchargerBoxIds = (from charger in _dbContext.Charger
+										join locations in operatorAlertRequest.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => operatorAlertRequest.LocationIds.Contains((int)x.Id)) : _dbContext.Locations on charger.LocationId equals locations.Id
+										join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
+										join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
+										join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+										on locations.Id equals userMap.LocationId
+										select charger.ChargeBoxId
+
+				   ).Distinct().ToList();
+				if (allchargerBoxIds.Count > 0)
+				{
+					List<string> list = new List<string>();
+					if (operatorAlertRequest.chargerBoxIds.Count > 0)
+					{
+						list = operatorAlertRequest.chargerBoxIds.Intersect(allchargerBoxIds).ToList();
+						operatorAlertRequest.chargerBoxIds.Clear();
+					}
+                    else
+                    {
+                        list = allchargerBoxIds;
+					}
+					operatorAlertRequest.chargerBoxIds = list;
+					int countr = operatorAlertRequest.PageNumber * operatorAlertRequest.PageSize;
+                    if(operatorAlertRequest.chargerBoxIds.Count>0)
+                    {
+						if (!string.IsNullOrEmpty(operatorAlertRequest.SearchParam))
+						{
+							Rcount = (from s in _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId)).Where(d => d.RequestType.ToLower().Contains(operatorAlertRequest.SearchParam.ToLower()))
+									  select s).Count();
+							tcount = (from s in _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId)).Where(d => d.RequestType.ToLower().Contains(operatorAlertRequest.SearchParam.ToLower())).Where(d => d.IsRead == false)
+									  select s).Count();
+						}
+						else
+						{
+							Rcount = (from s in _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId) && o.RequestType != "Heartbeat")
+									  select s).Count();
+							tcount = (from s in _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId) && o.RequestType != "Heartbeat" && o.IsRead == false)
+                                      select s).Count();
+						}
+						res = (from s in string.IsNullOrEmpty(operatorAlertRequest.SearchParam) ? _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId) && o.RequestType != "Heartbeat").OrderByDescending(o => o.Id).Take(countr).ToList() : _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId)).Where(d => d.RequestType.ToLower().Contains(operatorAlertRequest.SearchParam.ToLower())).OrderByDescending(o => o.Id).Take(countr).ToList()
+							   join charger in _dbContext.Charger on s.DeviceId equals charger.ChargeBoxId
+							   join locations in operatorAlertRequest.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => operatorAlertRequest.LocationIds.Contains((int)x.Id)) : _dbContext.Locations on charger.LocationId equals locations.Id
+							   select new AlertResponse
+							   {
+
+								   EventLogId = s.Id,
+								   ChargeBoxId = charger.ChargeBoxId,
+								   Category = "OCPP",
+								   MessageType = s.RequestType,
+								   DateTime = s.CreatedAt,
+								   IPAddress = OccpIp == null ? "" : OccpIp,
+								   LocationsName = locations.LocationName,
+								   RequestPayload = s.RequestPayload == null ? "" : s.RequestPayload.Replace(",", ",\r\n"),
+								   ResponsePayload = s.ResponsePayload == null ? "" : s.ResponsePayload.Replace(",", ",\r\n"),
+								   IsRead = s.IsRead == false ? false : true,
+								   Flag = "OCPP",
+                                   AssetId =charger.AssetId
+
+							   }).OrderByDescending(a => a.DateTime).DistinctBy(d => d.EventLogId).Where(r => r.ChargeBoxId != null).ToList<AlertResponse>();
+					}
+				}
+				
+				tasknotification = (from s in _dbContext.TaskNotifications.Where(d=> d.UserId.Equals(_tokenBase.getObjectId()))
+									select new AlertResponse
+									{
+										EventLogId = s.Id,
+										ChargeBoxId = "",
+										Category = s.Category,
+										MessageType = s.Messagetype,
+										DateTime = s.CreatedAt,
+										IPAddress = s.Ipaddress == null ? "" : s.Ipaddress,
+										LocationsName = "",
+										RequestPayload = "",
+										ResponsePayload = s.Content,
+										IsRead = s.IsRead == false ? false : true,
+										UserId = s.UserId == null ? "" : s.UserId,
+										Flag = "ASSET",
+                                        AssetId =""
+
+									}).Distinct().OrderByDescending(a => a.DateTime)
+			   //.Where(e=>e.UserId.Equals(_tokenBase.getObjectId()))
+			   .ToList<AlertResponse>();
+				Rcount= Rcount+ tasknotification.Count;
+				res.AddRange(tasknotification);
+				if (res != null)
+				{
+                    _taskCount = (new TaskCount() { Counts = tasknotification.Where(s => s.IsRead == false).Count() + tcount });
+				}
+
+				if (res != null && res.Count > 0)
+				{
+					res = res != null ? res.OrderByDescending(a => a.DateTime).ToList() : res;
+					if (!string.IsNullOrEmpty(operatorAlertRequest.SearchParam))
+						res = res.Where(d => d.MessageType.ToLower().Contains(operatorAlertRequest.SearchParam.ToLower())
+					 ).OrderByDescending(a => a.DateTime).ToList<AlertResponse>();
+					//Paging on Records           
+
+					var dataResult = PagedList<AlertResponse>.ToPageList(res,
+				   operatorAlertRequest.PageNumber,
+				  operatorAlertRequest.PageSize,Rcount);
+					if (res.Count > 0)
+					{
+						operatorAlertResponse.StatusMessage = RespnoseMessage.Record_found;
+						operatorAlertResponse.StatusCode = 200;
+						operatorAlertResponse.data = dataResult;
+						operatorAlertResponse.TaskCount = _taskCount;
+						operatorAlertResponse.paginationResponse = new PaginationResponse()
+						{
+							TotalCount = dataResult.TotalCount,
+							PageSize = dataResult.PageSize,
+							CurrentPage = dataResult.CurrentPage,
+							TotalPages = dataResult.TotalPages,
+							HasNext = dataResult.HasNext,
+							HasPrevious = dataResult.HasPrevious
+						};
+					}
+					else
+					{
+						operatorAlertResponse.StatusCode = 200;
+						operatorAlertResponse.StatusMessage = RespnoseMessage.Record_not_found;
+					}
+				}
+				else
+				{
+					operatorAlertResponse.StatusCode = 404;
+					operatorAlertResponse.StatusMessage = RespnoseMessage.Record_not_found;
+				}
+			}
+			catch (Exception ex)
+			{
+				operatorAlertResponse.StatusMessage = RespnoseMessage.Faild;
+				operatorAlertResponse.StatusCode = (int)HttpStatusCode.ExpectationFailed;
+
+				operatorAlertResponse.data = new List<AlertResponse>();
+			}
+			return operatorAlertResponse;
+		}
+
+		public string AlertValidation(OperatorAlertRequest operatorAlertRequest)
         {
             string checkemptys;
             if (operatorAlertRequest.LocationIds != null && operatorAlertRequest.LocationIds.Count() > 0)
