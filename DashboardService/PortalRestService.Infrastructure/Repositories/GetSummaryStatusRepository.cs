@@ -164,11 +164,12 @@ namespace PortalRestService.Infrastructure.Repositories
 
                     if (objDispenser.data != null)
                     {
+                        //Add Disconnected in offline 26-10-2023 suggest by Mamta mam and requested by Michel
                         List<StatusData> StatusData = new List<StatusData>()
                     {
                         new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus!=null && d.ChargerStatus.Count >0 && d.ChargerStatus[0].ChargerStatus1.ToLower().Equals(Status_Indication.ChargerStatus.Available.ToString().ToLower())).ToList().Count).ToString(), Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
                         new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus !=null && d.ChargerStatus.Count>0  && d.ChargerStatus[0].ChargerStatus1.Replace("Unavailable","Connected").ToLower().Equals(Status_Indication.ChargerStatus.Connected.GetEnumDisplayName().ToLower())).ToList().Count).ToString()  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus==null || d.ChargerStatus.Count==0 || d.ChargerStatus[0].ChargerStatus1=="Offline").ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
+                        new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value = CommonHelpers.GetHoursTwoDigitFormat(objDispenser.data.Where(d => d.ChargerStatus==null || d.ChargerStatus.Count==0 || d.ChargerStatus[0].ChargerStatus1=="Offline" || d.ChargerStatus[0].ChargerStatus1=="Disconnected").ToList().Count).ToString() , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
 
                       };
                         cardData.StatusData = StatusData;
