@@ -230,6 +230,9 @@ namespace PortalRestService.Core.Responses
         public string CityName { get; set; }
         public string status { get; set; }
         public string ChargeBoxid { get; set; }
+        public string? AssetId { get; set; }
+        public string? MakeName { get; set; }
+        public string? ModelName { get; set; }
     }
 
     public class LocationsDispenserDetailsResponce

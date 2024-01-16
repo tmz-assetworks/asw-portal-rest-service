@@ -113,6 +113,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 {
                     chargerInformationResponse.StatusMessage = RespnoseMessage.Record_found;
                     chargerInformationResponse.StatusCode = (int)HttpStatusCode.OK;
+                    chargerInformationResponse.data.AssetId = dispenser.assetId;
                     chargerInformationResponse.data.HardwareSerialNumber = dispenser.hardwareSerialNumber;
                     chargerInformationResponse.data.ZipCode = dispenser.LocationDTO.LocationAddress.PinCode;
                     chargerInformationResponse.data.Address = dispenser.LocationDTO.LocationAddress.AddressLine1 + " " + dispenser.LocationDTO.LocationAddress.AddressLine2;
