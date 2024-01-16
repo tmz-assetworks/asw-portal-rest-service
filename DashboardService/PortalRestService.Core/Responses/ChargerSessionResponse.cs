@@ -323,6 +323,7 @@ namespace PortalRestService.Core.Responses
     }
     public class ChargerInfo
     {
+        public string? AssetId { get; set; }
         public string HardwareSerialNumber { get; set; }
         public string? ChargeBoxId { get; set; }
         public string Charger { get; set; }

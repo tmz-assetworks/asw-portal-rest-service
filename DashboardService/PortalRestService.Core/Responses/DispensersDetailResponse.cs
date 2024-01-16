@@ -37,6 +37,7 @@ namespace PortalRestService.Core.Responses
         public long LocationId { get; set; }
         public string State { get; set; }
         public string LocationContactNumber { get; set; }
+        public string? AssetId { get; set; }
     }
     public class DispensersDetailRequest : QueryStringParameters
     {

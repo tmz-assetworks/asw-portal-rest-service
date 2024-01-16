@@ -40,8 +40,8 @@ namespace RestService.Assets
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
 
-                    webBuilder.UseStartup<Startup>()
-                   .UseUrls("http://*:6010");
+                    webBuilder.UseStartup<Startup>();
+                   //.UseUrls("http://*:6010");
 
                 });
     }

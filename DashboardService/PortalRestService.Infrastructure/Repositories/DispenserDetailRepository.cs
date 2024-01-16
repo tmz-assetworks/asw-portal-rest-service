@@ -24,6 +24,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                        on location.Id equals userMap.LocationId
                       select new DispensersDetail
                       {
+                          AssetId = disp.AssetId,
                           ChargerBoxId = disp.ChargeBoxId,
                           TimeReported = disp.ChargerStatuses == null ? "" :
                           disp.ChargerStatuses.ToList().Where(x => x.ConnectorStatus.ToLower() == "faulted").ToList().Count == 0 ? "" :
