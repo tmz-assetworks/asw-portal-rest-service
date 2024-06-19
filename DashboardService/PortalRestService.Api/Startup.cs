@@ -1,21 +1,19 @@
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
+using PortalRestService.Api.Service;
 using PortalRestService.Application.Handlers.Assets.QueryHandlers;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Repositories.Base;
+using PortalRestService.Helpers;
 using PortalRestService.Infrastructure.Repositories;
 using PortalRestService.Infrastructure.Repositories.Assets;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System.Reflection;
-using PortalRestService.Helpers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using PortalRestService.Api.Service;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Identity.Web;
 
 namespace RestService.Assets
 {
@@ -100,13 +98,14 @@ namespace RestService.Assets
             services.AddTransient<ILocationStatusByLocationIdRepository, LocationStatusByLocationIdRepository>();
             services.AddTransient<ILocationPerformingRepository, LocationPerformingRepository>();
             services.AddTransient<ILocationDispenserRepository, LocationDispenserRepository>();
-            services.AddTransient<IVehicleDashboardRepository,VehicleDashboardRepository>();
+            services.AddTransient<IVehicleDashboardRepository, VehicleDashboardRepository>();
             services.AddSingleton<IHttpHelper, HttpHelper>();
             services.AddTransient<IMilesAddedByLocationQueryRepository, MilesAddedByLocationRepository>();
             services.AddTransient<IVehicleRepository, VehicleRepository>();
             services.AddTransient<IEventLogByLocationRepository, EventLogBylocationRepository>();
             services.AddTransient<IGetAllAlertsRepository, GetAllAlertsRepository>();
             services.AddTransient<IUpdateIsReadEventLogByIDRepository, UpdateIsReadEventLogByIDRepository>();
+            services.AddTransient<IUpdateOcppEventLogAreReadByOperatorIDRepository, UpdateOcppEventLogAreReadByOperatorIDRepository>();
             services.AddTransient<IChartDetailsListRepository, GetChartDetailsListRepository>();
             services.AddTransient<IGetChargerSessionDetailsListRepository, ChargerSessionDetailsListRepository>();
             services.AddTransient<IGetChargerInformationRepository, GetChargerInfoRepository>();
@@ -144,7 +143,7 @@ namespace RestService.Assets
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader();
-            }); 
+            });
 
             app.UseRouting();
             app.UseAuthentication();
