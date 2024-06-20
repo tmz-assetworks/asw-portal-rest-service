@@ -3,7 +3,6 @@ using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Infrastructure.DBContext;
-using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System.Net;
 
@@ -11,16 +10,13 @@ namespace PortalRestService.Infrastructure.Repositories
 {
     public class UpdateOcppEventLogAreReadByOperatorIDRepository : OcppRepository<EventLogLocationResponse>, IUpdateOcppEventLogAreReadByOperatorIDRepository
     {
-        private readonly TokenBase _tokenBase;
-        public UpdateOcppEventLogAreReadByOperatorIDRepository(ocpp_dbContext dbContext, TokenBase token) : base(dbContext)
+        public UpdateOcppEventLogAreReadByOperatorIDRepository(ocpp_dbContext dbContext) : base(dbContext)
         {
-            _tokenBase = token;
         }
 
         /// <inheritdoc/>
         public async Task<EventLogLocationResponse> UpdateOcppEventLogAreReadByOperator(List<int> eventLogIds)
         {
-
             // Fetch all relevant records to be updated
             var ocppEventLogsToUpdate = await _dbContext.OcppEventLogs
                    .Where(e => eventLogIds.Contains(e.Id) && e.IsRead == false)
