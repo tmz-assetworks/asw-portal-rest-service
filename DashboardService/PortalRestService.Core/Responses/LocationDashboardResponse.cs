@@ -47,8 +47,7 @@ namespace PortalRestService.Core.Responses
         public List<int> LocationIds { get; set; }
         public string operatorId { get; set; }
         public List<string> chargerBoxIds { get; set; }
-
-
+        public bool isRead { get; set; }
     }
     public class TaskCount
     {
@@ -58,7 +57,7 @@ namespace PortalRestService.Core.Responses
     }
     public class AlertResponse
     {
-       
+
         public int EventLogId { get; set; }
         public string? ChargeBoxId { get; set; }
         public string? Category { get; set; }
@@ -72,10 +71,10 @@ namespace PortalRestService.Core.Responses
 
         public string Flag { get; set; }
         public string UserId { get; set; }
-		public string? AssetId { get; set; }
+        public string? AssetId { get; set; }
 
 
-	}
+    }
 
     public class OperatorAlertResponse
     {
@@ -529,7 +528,7 @@ namespace PortalRestService.Core.Responses
         public PaginationResponse paginationResponse { get; set; }
     }
 
-     public class ChargerSessionDetailsList
+    public class ChargerSessionDetailsList
     {
         public long Id { get; set; }
         public string Sessionid { get; set; }
@@ -546,7 +545,7 @@ namespace PortalRestService.Core.Responses
         public string? ReasoneForStop { get; set; }
         public int? Startmetervalue { get; set; }
         public int? Endmetervalue { get; set; }
-       
+
     }
 
     public class ChargerSessionDetailsListResponse
@@ -560,9 +559,9 @@ namespace PortalRestService.Core.Responses
         public List<ChargerSessionDetailsList> data { get; set; }
         public PaginationResponse paginationResponse { get; set; }
     }
-     public class CommandList
+    public class CommandList
     {
-       
+
         public long Id { get; set; }
         public string value { get; set; }
     }
@@ -575,7 +574,7 @@ namespace PortalRestService.Core.Responses
         public int StatusCode { get; set; }
         public string StatusMessage { get; set; }
         public List<CommandList> data { get; set; }
-        
+
     }
     public class ChargeBoxIDList
     {
@@ -594,12 +593,12 @@ namespace PortalRestService.Core.Responses
         public List<ChargeBoxIDList> data { get; set; }
 
     }
-    
+
     public class SaveNotificationResponse
     {
-        
+
         public int? StatusCode { get; set; }
-        public string? StatusMessage { get; set; }       
+        public string? StatusMessage { get; set; }
     }
     public class NotificationCommand
     {
