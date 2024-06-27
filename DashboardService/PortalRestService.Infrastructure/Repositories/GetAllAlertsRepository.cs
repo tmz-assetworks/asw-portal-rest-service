@@ -344,13 +344,13 @@ namespace PortalRestService.Infrastructure.Repositories
                                || o.RequestPayload.Contains("Faulted")
                                || o.RequestPayload.Contains("Unavailable"))
                          : _dbContext.OcppEventLogs.Where(o => o.RequestType == "StatusNotification"
-                               && o.CreatedAt >= DateTime.Now.AddDays(-30) 
+                               && o.CreatedAt >= DateTime.Now.AddDays(-30)
                                && o.IsRead == false)
                          .Where(o => o.RequestPayload.Contains("SuspendedEVSE")
                                || o.RequestPayload.Contains("Faulted")
                                || o.RequestPayload.Contains("Unavailable")))
-
-                         : (operatorAlertRequest.chargerBoxIds.Count > 0 ?
+    
+                               : (operatorAlertRequest.chargerBoxIds.Count > 0 ?
                            _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId)
                                && o.RequestType == "StatusNotification"
                                && o.CreatedAt >= DateTime.Now.AddDays(-30))
@@ -384,7 +384,9 @@ namespace PortalRestService.Infrastructure.Repositories
                            Flag = "OCPP"
                        }).OrderByDescending(a => a.DateTime).Distinct().Where(r => r.ChargeBoxId != null).ToList<AlertResponse>();
 
-                tasknotification = (from s in _dbContext.TaskNotifications.Where(d => d.CreatedAt >= DateTime.Now.AddDays(-30))
+                var taskNotifications = !operatorAlertRequest.isRead ? _dbContext.TaskNotifications.Where(d => d.CreatedAt >= DateTime.Now.AddDays(-30) && !d.IsRead) : _dbContext.TaskNotifications.Where(d => d.CreatedAt >= DateTime.Now.AddDays(-30));
+
+                tasknotification = (from s in taskNotifications
                                     select new AlertResponse
                                     {
                                         EventLogId = s.Id,
