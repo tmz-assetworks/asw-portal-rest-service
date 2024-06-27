@@ -105,7 +105,7 @@ namespace RestService.Assets
             services.AddTransient<IEventLogByLocationRepository, EventLogBylocationRepository>();
             services.AddTransient<IGetAllAlertsRepository, GetAllAlertsRepository>();
             services.AddTransient<IUpdateIsReadEventLogByIDRepository, UpdateIsReadEventLogByIDRepository>();
-            services.AddTransient<IUpdateOcppEventLogAreReadByOperatorIDRepository, UpdateOcppEventLogAreReadByOperatorIDRepository>();
+            services.AddTransient<IUpdateOcppEventLogAndTaskNotificationRepository, UpdateOcppEventLogAndTaskNotificationRepository>();
             services.AddTransient<IChartDetailsListRepository, GetChartDetailsListRepository>();
             services.AddTransient<IGetChargerSessionDetailsListRepository, ChargerSessionDetailsListRepository>();
             services.AddTransient<IGetChargerInformationRepository, GetChargerInfoRepository>();

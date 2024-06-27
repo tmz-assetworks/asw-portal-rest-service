@@ -406,6 +406,7 @@ namespace PortalRestService.Api.Controllers
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
+                
                 if (ModelState.IsValid)
                 {
                     if (operatorAlertRequest.PageSize == 0) operatorAlertRequest.PageSize = 10;
@@ -504,21 +505,26 @@ namespace PortalRestService.Api.Controllers
         }
 
         /// <summary>
-        /// Updates the read status of OCPP event logs for the given operator.
+        /// Updates OCPP event logs and task notifications.
         /// </summary>
-        /// <param name="eventLogIds">A list of event log IDs to be updated.</param>
-        /// <returns>An ActionResult containing an EventLogLocationResponse indicating the result of the update operation.</returns>
-        /// <response code="200">If the event logs were successfully updated.</response>
-        /// <response code="500">If an internal server error occurs during the update operation.</response>
-        [HttpPost("UpdateOcppEventLogAreReadByOperator")]
+        /// <remarks>
+        /// Updates the OCPP event logs and task notifications based on the provided requests.
+        /// </remarks>
+        /// <param name="ocppEventLogAndTaskNotificationRequests">List of requests containing OCPP event log and task notification data.</param>
+        /// <returns>
+        /// An ActionResult of type EventLogLocationResponse indicating the status of the update operation.
+        /// Returns Status200OK if the operation is successful.
+        /// Returns NotModified if the operation fails to update.
+        /// </returns>
+        [HttpPost("UpdateOcppEventLogAndTaskNotification")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<EventLogLocationResponse>> UpdateOcppEventLogAreReadByOperator([FromBody] List<int> eventLogIds)
+        public async Task<ActionResult<EventLogLocationResponse>> UpdateOcppEventLogAndTaskNotification([FromBody] List<OcppEventLogAndTaskNotificationRequest> ocppEventLogAndTaskNotificationRequests)
         {
             try
             {
                 _tokenBase.acces_token = await HttpContext.GetTokenAsync("access_token");
-                var result = await _mediator.Send(new UpdateOcppEventLogAreReadByOperatorIdQuery(eventLogIds));
+                var result = await _mediator.Send(new UpdateOcppEventLogAndTaskNotificationQuery(ocppEventLogAndTaskNotificationRequests));
                 return Ok(result);
             }
             catch (Exception ex)
