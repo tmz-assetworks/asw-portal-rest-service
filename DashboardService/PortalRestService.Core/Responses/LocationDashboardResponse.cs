@@ -545,6 +545,8 @@ namespace PortalRestService.Core.Responses
         public string? ReasoneForStop { get; set; }
         public int? Startmetervalue { get; set; }
         public int? Endmetervalue { get; set; }
+        public string? AssetId {  get; set; }
+
 
     }
 

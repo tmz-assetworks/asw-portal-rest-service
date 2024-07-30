@@ -33,6 +33,8 @@ namespace PortalRestService.Infrastructure.Repositories
             if (!string.IsNullOrEmpty(request.Fromdate) || !string.IsNullOrEmpty(request.Todate) || request.status.Count > 0)
             {
                 res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId, StringComparer.InvariantCultureIgnoreCase) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+                       join vehiclerfid in _dbContext.VehicleRFID on c.RfId equals vehiclerfid.Name
+                       join vehicle in _dbContext.Vehicle on vehiclerfid.VehicleId equals vehicle.Id
                        join charger in _dbContext.Charger on c.ChargerId equals charger.Id
                        join location in  _dbContext.Locations on charger.LocationId equals location.Id
                        join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
@@ -57,8 +59,9 @@ namespace PortalRestService.Infrastructure.Repositories
                            Startsoc=c.StartSoc,
                            EndSoc=c.EndSoc,
                          
-                           ReasoneForStop=c.ReasonForStop
-                           
+                           ReasoneForStop=c.ReasonForStop,
+                           AssetId = vehicle.AssetId
+
                        }).DistinctBy(d => d.Id).OrderByDescending(a => a.ModifiedAt).Where(s => s.ChargeBoxId != null).ToList();
                 if (res != null)
                 {
@@ -76,6 +79,8 @@ namespace PortalRestService.Infrastructure.Repositories
             else
             {
                 res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId, StringComparer.InvariantCultureIgnoreCase) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+                       join vehiclerfid in _dbContext.VehicleRFID on c.RfId equals vehiclerfid.Name
+                       join vehicle in _dbContext.Vehicle on vehiclerfid.VehicleId equals vehicle.Id
                        join charger in  _dbContext.Charger on c.ChargerId equals charger.Id
                        join location in _dbContext.Locations on charger.LocationId equals location.Id
                        join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
@@ -99,7 +104,8 @@ namespace PortalRestService.Infrastructure.Repositories
                            Endmetervalue = c.EndMeterValue,
                            Startsoc = c.StartSoc,
                            EndSoc = c.EndSoc,
-                           ReasoneForStop = c.ReasonForStop
+                           ReasoneForStop = c.ReasonForStop,
+                           AssetId = vehicle.AssetId
                        }).DistinctBy(d => d.Id).OrderByDescending(a => a.ModifiedAt).Where(s => s.ChargeBoxId != null).ToList();
             }
 
