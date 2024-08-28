@@ -90,7 +90,7 @@ namespace RestService.Assets
                 });
             });
             services.AddAutoMapper(typeof(Startup));
-            services.AddMediatR(typeof(GetAllChargingSessionHandler).GetTypeInfo().Assembly);
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(GetAllChargingSessionHandler).GetTypeInfo().Assembly));
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddTransient<IChargingSessionRepository, ChargingSessionRepository>();
             services.AddTransient<IChargerByLocationRepository, GetChargerByLocationIDRepository>();
