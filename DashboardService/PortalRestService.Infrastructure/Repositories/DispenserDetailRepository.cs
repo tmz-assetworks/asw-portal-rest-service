@@ -17,13 +17,13 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
             this._tokenBase = tokenBase;
         }
 
+
         public Task<PagedList<DispensersDetail>> GetDispensersDetail(DispensersDetailRequest dispensersDetailRequest)
         {
-            List<DispensersDetail> result = new List<DispensersDetail>();
-            result = (from disp in _dbContext.Charger                       
+            List<DispensersDetail> result = (from disp in _dbContext.Charger                       
                       join location in _dbContext.Locations on disp.LocationId equals location.Id
                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                      on location.Id equals userMap.LocationId where (dispensersDetailRequest.SearchParam == null && dispensersDetailRequest.SearchParam == "") ? 1 == 1 : (disp.ChargeBoxId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.AssetId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.MakeName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.ModelName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || location.LocationName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()))
+                      on location.Id equals userMap.LocationId where (!string.IsNullOrEmpty(dispensersDetailRequest.SearchParam)) ? (disp.ChargeBoxId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.AssetId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.MakeName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.ModelName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || location.LocationName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower())): disp.ChargeBoxId != null
                       select new DispensersDetail
                       {
                           AssetId = disp.AssetId,
