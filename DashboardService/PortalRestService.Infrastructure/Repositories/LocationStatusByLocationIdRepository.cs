@@ -15,9 +15,11 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
     public class LocationStatusByLocationIdRepository : OcppRepository<AllLocationStatusChartBO>, ILocationStatusByLocationIdRepository
     {
         TokenBase _tokenBase;
-        public LocationStatusByLocationIdRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase tokenBase) : base(dbContext)
+        private readonly ILocationRepository _locationRepository;
+        public LocationStatusByLocationIdRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase tokenBase, ILocationRepository locationRepository) : base(dbContext)
         {
             _tokenBase = tokenBase;
+            _locationRepository = locationRepository;
         }
         public async Task<List<AllLocationStatusChartBO>> GetLocationStatusByLocatonId(List<int> locations, string duration)
         {
@@ -25,10 +27,12 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
             AllLocationStatusQueryResponse obj = new AllLocationStatusQueryResponse();
             List<LocationStatusData> LocationStatus = new List<LocationStatusData>();
 
-            List<AllLocationStatusChartBO> res = (from location in locations.Count > 0 ? _dbContext.Locations.Where(x => locations.Contains((int)(x.Id))) : _dbContext.Locations
+            List<long> locationIdList = await _locationRepository.GetAllLocationIdByObjectId();
+
+            List<AllLocationStatusChartBO> res = (from location in locations.Count > 0 ? _dbContext.Locations.Where(x => locations.Contains((int)(x.Id)) && locationIdList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdList.Contains(x.Id))
                                                   join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                                                  join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                                                  on location.Id equals userMap.LocationId
+                                                  //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                                  //on location.Id equals userMap.LocationId
                                                   select new AllLocationStatusChartBO
                                                   {
                                                       LocationStatus = Status.LocationStatusName,

@@ -1,23 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.EnumData;
 using PortalRestService.Infrastructure.Helper;
-using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
 using System.Net;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
@@ -27,11 +17,13 @@ namespace PortalRestService.Infrastructure.Repositories
         private readonly double gasolineInKiloWatt = 0;
         private readonly double lbsofCO2emitted = 0;
         private readonly IConfiguration _configuration;
+        private readonly ILocationRepository _locationRepository;
         TokenBase _tokenBase;
-        public GetSummaryDataRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, TokenBase tokenBase) : base(dbContext)
+        public GetSummaryDataRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, TokenBase tokenBase,
+            ILocationRepository locationRepository) : base(dbContext)
         {
             this._configuration = configuration;
-            //_httpHelper = httpHelper;
+            this._locationRepository = locationRepository;
 
             gasolineInKiloWatt = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("GallongasolineKiloWatt").Value);
             lbsofCO2emitted = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("lbsofCO2emitted").Value);
@@ -45,7 +37,6 @@ namespace PortalRestService.Infrastructure.Repositories
             List<SummaryDetail> summaryDetails = null;
             try
             {
-                // Getting Charging Session data
                 summaryDetails = new List<SummaryDetail>();
                 List<PortalRestService.Core.Models.ChargingSession> objChargingSession = _dbContext.ChargingSessions.ToList();
 
@@ -53,19 +44,20 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 if (_tokenBase.getRole().ToLower() == "admin")
                 {
-                    locationsResponse.data = (from location in _dbContext.Locations.Where(x => locationId == x.Id)
+
+                    locationsResponse.data = await (from location in locationId > 0 ? _dbContext.Locations.Where(x => locationId == x.Id) :_dbContext.Locations.Where(x => x.CreatedBy == _tokenBase.getObjectId())
                                               join charger in _dbContext.Charger
                                               on location.Id equals charger.LocationId
                                               select new LocationDispenserForLocation
                                               {
                                                   DispenserId = charger.Id,
                                                   locationId = location.Id,
-                                                  ChargeBoxId = charger.ChargeBoxId + " (" + location.LocationName + ")",
-                                              }).ToList<LocationDispenserForLocation>();
+                                                  ChargeBoxId = locationId > 0? charger.ChargeBoxId + " (" + location.LocationName + ")" : charger.ChargeBoxId,
+                                              }).ToListAsync<LocationDispenserForLocation>();
                 }
                 else
                 {
-                    locationsResponse.data = (from location in locationId>0 ?_dbContext.Locations.Where(x => locationId == x.Id): _dbContext.Locations
+                    locationsResponse.data = await (from location in locationId>0 ?_dbContext.Locations.Where(x => locationId == x.Id): _dbContext.Locations
                                               join charger in _dbContext.Charger
                                               on location.Id equals charger.LocationId
 
@@ -76,7 +68,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                                   DispenserId = charger.Id,
                                                   locationId = location.Id,
                                                   ChargeBoxId = charger.ChargeBoxId,
-                                              }).ToList<LocationDispenserForLocation>();
+                                              }).ToListAsync<LocationDispenserForLocation>();
                 }
                 if (locationsResponse != null && locationsResponse.data != null)
                 {
@@ -86,10 +78,11 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 SummaryDetail summaryDetail = new SummaryDetail();
 
-                //Type  chargingInfustructure
+                List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
+
                 TotalLocationAndChargerResponse totalLocationAndChargerResponse = new TotalLocationAndChargerResponse();
-                totalLocationAndChargerResponse.TotalLocations = _dbContext.Locations.Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.Id, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
-                totalLocationAndChargerResponse.TotalDispenser = _dbContext.Charger.Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.LocationId, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
+                totalLocationAndChargerResponse.TotalLocations = await _dbContext.Locations.Where(x => locationList.Contains(x.Id)).CountAsync(); //Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.Id, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
+                totalLocationAndChargerResponse.TotalDispenser =await _dbContext.Charger.Where(x => locationList.Contains(x.LocationId.Value)).CountAsync(); //Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.LocationId, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
 
 
                 if (totalLocationAndChargerResponse != null)
@@ -121,8 +114,6 @@ namespace PortalRestService.Infrastructure.Repositories
                     }
                 }
 
-                // Type = "Revenue";
-
                 var todayChargingsession = (from data in objChargingSession.Where(c => c.CreatedAt != null && c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year) select data).ToList();       // AS-701
 
                 double startChargingMeter = Math.Round((double)(from data in objChargingSession where data.StartMeterValue != null select data.StartMeterValue.Value).Sum() / 1000, 2);
@@ -138,26 +129,27 @@ namespace PortalRestService.Infrastructure.Repositories
                 double todayBillableChargingMeter = todayEndChargingMeter - todayStartChargingMeter;
 
                 int chargingSessionGroupBydateCount = objChargingSession.Where(c => c.CreatedAt != null).GroupBy(s => s.CreatedAt.Value.Date).ToList().Count;
-                //TotalRevenue
-                ///
+                
                 summaryDetail.Revenue = new List<Revenue>();
                 var today = DateTime.Today;
                 var thismonthStart = new DateTime(today.Year, today.Month, 1);
                 Revenue totalRevenue = new Revenue();
                 totalRevenue.Key = EnumControlTexts.DisplayingLabels.TotalRevenue.GetEnumDisplayName();
-                var totalRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Sum(o => o.trans.TotalAmount);
+                var totalRevenueValue = await _dbContext.Locations.Where(x => locationList.Contains(x.Id)).Join(_dbContext.PaymentTransaction, userlocation => userlocation.Id,
+                    trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).SumAsync(o => o.trans.TotalAmount);
                 totalRevenue.Value = string.Format("{0:#,0}", totalRevenueValue.ToString());
                 summaryDetail.Revenue.Add(totalRevenue);
 
-                // Daily Revenue
                 Revenue dailyRevenue = new Revenue();
                 dailyRevenue.Key = EnumControlTexts.DisplayingLabels.DailyRevenue.GetEnumDisplayName();
                 if (totalRevenue.Value != "0")
                 {
-                        List<DateTime> list = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId())
-                        .Join(_dbContext.OperatorUserMapper, userg => userg.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).
-                        Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Select(o => o.trans.CreatedOn).ToList();
-
+                        List<DateTime> list = await
+                        (from location in _dbContext.Locations.Where(x => locationList.Contains(x.Id))
+                            join payment in _dbContext.PaymentTransaction on location.Id equals payment.LocationId
+                            select payment.CreatedOn).ToListAsync();
+                        
+                    
                     if (list.Count > 0)
                     {
                         DateTime eaeliestDate = list.Min();
@@ -178,22 +170,24 @@ namespace PortalRestService.Infrastructure.Repositories
                 }
                 summaryDetail.Revenue.Add(dailyRevenue);
 
-                // Today 's Revenue
                 Revenue todaysRevenue = new Revenue();
                 todaysRevenue.Key = EnumControlTexts.DisplayingLabels.TodaysRevenue.GetEnumDisplayName();
-                var todaysRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Where(o => o.trans.CreatedOn >= today).Sum(o => o.trans.TotalAmount);
+                
+                var todaysRevenueValue =await _dbContext.Locations.Where(x => locationList.Contains(x.Id)).Join(_dbContext.PaymentTransaction, location => location.Id,
+                    payment => payment.LocationId, (location, payment) => new { location, payment }).
+                    Where(o => o.payment.CreatedOn >= today).SumAsync(o => o.payment.TotalAmount);
+
                 todaysRevenue.Value = string.Format("{0:#,0}", todaysRevenueValue.ToString());
                 summaryDetail.Revenue.Add(todaysRevenue);
 
-                //2  EnergyUsed
-                //TotalEnergy
+               
                 EnergyUsed energyUsedTotalEnergy = new EnergyUsed();
                 energyUsedTotalEnergy.Key = EnumControlTexts.DisplayingLabels.TotalEnergy.GetEnumDisplayName();
                 energyUsedTotalEnergy.Value = string.Format("{0:#,0}", Math.Round(billableChargingMeter, 2));
 
                 summaryDetail.EnergyUsed = new List<EnergyUsed>();
                 summaryDetail.EnergyUsed.Add(energyUsedTotalEnergy);
-                //DailyAverage
+                
                 EnergyUsed dailyAverageEnergyUsed = new EnergyUsed();
                 dailyAverageEnergyUsed.Key = EnumControlTexts.DisplayingLabels.DailyAverage.GetEnumDisplayName();
                 if (billableChargingMeter > 0)
@@ -202,13 +196,11 @@ namespace PortalRestService.Infrastructure.Repositories
                 dailyAverageEnergyUsed.Value = string.Format("{0:#,0}", dailyAverageEnergyUsed.Value);
                 summaryDetail.EnergyUsed.Add(dailyAverageEnergyUsed);
 
-                // Today's 
                 EnergyUsed todaysEnergyUsed = new EnergyUsed();
                 todaysEnergyUsed.Key = EnumControlTexts.DisplayingLabels.Todays.GetEnumDisplayName();
                 todaysEnergyUsed.Value = string.Format("{0:#,0}", Math.Round(todayBillableChargingMeter, 2));
                 summaryDetail.EnergyUsed.Add(todaysEnergyUsed);
 
-                // Energy Points
                 List<EnergyPoint> EnergyPoints = new List<EnergyPoint>();
                 EnergyPoint energyPointMTofco2Saved = new EnergyPoint();
                 energyPointMTofco2Saved.Key = EnumControlTexts.DisplayingLabels.MTofco2Saved.GetEnumDisplayName();
@@ -223,7 +215,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 summaryDetail.EnergyPoints.Add(energyPointGGEofGasSaved);
 
-                //Binding all data
+                
                 summaryDetails.Add(summaryDetail);
 
                 summaryData.Data = summaryDetails;
