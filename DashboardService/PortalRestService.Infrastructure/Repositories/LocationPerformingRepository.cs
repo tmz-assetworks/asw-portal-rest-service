@@ -21,9 +21,11 @@ namespace PortalRestService.Infrastructure.Repositories
     public class LocationPerformingRepository : OcppRepository<LocationPerformingChartResponse>, ILocationPerformingRepository
     {
         TokenBase _tokenBase;
-        public LocationPerformingRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase) : base(dbContext)
+        private readonly ILocationRepository _locationRepository;
+        public LocationPerformingRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase, ILocationRepository locationRepository) : base(dbContext)
         {
             _tokenBase = tokenBase;
+            _locationRepository = locationRepository;
         }
         async Task<LocationPerformingChartResponse> ILocationPerformingRepository.GetLocationPerforming(List<int> locations, string duration, int orderby)
         {
@@ -44,14 +46,15 @@ namespace PortalRestService.Infrastructure.Repositories
                    
                 }
                 //Add condition we will get data without current charging session
+                List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.ChargingStatus != "Charging" && s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                          join charger in _dbContext.Charger on s.ChargerId equals charger.Id
-                                                        join location in locations.Count > 0 ? _dbContext.Locations.Where(x => locations.Contains((int)(x.Id))) : _dbContext.Locations on charger.LocationId equals location.Id
+                                                        join location in locations.Count > 0 ? _dbContext.Locations.Where(x => locations.Contains((int)(x.Id)) && locationList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals location.Id
                                                          join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
                                                          join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                                                         join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                                                         on location.Id equals userMap.LocationId
+                                                         //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                                         //on location.Id equals userMap.LocationId
                                                          select new ChargingSessionByLocationBO
                                                          {
                                                              Id = s.Id,

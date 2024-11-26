@@ -27,10 +27,13 @@ namespace PortalRestService.Infrastructure.Repositories
         private readonly double gasolineInKiloWatt = 0;
         private readonly double lbsofCO2emitted = 0;
         private readonly IConfiguration _configuration;
+        private readonly ILocationRepository _locationRepository;
         TokenBase _tokenBase;
-        public GetSummaryDataRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, TokenBase tokenBase) : base(dbContext)
+        public GetSummaryDataRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, TokenBase tokenBase,
+            ILocationRepository locationRepository) : base(dbContext)
         {
             this._configuration = configuration;
+            this._locationRepository = locationRepository;
             //_httpHelper = httpHelper;
 
             gasolineInKiloWatt = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("GallongasolineKiloWatt").Value);
@@ -53,14 +56,15 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 if (_tokenBase.getRole().ToLower() == "admin")
                 {
-                    locationsResponse.data = (from location in _dbContext.Locations.Where(x => locationId == x.Id)
+
+                    locationsResponse.data = (from location in locationId > 0 ? _dbContext.Locations.Where(x => locationId == x.Id) :_dbContext.Locations.Where(x => x.CreatedBy == _tokenBase.getObjectId())
                                               join charger in _dbContext.Charger
                                               on location.Id equals charger.LocationId
                                               select new LocationDispenserForLocation
                                               {
                                                   DispenserId = charger.Id,
                                                   locationId = location.Id,
-                                                  ChargeBoxId = charger.ChargeBoxId + " (" + location.LocationName + ")",
+                                                  ChargeBoxId = locationId > 0? charger.ChargeBoxId + " (" + location.LocationName + ")" : charger.ChargeBoxId,
                                               }).ToList<LocationDispenserForLocation>();
                 }
                 else
@@ -86,10 +90,12 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 SummaryDetail summaryDetail = new SummaryDetail();
 
+                List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
+
                 //Type  chargingInfustructure
                 TotalLocationAndChargerResponse totalLocationAndChargerResponse = new TotalLocationAndChargerResponse();
-                totalLocationAndChargerResponse.TotalLocations = _dbContext.Locations.Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.Id, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
-                totalLocationAndChargerResponse.TotalDispenser = _dbContext.Charger.Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.LocationId, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
+                totalLocationAndChargerResponse.TotalLocations = _dbContext.Locations.Where(x => locationList.Contains(x.Id)).Count(); //Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.Id, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
+                totalLocationAndChargerResponse.TotalDispenser = _dbContext.Charger.Where(x => locationList.Contains(x.LocationId.Value)).Count(); //Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.LocationId, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
 
 
                 if (totalLocationAndChargerResponse != null)
@@ -145,7 +151,9 @@ namespace PortalRestService.Infrastructure.Repositories
                 var thismonthStart = new DateTime(today.Year, today.Month, 1);
                 Revenue totalRevenue = new Revenue();
                 totalRevenue.Key = EnumControlTexts.DisplayingLabels.TotalRevenue.GetEnumDisplayName();
-                var totalRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Sum(o => o.trans.TotalAmount);
+                //var totalRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Sum(o => o.trans.TotalAmount);
+                var totalRevenueValue = _dbContext.Locations.Where(x => locationList.Contains(x.Id)).Join(_dbContext.PaymentTransaction, userlocation => userlocation.Id,
+                    trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Sum(o => o.trans.TotalAmount);
                 totalRevenue.Value = string.Format("{0:#,0}", totalRevenueValue.ToString());
                 summaryDetail.Revenue.Add(totalRevenue);
 
@@ -154,10 +162,16 @@ namespace PortalRestService.Infrastructure.Repositories
                 dailyRevenue.Key = EnumControlTexts.DisplayingLabels.DailyRevenue.GetEnumDisplayName();
                 if (totalRevenue.Value != "0")
                 {
-                        List<DateTime> list = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId())
-                        .Join(_dbContext.OperatorUserMapper, userg => userg.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).
-                        Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Select(o => o.trans.CreatedOn).ToList();
-
+                        List<DateTime> list = 
+                        //_dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId())
+                        //.Join(_dbContext.OperatorUserMapper, userg => userg.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).
+                        //Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) =>
+                        //new { userlocation, trans }).Select(o => o.trans.CreatedOn).ToList();
+                        (from location in _dbContext.Locations.Where(x => locationList.Contains(x.Id))
+                            join payment in _dbContext.PaymentTransaction on location.Id equals payment.LocationId
+                            select payment.CreatedOn).ToList();
+                        
+                    
                     if (list.Count > 0)
                     {
                         DateTime eaeliestDate = list.Min();
@@ -181,7 +195,17 @@ namespace PortalRestService.Infrastructure.Repositories
                 // Today 's Revenue
                 Revenue todaysRevenue = new Revenue();
                 todaysRevenue.Key = EnumControlTexts.DisplayingLabels.TodaysRevenue.GetEnumDisplayName();
-                var todaysRevenueValue = _dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) => new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId, trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).Where(o => o.trans.CreatedOn >= today).Sum(o => o.trans.TotalAmount);
+                //var todaysRevenueValue =
+                   //_dbContext.Users.Where(u => u.ObjectId == _tokenBase.getObjectId()).
+                   //Join(_dbContext.OperatorUserMapper, user => user.Id, opmapper => opmapper.UserId, (user, opmapper) =>
+                   //new { user, opmapper }).Join(_dbContext.PaymentTransaction, userlocation => userlocation.opmapper.LocationId,
+                   //trans => trans.LocationId, (userlocation, trans) => new { userlocation, trans }).
+                   //Where(o => o.trans.CreatedOn >= today).Sum(o => o.trans.TotalAmount);
+
+                var todaysRevenueValue = _dbContext.Locations.Where(x => locationList.Contains(x.Id)).Join(_dbContext.PaymentTransaction, location => location.Id,
+                    payment => payment.LocationId, (location, payment) => new { location, payment }).
+                    Where(o => o.payment.CreatedOn >= today).Sum(o => o.payment.TotalAmount);
+
                 todaysRevenue.Value = string.Format("{0:#,0}", todaysRevenueValue.ToString());
                 summaryDetail.Revenue.Add(todaysRevenue);
 

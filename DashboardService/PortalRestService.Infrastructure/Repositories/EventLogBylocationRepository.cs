@@ -18,9 +18,11 @@ namespace PortalRestService.Infrastructure.Repositories
     {
         //readonly SqlConnection  conn;
         TokenBase _tokenBase;
-        public EventLogBylocationRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token) : base(dbContext)
+		private readonly ILocationRepository _locationRepository;
+        public EventLogBylocationRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token,ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase=token;
+            this._tokenBase=token;
+			this._locationRepository=locationRepository;
         }
 
 		async Task<PagedList<EventLogLocation>> GetEventLogByLocationOld(EventLogRequest request)
@@ -82,13 +84,14 @@ namespace PortalRestService.Infrastructure.Repositories
 			int Rcount = 0;
 			try
             {
+				List<long> locationIdList = await _locationRepository.GetAllLocationIdByObjectId();
 				int countr = request.PageNumber * request.PageSize;
 				var allchargerBoxIds = (from charger in _dbContext.Charger
-										join locations in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)x.Id)) : _dbContext.Locations on charger.LocationId equals locations.Id
+										join locations in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)x.Id) && locationIdList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdList.Contains(x.Id)) on charger.LocationId equals locations.Id
 										join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
 										join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
-										join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-										on locations.Id equals userMap.LocationId
+										//join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+										//on locations.Id equals userMap.LocationId
 										select charger.ChargeBoxId
 
 				   ).Distinct().ToList();
@@ -123,7 +126,7 @@ namespace PortalRestService.Infrastructure.Repositories
 				//Ajay 4-sep-2023 we get only needed record insted of all records		   
 				res = (from s in string.IsNullOrEmpty(request.SearchParam) ? _dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId)).OrderByDescending(o => o.Id).Take(countr).ToList() : _dbContext.OcppEventLogs.Where(o => request.ChargerBoxIds.Contains(o.DeviceId)).Where(d => d.RequestType.ToLower().StartsWith(request.SearchParam.ToLower()) || d.DeviceId.ToLower() == request.SearchParam.ToLower()).OrderByDescending(o => o.Id).Take(countr).ToList()
 					   join charger in _dbContext.Charger on s.DeviceId equals charger.ChargeBoxId
-                       join locations in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)x.Id)) : _dbContext.Locations on charger.LocationId equals locations.Id
+                       join locations in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)x.Id) && locationIdList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdList.Contains(x.Id)) on charger.LocationId equals locations.Id
                        select new EventLogLocation
                        {
                            Id = s.Id,

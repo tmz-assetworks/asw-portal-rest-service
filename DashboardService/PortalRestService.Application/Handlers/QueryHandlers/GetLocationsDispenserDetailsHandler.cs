@@ -22,7 +22,7 @@ namespace PortalRestService.Application.Handlers.QueryHandlers
 
         public async Task<PagedList<Core.Responses.LocationsDispenserDetails>> Handle(GetLocationsDispenserDetailsQuery request, CancellationToken cancellationToken)
         {
-            return (PagedList<Core.Responses.LocationsDispenserDetails>)await _LocationRepo.GetLocationsDispenserDetails(request.LocationDispenserRequest);
+            return await _LocationRepo.GetLocationsDispenserDetails(request.LocationDispenserRequest);
         }
         
     }

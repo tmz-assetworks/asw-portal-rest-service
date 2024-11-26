@@ -22,18 +22,38 @@ namespace PortalRestService.Infrastructure.Repositories
         {
             _tokenBase = tokenBase;
         }
+        public async Task<List<long>> GetAllLocationIdByObjectId()
+        {
+            return _tokenBase.getRole().ToLower() == "admin" ? (from location in _dbContext.Locations.Where(location => location.CreatedBy == _tokenBase.getObjectId()) select location.Id).ToList()
+               : (from location in _dbContext.Locations
+                  join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                                                                        on location.Id equals userMap.LocationId
+                  select location.Id).ToList();
+        }
 
         public async Task<AllLocationQueryResponse> GetAllLocation()
         {
             AllLocationQueryResponse objlocationdata = new AllLocationQueryResponse();
             try
             {
-                objlocationdata .data= _dbContext.Locations
-                  .Select(m => new LocationData
-                  {
-                       Id= m.Id,
-                      LocationName = m.LocationName
-                  }).Where(m => m.LocationName != "").OrderBy(m => m.LocationName).ToList<LocationData>();
+                if (_tokenBase.getRole().ToLower() == "admin")
+                {
+                    objlocationdata.data = _dbContext.Locations.Where(x => x.CreatedBy == _tokenBase.getObjectId())
+                      .Select(m => new LocationData
+                      {
+                          Id = m.Id,
+                          LocationName = m.LocationName
+                      }).Where(m => m.LocationName != "").OrderBy(m => m.LocationName).ToList<LocationData>();
+                }
+                else
+                {
+                    objlocationdata.data = _dbContext.Locations
+                      .Select(m => new LocationData
+                      {
+                          Id = m.Id,
+                          LocationName = m.LocationName
+                      }).Where(m => m.LocationName != "").OrderBy(m => m.LocationName).ToList<LocationData>();
+                }
                 if (objlocationdata.data.Count > 0)
                     objlocationdata.StatusMessage = RespnoseMessage.Record_found;
                 else
@@ -53,14 +73,15 @@ namespace PortalRestService.Infrastructure.Repositories
             return objlocationdata;
         }
 
-        public Task<PagedList<LocationsDispenserDetails>> GetLocationsDispenserDetails(LocationDispenserDetailRequest locationDispenserRequest)
+        public async Task<PagedList<LocationsDispenserDetails>> GetLocationsDispenserDetails(LocationDispenserDetailRequest locationDispenserRequest)
         {
             List<LocationsDispenserDetails> result = new List<LocationsDispenserDetails>();
+            List<long> locationIdList = await GetAllLocationIdByObjectId();
             if (locationDispenserRequest.LocationIds.Count <= 0 || locationDispenserRequest.LocationIds == null)
             {
-                result = (from location in _dbContext.Locations
-                          join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                         on location.Id equals userMap.LocationId
+                result = (from location in _dbContext.Locations.Where(x => locationIdList.Contains(x.Id))
+                         // join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                         //on location.Id equals userMap.LocationId
                           select new LocationsDispenserDetails
                           {
                               Address = location.LocationAddress.AddressLine1 + " " + location.LocationAddress.AddressLine2,
@@ -115,9 +136,9 @@ namespace PortalRestService.Infrastructure.Repositories
             }
             else
             {
-                result = (from location in _dbContext.Locations.Where(x => locationDispenserRequest.LocationIds.Contains(x.Id))
-                join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                         on location.Id equals userMap.LocationId
+                result = (from location in _dbContext.Locations.Where(x => locationDispenserRequest.LocationIds.Contains(x.Id) && locationIdList.Contains(x.Id))
+                //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                //         on location.Id equals userMap.LocationId
                           select new LocationsDispenserDetails
                           {
                               Address = location.LocationAddress.AddressLine1 + " " + location.LocationAddress.AddressLine2,
@@ -180,7 +201,7 @@ namespace PortalRestService.Infrastructure.Repositories
             var dataResult = PagedList<LocationsDispenserDetails>.ToPagedList(result,
               locationDispenserRequest.PageNumber,
               locationDispenserRequest.PageSize);
-            return Task.FromResult(dataResult);
+            return dataResult;
         }
     }
 }

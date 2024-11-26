@@ -17,22 +17,25 @@ namespace PortalRestService.Infrastructure.Repositories
     public class GetAllChargeBoxIDRepository : OcppRepository<ChargeBoxIDListResponse>, IGetAllChargeBoxIDRepository
     {
         TokenBase _tokenBase;
-        public GetAllChargeBoxIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token) : base(dbContext)
+        private readonly ILocationRepository _locationRepository;
+        public GetAllChargeBoxIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token, ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase=token;
+            _tokenBase = token;
+            _locationRepository = locationRepository;
         }
 
         public async Task<ChargeBoxIDListResponse> GetAllChargeBoxID()
         {
             ChargeBoxIDListResponse re = new ChargeBoxIDListResponse();
             try
-            {               
+            {
+                List<long> locationIdList = await _locationRepository.GetAllLocationIdByObjectId();
                     re.data = (from  charger in _dbContext.Charger 
-                               join location in _dbContext.Locations on charger.LocationId equals location.Id
+                               join location in _dbContext.Locations.Where(x => locationIdList.Contains(x.Id)) on charger.LocationId equals location.Id
                                join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
                                join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                               join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                               on location.Id equals userMap.LocationId
+                               //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                               //on location.Id equals userMap.LocationId
                                select new ChargeBoxIDList
                                {
                                    id = charger.Id,

@@ -22,11 +22,13 @@ namespace PortalRestService.Infrastructure.Repositories
         TokenBase _tokenBase;
         private readonly IConfiguration _configuration;
         private readonly string OccpIp = String.Empty;
-        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token, IConfiguration configuration) : base(dbContext)
+        private readonly ILocationRepository _locationRepository;
+        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token, IConfiguration configuration, ILocationRepository locationRepository) : base(dbContext)
         {
             _tokenBase = token;
             this._configuration = configuration;
             OccpIp = this._configuration.GetSection("OccpIp").GetSection("ip").Value;
+            _locationRepository = locationRepository;
         }
         async Task<EnergyUsedBOForChartResponse> IEnergyUsedByLocationIDRepository.GetEnergyUsedByLocationID(List<int> location, string duration, string chargeBoxId)
         {
@@ -56,14 +58,15 @@ namespace PortalRestService.Infrastructure.Repositories
                     interval = new TimeSpan(24, 0, 0);
                     laveltype = "month";
                 }
+                List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
                 List<EnergyUsedChartBO> res = (from s in _dbContext.ChargingSessions
                                                where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now && s.EndMeterValue>0
                                                join charger in !string.IsNullOrEmpty(chargeBoxId) == true ? _dbContext.Charger.Where(x => chargeBoxId.ToLower().Equals(x.ChargeBoxId.ToLower())) : _dbContext.Charger on s.ChargerId equals charger.Id
-                                               join locations in location.Count>0? _dbContext.Locations.Where(x=>location.Contains((int)x.Id)): _dbContext.Locations on charger.LocationId equals locations.Id
+                                               join locations in location.Count>0? _dbContext.Locations.Where(x=>location.Contains((int)x.Id) && locationList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals locations.Id
                                                join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
                                                join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
-                                               join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                                               on locations.Id equals userMap.LocationId
+                                               //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                               //on locations.Id equals userMap.LocationId
                                                select new EnergyUsedChartBO
                                                {
                                                    StartMeterValue = s.StartMeterValue.Value,
