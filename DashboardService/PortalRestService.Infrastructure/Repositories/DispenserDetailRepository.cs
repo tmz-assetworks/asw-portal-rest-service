@@ -11,11 +11,9 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 {
     public class DispensersDetailRepository : OcppRepository<DispensersDetail>, IDispenserDetailRepository
     {
-        TokenBase _tokenBase;
         private readonly ILocationRepository _locationRepository;
-        public DispensersDetailRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase, ILocationRepository locationRepository) : base(dbContext)
+        public DispensersDetailRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository) : base(dbContext)
         {
-            this._tokenBase = tokenBase;
             _locationRepository = locationRepository;
         }
 

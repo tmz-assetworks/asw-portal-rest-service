@@ -30,9 +30,8 @@ namespace PortalRestService.Infrastructure.Repositories
         private readonly double lbsofCO2emitted = 0;
         private readonly IConfiguration _configuration;
         private readonly ILocationRepository _locationRepository;
-        TokenBase _tokenBase;
         public GetSummaryStatusRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration,
-            ILocationRepository locationRepository, TokenBase tokenBase) : base(dbContext)
+            ILocationRepository locationRepository) : base(dbContext)
         {
             this._configuration = configuration;
             this._locationRepository = locationRepository;
@@ -41,7 +40,6 @@ namespace PortalRestService.Infrastructure.Repositories
             gasolineInKiloWatt = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("GallongasolineKiloWatt").Value);
             lbsofCO2emitted = (double)Convert.ToDouble(this._configuration.GetSection("GasolineIoKiloWatt").GetSection("lbsofCO2emitted").Value);
             perkwtRate = (double)Convert.ToDouble(this._configuration.GetSection("EneryRatePerKg").GetSection("perkwtRate").Value);
-            _tokenBase = tokenBase;
         }
 
         public async Task<CardDataResponse> GetSummaryStatus(int locationId, bool isChargersReq)

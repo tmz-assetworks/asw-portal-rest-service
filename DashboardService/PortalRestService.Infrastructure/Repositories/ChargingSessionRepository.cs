@@ -14,11 +14,9 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 {
     public class ChargingSessionRepository : OcppRepository<ChargerSessionByLocationResponse>, IChargingSessionRepository
     {
-        TokenBase _tokenBase;
         private readonly ILocationRepository _locationRepository;
-        public ChargingSessionRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase, ILocationRepository locationRepository) : base(dbContext)
+        public ChargingSessionRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase = tokenBase;
             _locationRepository = locationRepository;
         }
 
@@ -80,8 +78,6 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                                                          join location in locations.Count>0? _dbContext.Locations.Where(x=>locations.Contains((int)(x.Id)) && locationList.Contains(x.Id)): _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals location.Id
                                                          join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
                                                          join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                                                         //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                                                         //on location.Id equals userMap.LocationId
                                                          select new ChargingSessionByLocationBO
                                                          {
                                                              Id = s.Id,
@@ -107,7 +103,6 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                                                              LocationStatusName = "",
                                                              LocationStatusId = location.LocationStatusId,
                                                              ChargeBoxId = charger.ChargeBoxId,
-                                                             // times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
                                                              svalue = (s.StartTime.HasValue == true ?
                                                      laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
                                                      laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
@@ -135,7 +130,6 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                     .Select(y => new ChargingSessionByLocationChartBO()
                     {
                         ChargingStatus = y.Key.ChargingStatus,
-                        // times = y.Key.times.Length == 2 ? y.Key.times : "0" + y.Key.times,
                         svalue = y.Max(f => f.svalue),
                         times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
                         Counts = y.ToList().Count,

@@ -1,31 +1,20 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
-//using PortalRestService.Core.Responses;
-using PortalRestService.Helper;
-using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
 #pragma warning disable
     public class EnergyUsedByLocationIDRepository : OcppRepository<EnergyUsedBOForChartResponse>, IEnergyUsedByLocationIDRepository
     {
-        TokenBase _tokenBase;
         private readonly IConfiguration _configuration;
         private readonly string OccpIp = String.Empty;
         private readonly ILocationRepository _locationRepository;
-        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token, IConfiguration configuration, ILocationRepository locationRepository) : base(dbContext)
+        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase = token;
             this._configuration = configuration;
             OccpIp = this._configuration.GetSection("OccpIp").GetSection("ip").Value;
             _locationRepository = locationRepository;
@@ -64,15 +53,12 @@ namespace PortalRestService.Infrastructure.Repositories
                                                join charger in !string.IsNullOrEmpty(chargeBoxId) == true ? _dbContext.Charger.Where(x => chargeBoxId.ToLower().Equals(x.ChargeBoxId.ToLower())) : _dbContext.Charger on s.ChargerId equals charger.Id
                                                join locations in location.Count>0? _dbContext.Locations.Where(x=>location.Contains((int)x.Id) && locationList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals locations.Id
                                                join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
-                                               join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id
-                                               //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                                               //on locations.Id equals userMap.LocationId
+                                               join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id                                               
                                                select new EnergyUsedChartBO
                                                {
                                                    StartMeterValue = s.StartMeterValue.Value,
                                                    EndMeterValue = s.EndMeterValue.Value,
                                                    chargeboxId = charger.ChargeBoxId,
-                                                   //times = (s.StartTime.HasValue == true ? s.StartTime.ToString() : "").Split(" ")[1].Split(":")[0].ToString(),
                                                    svalue = (s.StartTime.HasValue == true ?
                                                      laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
                                                      laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :

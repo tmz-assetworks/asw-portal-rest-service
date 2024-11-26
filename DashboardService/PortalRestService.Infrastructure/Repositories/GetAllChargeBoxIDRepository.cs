@@ -6,21 +6,14 @@ using PortalRestService.Helper;
 using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
     public class GetAllChargeBoxIDRepository : OcppRepository<ChargeBoxIDListResponse>, IGetAllChargeBoxIDRepository
     {
-        TokenBase _tokenBase;
         private readonly ILocationRepository _locationRepository;
-        public GetAllChargeBoxIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext,TokenBase token, ILocationRepository locationRepository) : base(dbContext)
+        public GetAllChargeBoxIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase = token;
             _locationRepository = locationRepository;
         }
 
