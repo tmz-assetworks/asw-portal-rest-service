@@ -81,8 +81,8 @@ namespace PortalRestService.Infrastructure.Repositories
                 List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
 
                 TotalLocationAndChargerResponse totalLocationAndChargerResponse = new TotalLocationAndChargerResponse();
-                totalLocationAndChargerResponse.TotalLocations = await _dbContext.Locations.Where(x => locationList.Contains(x.Id)).CountAsync(); //Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.Id, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
-                totalLocationAndChargerResponse.TotalDispenser =await _dbContext.Charger.Where(x => locationList.Contains(x.LocationId.Value)).CountAsync(); //Join(_dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id)), p => p.LocationId, n => n.LocationId, (p, n) => new { p.LocationId }).Count();
+                totalLocationAndChargerResponse.TotalLocations = await _dbContext.Locations.Where(x => locationList.Contains(x.Id)).CountAsync();
+                totalLocationAndChargerResponse.TotalDispenser =await _dbContext.Charger.Where(x => locationList.Contains(x.LocationId.Value)).CountAsync();
 
 
                 if (totalLocationAndChargerResponse != null)
@@ -114,7 +114,7 @@ namespace PortalRestService.Infrastructure.Repositories
                     }
                 }
 
-                var todayChargingsession = (from data in objChargingSession.Where(c => c.CreatedAt != null && c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year) select data).ToList();       // AS-701
+                var todayChargingsession = (from data in objChargingSession.Where(c => c.CreatedAt != null && c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year) select data).ToList();
 
                 double startChargingMeter = Math.Round((double)(from data in objChargingSession where data.StartMeterValue != null select data.StartMeterValue.Value).Sum() / 1000, 2);
                 double endChargingMeter = Math.Round((double)(from data in objChargingSession where data.EndMeterValue != null select data.EndMeterValue.Value).Sum() / 1000, 2);
@@ -122,8 +122,8 @@ namespace PortalRestService.Infrastructure.Repositories
                 double billableChargingMeter = endChargingMeter - startChargingMeter;
                 if (billableChargingMeter < 0)
                     billableChargingMeter = 0;
-                double todayStartChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum() / 1000, 2);    // AS-701
-                double todayEndChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.EndMeterValue != null) select data.EndMeterValue.Value).Sum() / 1000, 2);        // AS-701
+                double todayStartChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.StartMeterValue != null) select data.StartMeterValue.Value).Sum() / 1000, 2);
+                double todayEndChargingMeter = Math.Round((double)(from data in objChargingSession.Where(c => c.CreatedAt.Value.Day == DateTime.Now.Day && c.CreatedAt.Value.Year == DateTime.Now.Year).Where(s => s.EndMeterValue != null) select data.EndMeterValue.Value).Sum() / 1000, 2);
                 if (todayEndChargingMeter < 0)
                     todayEndChargingMeter = 0;
                 double todayBillableChargingMeter = todayEndChargingMeter - todayStartChargingMeter;
@@ -191,7 +191,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 EnergyUsed dailyAverageEnergyUsed = new EnergyUsed();
                 dailyAverageEnergyUsed.Key = EnumControlTexts.DisplayingLabels.DailyAverage.GetEnumDisplayName();
                 if (billableChargingMeter > 0)
-                    dailyAverageEnergyUsed.Value = string.Format("{0:#,0}", Math.Round(billableChargingMeter / chargingSessionGroupBydateCount, 2));  // Date : 29/07/2022    // 
+                    dailyAverageEnergyUsed.Value = string.Format("{0:#,0}", Math.Round(billableChargingMeter / chargingSessionGroupBydateCount, 2));
                 else todaysRevenue.Value = "0";
                 dailyAverageEnergyUsed.Value = string.Format("{0:#,0}", dailyAverageEnergyUsed.Value);
                 summaryDetail.EnergyUsed.Add(dailyAverageEnergyUsed);
@@ -204,7 +204,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 List<EnergyPoint> EnergyPoints = new List<EnergyPoint>();
                 EnergyPoint energyPointMTofco2Saved = new EnergyPoint();
                 energyPointMTofco2Saved.Key = EnumControlTexts.DisplayingLabels.MTofco2Saved.GetEnumDisplayName();
-                energyPointMTofco2Saved.Value = string.Format("{0:#,0}", Math.Round((billableChargingMeter / gasolineInKiloWatt) * lbsofCO2emitted, 2));   // 1 gasoline = 33.705 Kilowatt
+                energyPointMTofco2Saved.Value = string.Format("{0:#,0}", Math.Round((billableChargingMeter / gasolineInKiloWatt) * lbsofCO2emitted, 2));
                 summaryDetail.EnergyPoints = EnergyPoints;
                 summaryDetail.EnergyPoints.Add(energyPointMTofco2Saved);
 

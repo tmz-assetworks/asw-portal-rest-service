@@ -21,10 +21,12 @@ namespace PortalRestService.Infrastructure.Repositories
     {
         TokenBase _tokenBase;
         private readonly ILocationRepository _locationRepository;
-        public GetChargerByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token, ILocationRepository locationRepository) : base(dbContext)
+        private readonly IMilesAddedByLocationQueryRepository _milesAddedByLocationQueryRepository;
+        public GetChargerByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token, ILocationRepository locationRepository, IMilesAddedByLocationQueryRepository milesAddedByLocationQueryRepository) : base(dbContext)
         {
             _tokenBase = token;
             _locationRepository = locationRepository;
+            _milesAddedByLocationQueryRepository = milesAddedByLocationQueryRepository;
         }
 
         public Task<ChargerStatusResponse> AddAsync(ChargerStatusResponse entity)
@@ -49,27 +51,12 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                string laveltype = "time";
-                TimeSpan interval = new TimeSpan(4, 0, 0);
-                if (duration == "7")
-                {
-                    duration = "6";
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "day";
-                }
-                else
-                if (duration == "30")
-                {
-                    duration = "28";
-                    interval = new TimeSpan(24 * 7, 0, 0);
-                    laveltype = "date";
-                }
-                else
-                if (duration == "90")
-                {
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "month";
-                }
+                DurationAndIntervalDTO dTO = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
+
+
+                string laveltype = dTO.laveltype;
+                TimeSpan interval = dTO.interval;
+                duration = dTO.duration;
 
                 List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
 

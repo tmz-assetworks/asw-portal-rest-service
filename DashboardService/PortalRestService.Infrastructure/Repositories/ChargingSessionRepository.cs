@@ -15,9 +15,11 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
     public class ChargingSessionRepository : OcppRepository<ChargerSessionByLocationResponse>, IChargingSessionRepository
     {
         private readonly ILocationRepository _locationRepository;
-        public ChargingSessionRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository) : base(dbContext)
+        private readonly IMilesAddedByLocationQueryRepository _milesAddedByLocationQueryRepository;
+        public ChargingSessionRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository, IMilesAddedByLocationQueryRepository milesAddedByLocationQueryRepository) : base(dbContext)
         {
             _locationRepository = locationRepository;
+            _milesAddedByLocationQueryRepository = milesAddedByLocationQueryRepository;
         }
 
         public Task<ChargingSessionByLocationForChartResponse> AddAsync(ChargingSessionByLocationForChartResponse entity)
@@ -48,29 +50,14 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
             DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                    if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
-                        duration = "1";
-                string laveltype = "time";
-                TimeSpan interval = new TimeSpan(4, 0, 0);
-                if (duration == "7")
-                {
-                    duration = "6";
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "day";
-                }
-                else
-                if (duration == "30")
-                {
-                    duration = "28";
-                    interval = new TimeSpan(24 * 7, 0, 0);
-                    laveltype = "date";
-                }
-                else
-                if (duration == "90")
-                {
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "month";
-                }
+
+                DurationAndIntervalDTO dTO = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
+
+
+                string laveltype = dTO.laveltype;
+                TimeSpan interval = dTO.interval;
+                duration = dTO.duration;
+               
                 List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
@@ -104,15 +91,15 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                                                              LocationStatusId = location.LocationStatusId,
                                                              ChargeBoxId = charger.ChargeBoxId,
                                                              svalue = (s.StartTime.HasValue == true ?
-                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
-                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
-                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
-                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") : ""),
-                                                             times = (s.StartTime.HasValue == true ?
-                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
-                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
-                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") :
-                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
+                                                             laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
+                                                             laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
+                                                             laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
+                                                             (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") : ""),
+                                                                     times = (s.StartTime.HasValue == true ?
+                                                             laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
+                                                             laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
+                                                             laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") :
+                                                             (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
 
                                                              SerialNumber = "",
                                                          }).ToList<ChargingSessionByLocationBO>();

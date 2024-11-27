@@ -32,29 +32,13 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
-                    duration = "1";
-                string laveltype = "time";
-                TimeSpan interval = new TimeSpan(4, 0, 0);
-                if (duration == "7")
-                {
-                    duration = "6";
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "day";
-                }
-                else
-                if (duration == "30")
-                {
-                    duration = "28";
-                    interval = new TimeSpan(24 * 7, 0, 0);
-                    laveltype = "date";
-                }
-                else
-                if (duration == "90")
-                {
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "month";
-                }
+                DurationAndIntervalDTO dTO = await durationAndIntervalAsync(duration);
+
+
+                string laveltype = dTO.laveltype;
+                TimeSpan interval = dTO.interval;
+                duration = dTO.duration;
+
                 List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
                                                          where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
                                                          join charger in _dbContext.Charger on s.ChargerId equals charger.Id
@@ -190,6 +174,38 @@ namespace PortalRestService.Infrastructure.Repositories
             }
             return chargingSessionByLocationBOs;
 
+        }
+
+        public Task<DurationAndIntervalDTO> durationAndIntervalAsync(string duration)
+        {
+            DurationAndIntervalDTO dTO = new DurationAndIntervalDTO();
+            if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
+                duration = "1";
+            string laveltype = "time";
+            TimeSpan interval = new TimeSpan(4, 0, 0);
+            dTO.interval = interval;
+            dTO.laveltype = laveltype;
+            dTO.duration = duration;
+            if (duration == "7")
+            {
+                dTO.duration = "6";
+                dTO.interval = new TimeSpan(24, 0, 0);
+                dTO.laveltype = "day";
+            }
+            else
+            if (duration == "30")
+            {
+                dTO.duration = "28";
+                dTO.interval = new TimeSpan(24 * 7, 0, 0);
+                dTO.laveltype = "date";
+            }
+            else
+            if (duration == "90")
+            {
+                dTO.interval = new TimeSpan(24, 0, 0);
+                dTO.laveltype = "month";
+            }
+            return Task.FromResult(dTO);
         }
     }
 }
