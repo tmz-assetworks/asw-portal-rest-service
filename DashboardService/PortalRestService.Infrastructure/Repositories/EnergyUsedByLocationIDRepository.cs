@@ -13,11 +13,13 @@ namespace PortalRestService.Infrastructure.Repositories
         private readonly IConfiguration _configuration;
         private readonly string OccpIp = String.Empty;
         private readonly ILocationRepository _locationRepository;
-        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, ILocationRepository locationRepository) : base(dbContext)
+        private readonly IMilesAddedByLocationQueryRepository _milesAddedByLocationQueryRepository;
+        public EnergyUsedByLocationIDRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration, ILocationRepository locationRepository, IMilesAddedByLocationQueryRepository milesAddedByLocationQueryRepository) : base(dbContext)
         {
             this._configuration = configuration;
             OccpIp = this._configuration.GetSection("OccpIp").GetSection("ip").Value;
             _locationRepository = locationRepository;
+            _milesAddedByLocationQueryRepository = milesAddedByLocationQueryRepository;
         }
         async Task<EnergyUsedBOForChartResponse> IEnergyUsedByLocationIDRepository.GetEnergyUsedByLocationID(List<int> location, string duration, string chargeBoxId)
         {
@@ -25,28 +27,13 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
+                DurationAndIntervalDTO dTO = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
+
+
+                string laveltype = dTO.laveltype;
+                TimeSpan interval = dTO.interval;
+                duration = dTO.duration;                
                 
-                string laveltype = "time";
-                TimeSpan interval = new TimeSpan(4, 0, 0);
-                if (duration == "7")
-                {
-                    duration = "6";
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "day";
-                }
-                else
-                if (duration == "30")
-                {
-                    duration = "28";
-                    interval = new TimeSpan(24 * 7, 0, 0);
-                    laveltype = "date";
-                }
-                else
-                if (duration == "90")
-                {
-                    interval = new TimeSpan(24, 0, 0);
-                    laveltype = "month";
-                }
                 List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
                 List<EnergyUsedChartBO> res = (from s in _dbContext.ChargingSessions
                                                where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now && s.EndMeterValue>0

@@ -77,126 +77,74 @@ namespace PortalRestService.Infrastructure.Repositories
         {
             List<LocationsDispenserDetails> result = new List<LocationsDispenserDetails>();
             List<long> locationIdList = await GetAllLocationIdByObjectId();
-            if (locationDispenserRequest.LocationIds.Count <= 0 || locationDispenserRequest.LocationIds == null)
+
+            var locationQuery = _dbContext.Locations.AsQueryable();
+
+            if (locationDispenserRequest.LocationIds.Count > 0)
             {
-                result =await (from location in _dbContext.Locations.Where(x => locationIdList.Contains(x.Id))
-                         // join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                         //on location.Id equals userMap.LocationId
-                          select new LocationsDispenserDetails
-                          {
-                              Address = location.LocationAddress.AddressLine1 + " " + location.LocationAddress.AddressLine2,
-
-                              locationId = location.Id,
-                              CreatedOn = location.CreatedOn,
-
-                              LocationName = location.LocationName,
-
-                              status = location.LocationStatus.LocationStatusName,
-                              NoofPort = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id)
-                                          join port in _dbContext.Port
-                              on charger.Id equals port.ChargerId
-                              select new Port
-                              {
-                                  ChargerId = charger.Id
-                                          }).ToList<Port>().Count.ToString(),
-                              Available = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
-                                           join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Available")
-                              on charger.Id equals Status.ChargerId   //"Available")
-                                           select new LocationsDispenserStatus
-                                           {
-                                               Id = charger.Id,
-                                               Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
-                                           }
-                              ).ToList()
-                                           .Count.ToString(),
-                              Connected = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
-                                           join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Unavailable")
-                                            on charger.Id equals Status.ChargerId
-                                           select new LocationsDispenserStatus
-                                           {
-                                               Id = charger.Id,
-                                               Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
-                                           }
-                              ).ToList()
-                                           .Count.ToString(),
-                              Faulted = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
-                                         join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Faulted")
-                                          on charger.Id equals Status.ChargerId
-                                         select new LocationsDispenserStatus
-                                         {
-                                             Id = charger.Id,
-                                             Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
-                                         }
-                                           ).ToList()
-                                           .Count.ToString(),
-                              ContactNo = location.ContactPersonNumber.ToString(),
-                              ContactName = location.ContactPersonName.ToString(),
-
-                          }).ToListAsync<LocationsDispenserDetails>();
+                locationQuery = locationQuery.Where(x => locationDispenserRequest.LocationIds.Contains(x.Id) && locationIdList.Contains(x.Id));
             }
             else
             {
-                result =await (from location in _dbContext.Locations.Where(x => locationDispenserRequest.LocationIds.Contains(x.Id) && locationIdList.Contains(x.Id))
-                //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                //         on location.Id equals userMap.LocationId
-                          select new LocationsDispenserDetails
-                          {
-                              Address = location.LocationAddress.AddressLine1 + " " + location.LocationAddress.AddressLine2,
+                locationQuery = locationQuery.Where(x => locationIdList.Contains(x.Id));
+            }
 
-                              locationId = location.Id,
+            
+           result = await locationQuery.Select(location => new LocationsDispenserDetails {
+                            Address = location.LocationAddress.AddressLine1 + " " + location.LocationAddress.AddressLine2,
 
-                              LocationName = location.LocationName,
-                              CreatedOn = location.CreatedOn,
+                            locationId = location.Id,
+                            CreatedOn = location.CreatedOn,
 
-                              status = location.LocationStatus.LocationStatusName,
-                              NoofPort = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id)
-                                          join port in _dbContext.Port
-                              on charger.Id equals port.ChargerId
-                                          select new Port
-                                          {
-                                              ChargerId = charger.Id
-                                          }).ToList<Port>().Count.ToString(),
-                              Available = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
-                                           join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Available")
-                              on charger.Id equals Status.ChargerId   //"Available")
-                                           select new LocationsDispenserStatus
-                                           {
-                                               Id = charger.Id,
-                                               Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
-                                           }
-                              ).ToList()
-                                           .Count.ToString(),
-                              Connected = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
-                                           join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Unavailable")
-                                            on charger.Id equals Status.ChargerId
-                                           select new LocationsDispenserStatus
-                                           {
-                                               Id = charger.Id,
-                                               Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
-                                           }
-                              ).ToList()
-                                           .Count.ToString(),
-                              Faulted = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
-                                         join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Faulted")
+                            LocationName = location.LocationName,
+
+                            status = location.LocationStatus.LocationStatusName,
+                            NoofPort = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id)
+                                        join port in _dbContext.Port
+                            on charger.Id equals port.ChargerId
+                                        select new Port
+                                        {
+                                            ChargerId = charger.Id
+                                        }).ToList<Port>().Count.ToString(),
+                            Available = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
+                                         join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Available")
+                            on charger.Id equals Status.ChargerId   //"Available")
+                                         select new LocationsDispenserStatus
+                                         {
+                                             Id = charger.Id,
+                                             Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
+                                         }
+                                          ).ToList()
+                                                       .Count.ToString(),
+                            Connected = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
+                                         join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Unavailable")
                                           on charger.Id equals Status.ChargerId
                                          select new LocationsDispenserStatus
                                          {
                                              Id = charger.Id,
                                              Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
                                          }
-                                           ).ToList()
-                                           .Count.ToString(),
-                              ContactNo = location.ContactPersonNumber.ToString(),
-                              ContactName = location.ContactPersonName.ToString(),
+                                          ).ToList()
+                                                       .Count.ToString(),
+                            Faulted = (from charger in _dbContext.Charger.Where(x => x.LocationId == location.Id && x.ChargerStatuses != null && x.ChargerStatuses.ToList().Count > 0)
+                                       join Status in _dbContext.ChargerStatuses.Where(s => s.ConnectorStatus == "Faulted")
+                                        on charger.Id equals Status.ChargerId
+                                       select new LocationsDispenserStatus
+                                       {
+                                           Id = charger.Id,
+                                           Status = charger.ChargerStatuses.ToList()[0].ConnectorStatus
+                                       }
+                                                       ).ToList()
+                                                       .Count.ToString(),
+                            ContactNo = location.ContactPersonNumber.ToString(),
+                            ContactName = location.ContactPersonName.ToString(),
 
-
-                          }).ToListAsync<LocationsDispenserDetails>();
-            }
+                        }).ToListAsync<LocationsDispenserDetails>();
+            
             result = result != null ? result.OrderByDescending(a => a.locationId).ToList() : result;
             if (!string.IsNullOrEmpty(locationDispenserRequest.SearchParam))
                 result = result.Where(d => d.LocationName.ToLower().Contains(locationDispenserRequest.SearchParam.ToLower())
              ).ToList<LocationsDispenserDetails>();
-            //Paging on Records           
 
             var dataResult = PagedList<LocationsDispenserDetails>.ToPagedList(result,
               locationDispenserRequest.PageNumber,

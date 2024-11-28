@@ -12,5 +12,6 @@ namespace PortalRestService.Core.Repositories
     public interface IMilesAddedByLocationQueryRepository : IRepository<MilesAddedByLocationChartResponse>
     {
         Task<MilesAddedByLocationChartResponse> GetMilesAddedByLocation(List<int> location, string duration, string chargeBoxId);
+        Task<DurationAndIntervalDTO> durationAndIntervalAsync(string duration);
     }
 }
