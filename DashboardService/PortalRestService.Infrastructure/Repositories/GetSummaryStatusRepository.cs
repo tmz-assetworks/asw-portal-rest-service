@@ -65,8 +65,8 @@ namespace PortalRestService.Infrastructure.Repositories
 
                     AllLocationStatusQueryResponse Location = new AllLocationStatusQueryResponse();
                     Location.data = ((from ob in _dbContext.Locations.Where(location => locationIdlist.Contains(location.Id))
-                                      //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                                      //      on ob.Id equals userMap.LocationId
+                                          //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
+                                          //      on ob.Id equals userMap.LocationId
                                       select new LocationStatusData
                                       {
                                           Id = ob.Id,
@@ -83,10 +83,12 @@ namespace PortalRestService.Infrastructure.Repositories
                         {
                             List<StatusData> StatusData = new List<StatusData>()
                     {
+                        new StatusData { Key = Status_Indication.LocationStatus.Live.GetEnumDisplayName(), Value = Location.data!=null? CommonHelpers.GetHoursTwoDigitFormat(Location.data.Where(d => d.LocationStatus.ToString().ToLower().Trim().Equals(Status_Indication.LocationStatus.Live.GetEnumDisplayName().ToLower().Trim())).ToList().Count).ToString():"" , Color = ColorsEnum.LocationsColor.Live.GetEnumDisplayName()  },                        
+                        new StatusData { Key = Status_Indication.LocationStatus.UnderMaintenance.GetEnumDisplayName(), Value = Location.data!=null? CommonHelpers.GetHoursTwoDigitFormat(Location.data.Where(d => d.LocationStatus.ToString().ToLower().Trim().Equals(Status_Indication.LocationStatus.UnderMaintenance.GetEnumDisplayName().ToLower().Trim())).ToList().Count).ToString():"" , Color = ColorsEnum.LocationsColor.UnderMaintenance.GetEnumDisplayName()  },                                             
+                        new StatusData { Key = Status_Indication.LocationStatus.Inactive.GetEnumDisplayName(), Value =Location.data!=null? CommonHelpers.GetHoursTwoDigitFormat(Location.data.Where(d => d.LocationStatus.ToLower().Equals(Status_Indication.LocationStatus.Inactive.GetEnumDisplayName().ToLower())).ToList().Count).ToString() :"" , Color = ColorsEnum.LocationsColor.Inactive.GetEnumDisplayName()  },
                         new StatusData { Key = Status_Indication.LocationStatus.Commissioned.GetEnumDisplayName(), Value = Location.data!=null? CommonHelpers.GetHoursTwoDigitFormat(Location.data.Where(d => d.LocationStatus.ToLower().Equals(Status_Indication.LocationStatus.Commissioned.GetEnumDisplayName().ToLower())).ToList().Count).ToString():"", Color = ColorsEnum.LocationsColor.Commissioned.GetEnumDisplayName() },
-                        new StatusData { Key = Status_Indication.LocationStatus.UnderMaintenance.GetEnumDisplayName(), Value = Location.data!=null? CommonHelpers.GetHoursTwoDigitFormat(Location.data.Where(d => d.LocationStatus.ToString().ToLower().Trim().Equals(Status_Indication.LocationStatus.UnderMaintenance.GetEnumDisplayName().ToLower().Trim())).ToList().Count).ToString():"" , Color = ColorsEnum.LocationsColor.UnderMaintenance.GetEnumDisplayName()  },
-                        new StatusData { Key = Status_Indication.LocationStatus.Upcoming.GetEnumDisplayName(), Value =Location.data!=null? CommonHelpers.GetHoursTwoDigitFormat(Location.data.Where(d => d.LocationStatus.ToLower().Equals(Status_Indication.LocationStatus.Upcoming.GetEnumDisplayName().ToLower())).ToList().Count).ToString() :"" , Color = ColorsEnum.LocationsColor.Upcoming.GetEnumDisplayName()  },
-                      };
+                        new StatusData { Key = Status_Indication.LocationStatus.Upcoming.GetEnumDisplayName(), Value =Location.data!=null? CommonHelpers.GetHoursTwoDigitFormat(Location.data.Where(d => d.LocationStatus.ToLower().Equals(Status_Indication.LocationStatus.Upcoming.GetEnumDisplayName().ToLower())).ToList().Count).ToString() :"" , Color = ColorsEnum.LocationsColor.Upcoming.GetEnumDisplayName()  }
+                            };
                             cardData.StatusData = StatusData;
                             data.Add(cardData);
                         }
@@ -98,7 +100,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 if (locationId == 0)
                 {
                     //dispenserResponse = await PortalRestService.Helpers.Helper.GetCallAssetAuthAPIAsync(APIConstant.GetAllDispenser, _tokenBase.acces_token);
-                    objDispenser.data = _dbContext.Charger.Join(_dbContext.Locations.Where(x => locationIdlist.Contains(x.Id)), 
+                    objDispenser.data = _dbContext.Charger.Join(_dbContext.Locations.Where(x => locationIdlist.Contains(x.Id)),
                     m => m.LocationId, n => n.Id,
                     (m, n) => new Dispenser
                     {
@@ -187,23 +189,23 @@ namespace PortalRestService.Infrastructure.Repositories
                 }
                 else
                 {
-					cardData = new CardData();
+                    cardData = new CardData();
 
-					cardData.Type = "Chargers";
-					cardData.Count =  0;
-					List<StatusData> StatusData = new List<StatusData>()
-					{
-					new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = "00", Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
-					new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = "00"  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
-					new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value="00" , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
+                    cardData.Type = "Chargers";
+                    cardData.Count = 0;
+                    List<StatusData> StatusData = new List<StatusData>()
+                    {
+                    new StatusData { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(), Value = "00", Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName()  },
+                    new StatusData { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(), Value = "00"  , Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName()  },
+                    new StatusData { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(), Value="00" , Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() },
 
-					};
-					cardData.StatusData = StatusData;
-					data.Add(cardData);
-				}
+                    };
+                    cardData.StatusData = StatusData;
+                    data.Add(cardData);
+                }
 
 
-				cardData = new CardData();
+                cardData = new CardData();
                 cardData.Type = "Charging Sessions";
                 List<PortalRestService.Core.Models.ChargingSession> objChargingSession = _dbContext.ChargingSessions.ToList();
 
@@ -304,9 +306,9 @@ namespace PortalRestService.Infrastructure.Repositories
                                                       RequestType = v.RequestType == null ? "" : v.RequestType,
                                                       DeviceId = v.DeviceId == null ? "" : v.DeviceId,
                                                       ResponsePayload = v.ResponsePayload,
-													  RequestPayload = geterror(v.RequestPayload, v.RequestType == null ? "" : v.RequestType)
+                                                      RequestPayload = geterror(v.RequestPayload, v.RequestType == null ? "" : v.RequestType)
 
-												  }).ToList();
+                                                  }).ToList();
 
 
                     //Errors 
@@ -320,7 +322,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
                     List<StatusData> ErrorStatusData = new List<StatusData>()
                     {
-                        
+
                         new StatusData { Key = Status_Indication.Errors.Critical.ToString(), Value = Criticalcount.ToString().Length>1?Criticalcount.ToString():"0"+Criticalcount.ToString() , Color = ColorsEnum.ErrorsColor.Critical.GetEnumDisplayName()  },
                         new StatusData { Key = Status_Indication.Errors.High.ToString(), Value = Highcount.ToString().Length>1?Highcount.ToString():"0"+Highcount.ToString() , Color = ColorsEnum.ErrorsColor.High.GetEnumDisplayName()  },
                         new StatusData { Key = Status_Indication.Errors.Medium.ToString(), Value = Mediumcount.ToString().Length>1?Mediumcount.ToString():"0"+Mediumcount.ToString() , Color = ColorsEnum.ErrorsColor.Medium.GetEnumDisplayName()  },
