@@ -44,6 +44,8 @@ namespace PortalRestService.Application
             Installed = 5,
             [Display(Name = "Live")]
             Live = 6,
+            [Display(Name = "Inactive")]
+            Inactive = 7,
 
 
 

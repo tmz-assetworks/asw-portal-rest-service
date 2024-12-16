@@ -30,6 +30,9 @@ namespace PortalRestService.Infrastructure.EnumData
             [Display(Name = "#088532")]
             Live = 6,
 
+            [Display(Name = "#757575")]
+            Inactive = 7,
+
         }
 
         public enum ChargerStatus
