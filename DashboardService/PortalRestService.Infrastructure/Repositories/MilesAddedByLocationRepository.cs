@@ -190,7 +190,7 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 dTO.duration = "6";
                 dTO.interval = new TimeSpan(24, 0, 0);
-                dTO.laveltype = "day";
+                dTO.laveltype = "date";
             }
             else
             if (duration == "30")
@@ -203,7 +203,7 @@ namespace PortalRestService.Infrastructure.Repositories
             if (duration == "90")
             {
                 dTO.interval = new TimeSpan(24, 0, 0);
-                dTO.laveltype = "month";
+                dTO.laveltype = "date";
             }
             return Task.FromResult(dTO);
         }
