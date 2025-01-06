@@ -24,7 +24,7 @@ namespace PortalRestService.Infrastructure.Repositories
         }
         public async Task<List<long>> GetAllLocationIdByObjectId()
         {
-            return await (_tokenBase.getRole().ToLower() == "admin" ? (from location in _dbContext.Locations.Where(location => location.CreatedBy == _tokenBase.getObjectId()) select location.Id).ToListAsync()
+            return await (_tokenBase.getRole().ToLower() == "admin" ? (from location in _dbContext.Locations select location.Id).ToListAsync()
                : (from location in _dbContext.Locations
                   join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
                                                                                         on location.Id equals userMap.LocationId
@@ -36,32 +36,19 @@ namespace PortalRestService.Infrastructure.Repositories
             AllLocationQueryResponse objlocationdata = new AllLocationQueryResponse();
             try
             {
-                if (_tokenBase.getRole().ToLower() == "admin")
-                {
-                    objlocationdata.data =await _dbContext.Locations.Where(x => x.CreatedBy == _tokenBase.getObjectId())
+                objlocationdata.data = await _dbContext.Locations
                       .Select(m => new LocationData
                       {
                           Id = m.Id,
                           LocationName = m.LocationName
                       }).Where(m => m.LocationName != "").OrderBy(m => m.LocationName).ToListAsync<LocationData>();
-                }
-                else
-                {
-                    objlocationdata.data =await _dbContext.Locations
-                      .Select(m => new LocationData
-                      {
-                          Id = m.Id,
-                          LocationName = m.LocationName
-                      }).Where(m => m.LocationName != "").OrderBy(m => m.LocationName).ToListAsync<LocationData>();
-                }
                 if (objlocationdata.data.Count > 0)
                     objlocationdata.StatusMessage = RespnoseMessage.Record_found;
                 else
                 {
                     objlocationdata.StatusMessage = RespnoseMessage.Record_not_found;
                     objlocationdata.StatusCode = 200;
-                }
-                    
+                }                   
 
             }
             catch (Exception ex)
