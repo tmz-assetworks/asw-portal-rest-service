@@ -45,7 +45,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 if (_tokenBase.getRole().ToLower() == "admin")
                 {
 
-                    locationsResponse.data = await (from location in locationId > 0 ? _dbContext.Locations.Where(x => locationId == x.Id) :_dbContext.Locations.Where(x => x.CreatedBy == _tokenBase.getObjectId())
+                    locationsResponse.data = await (from location in locationId > 0 ? _dbContext.Locations.Where(x => locationId == x.Id) :_dbContext.Locations
                                               join charger in _dbContext.Charger
                                               on location.Id equals charger.LocationId
                                               select new LocationDispenserForLocation
