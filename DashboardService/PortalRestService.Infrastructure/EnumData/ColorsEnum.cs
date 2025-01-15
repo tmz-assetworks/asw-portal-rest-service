@@ -27,7 +27,7 @@ namespace PortalRestService.Infrastructure.EnumData
             [Display(Name = "#346432")]
             Installed =5,
 
-            [Display(Name = "#088532")]
+            [Display(Name = "#90993F")]
             Live = 6,
 
             [Display(Name = "#757575")]
