@@ -21,31 +21,30 @@ using System.Text;
 using System.Threading.Tasks;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Models;
+using PortalRestService.Infrastructure.Models;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
     public class LocationDispenserRepository : OcppRepository<LocationDispenserForLocationResponse>, ILocationDispenserRepository
     {
-        TokenBase _tokenBase;
-        public LocationDispenserRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase tokenBase) : base(dbContext)
+        private readonly ILocationRepository _locationRepository;
+        public LocationDispenserRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase = tokenBase;
+            _locationRepository = locationRepository;
         }
 
         async Task<LocationDispenserForLocationResponse> ILocationDispenserRepository.GetDispenserByLocation(LocationDispensersRequest locationDispensersRequest)
         {
             LocationDispenserForLocationResponse objLocationDispneser = new LocationDispenserForLocationResponse();
-            
-            objLocationDispneser.data =  (from location in locationDispensersRequest.locationIds.Count>0? _dbContext.Locations.Where(x=> locationDispensersRequest.locationIds.Contains(x.Id)): _dbContext.Locations
-                                   join charger in !string.IsNullOrEmpty(locationDispensersRequest.SearchParam) == true ? _dbContext.Charger.Where(d => locationDispensersRequest.SearchParam.ToLower().Contains(d.ChargeBoxId.ToLower())) : _dbContext.Charger
-                               on location.Id equals charger.LocationId
-                               join address in _dbContext.LocationAddress
-                               on location.LocationAddressId equals address.Id
-                               join Status in _dbContext.LocationStatus
-                               on location.LocationStatusId equals Status.Id
-                               join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                               on location.Id equals userMap.LocationId
-                               select new LocationDispenserForLocation
+            List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
+            objLocationDispneser.data =  (from location in locationDispensersRequest.locationIds.Count>0? _dbContext.Locations.Where(x=> locationDispensersRequest.locationIds.Contains(x.Id) && locationList.Contains(x.Id)): _dbContext.Locations.Where(x => locationList.Contains(x.Id))
+                                          join charger in !string.IsNullOrEmpty(locationDispensersRequest.SearchParam) == true ? _dbContext.Charger.Where(d => locationDispensersRequest.SearchParam.ToLower().Contains(d.ChargeBoxId.ToLower())) : _dbContext.Charger
+                                          on location.Id equals charger.LocationId
+                                          join address in _dbContext.LocationAddress
+                                          on location.LocationAddressId equals address.Id
+                                          join Status in _dbContext.LocationStatus
+                                          on location.LocationStatusId equals Status.Id
+                                          select new LocationDispenserForLocation
                                {
                                    DispenserId = charger.Id,
                                    locationId = location.Id,
