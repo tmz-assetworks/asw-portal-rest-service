@@ -13,7 +13,7 @@ namespace PortalRestService.Core.Models
     {
         public int Id { get; set; }
         public string AssetId { get; set; }
-
+        public string? SimCardMSIDN { get; set; }
         public string EndPointUrl { get; set; }
         public string FirmwareVersion { get; set; }
         public string HardwareSerialNumber { get; set; }

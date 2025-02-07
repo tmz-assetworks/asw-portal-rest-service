@@ -52,6 +52,7 @@ namespace PortalRestService.Infrastructure.Repositories
                      modelName = m.ModelName,
                      makeName = m.MakeName,
                      InstallationDate=m.InstallationDate,
+                     SimCardMSIDN = m.SimCardMSIDN != null ? m.SimCardMSIDN : "",
 
                      ChargerStatus = ((from ob in _dbContext.ChargerStatuses.Where(x => x.ChargerId == m.Id)
                                select new ChargerStatusDTO
@@ -130,6 +131,7 @@ namespace PortalRestService.Infrastructure.Repositories
                     chargerInformationResponse.data.InstalledDate = dispenser.InstallationDate;
                     chargerInformationResponse.data.ChargeBoxId = dispenser.chargeBoxId;
                     chargerInformationResponse.data.ConnectorType = dispenser.Ports.Count() > 0 ? dispenser.Ports[0].ConnectorType : 0;
+                    chargerInformationResponse.data.SimCardMSIDN = dispenser.SimCardMSIDN;
                 }
                
                 else

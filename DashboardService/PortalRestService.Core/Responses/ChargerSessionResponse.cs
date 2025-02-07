@@ -336,7 +336,8 @@ namespace PortalRestService.Core.Responses
         public string City { get; set; }
         public string ZipCode { get; set; }
         public string ConnectorIds { get; set; }
-        public long ConnectorType { get; set; }       
+        public long ConnectorType { get; set; }
+        public string? SimCardMSIDN { get; set; }
     }
 }
 

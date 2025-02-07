@@ -25,7 +25,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                       join location in _dbContext.Locations.Where(x => locationIdList.Contains(x.Id)) on disp.LocationId equals location.Id
                       //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
                       //on location.Id equals userMap.LocationId 
-                                             where (!string.IsNullOrEmpty(dispensersDetailRequest.SearchParam)) ? (disp.ChargeBoxId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.AssetId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.MakeName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.ModelName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || location.LocationName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower())): disp.ChargeBoxId != null
+                                             where (!string.IsNullOrEmpty(dispensersDetailRequest.SearchParam)) ? (disp.ChargeBoxId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.AssetId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.MakeName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.ModelName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || location.LocationName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.SimCardMSIDN.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower())) : disp.ChargeBoxId != null
                       select new DispensersDetail
                       {
                           AssetId = disp.AssetId,
@@ -40,6 +40,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                           ChargerType = "OCPP",
                           LocationContactName = location.LocationName,
                           LocationContactNumber = location.ContactPersonNumber,
+                          SimCardMSIDN = disp.SimCardMSIDN != null ? disp.SimCardMSIDN : "",
                       }).ToList<DispensersDetail>();
 
             result = result != null ? result.OrderByDescending(a => a.ChargerName).ToList<DispensersDetail>() : result;
