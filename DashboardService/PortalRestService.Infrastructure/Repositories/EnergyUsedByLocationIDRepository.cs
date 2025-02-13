@@ -54,7 +54,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                                    times = (s.StartTime.HasValue == true ?
                                                      laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
                                                      laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
-                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") :
+                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM-dd-yyyy") :
                                                      (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
                                                }).ToList<EnergyUsedChartBO>();
 
@@ -124,10 +124,10 @@ namespace PortalRestService.Infrastructure.Repositories
                 interval = new TimeSpan(24 * 7, 0, 0);
                 laveltype = "date";
 
-                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-6).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-12).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-18).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-18).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-24).ToString("dd-MM-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-24).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-6).ToString("MM-dd-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-12).ToString("MM-dd-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-18).ToString("MM-dd-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-18).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new EnergyUsedsResponse() { times = DateTime.Now.AddDays(-24).ToString("MM-dd-yyyy"), EndMeterValue = 0, svalue = (new DateTime((DateTime.Now.AddDays(-24).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
             }
             else
             if (duration == "90")

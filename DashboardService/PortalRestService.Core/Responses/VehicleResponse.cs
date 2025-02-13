@@ -36,10 +36,10 @@ namespace PortalRestService.Core.Responses
     public class Vehicle
     {
         public long id { get; set; }
-        public string VIN { get; set; }
-        public long ModelYear { get; set; }
-        public string MakeName { get; set; }
-        public string ModelName { get; set; }
+        public string? VIN { get; set; }
+        public long? ModelYear { get; set; }
+        public string? MakeName { get; set; }
+        public string? ModelName { get; set; }
         public string LicencePlate { get; set; }
         public string Department { get; set; }
         public string DomicileLocation { get; set; }

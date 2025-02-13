@@ -73,8 +73,8 @@ namespace PortalRestService.Infrastructure.Repositories
                                ),
                                
                                ChargeBoxId = charger.ChargeBoxId,
-                               StartTime = Convert.ToDateTime(s.StartTime).ToString("yyyy-MM-dd"),
-                               EndTime = Convert.ToDateTime(s.EndTime).ToString("yyyy-MM-dd"),
+                               StartTime = s.StartTime,
+                               EndTime = s.EndTime,
                                 Startmetervalue = Math.Round(Convert.ToDecimal(s.StartMeterValue) / 1000, 2).ToString(),
                                Endmetervalue = Math.Round(Convert.ToDecimal(s.EndMeterValue) / 1000, 2).ToString(),
                                Startsoc = s.StartSoc,
@@ -125,8 +125,8 @@ namespace PortalRestService.Infrastructure.Repositories
 
                                ),
                                ChargeBoxId = charger.ChargeBoxId,
-                               StartTime = Convert.ToDateTime(s.StartTime).ToString("yyyy-MM-dd"),
-                               EndTime = Convert.ToDateTime(s.EndTime).ToString("yyyy-MM-dd"),
+                               StartTime = s.StartTime,
+                               EndTime = s.EndTime,
                                Startmetervalue = Math.Round(Convert.ToDecimal(s.StartMeterValue)/1000,2).ToString(),
                                Endmetervalue = Math.Round(Convert.ToDecimal(s.EndMeterValue) / 1000, 2).ToString(),
                                Startsoc = s.StartSoc,
