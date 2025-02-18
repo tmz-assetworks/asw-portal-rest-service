@@ -506,8 +506,8 @@ namespace PortalRestService.Core.Responses
         public string LocationName { get; set; }
         public string ChargeBoxId { get; set; }
         public string? ChargingStatus { get; set; }
-        public string? StartTime { get; set; }
-        public string? EndTime { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
         public int? Startsoc { get; set; }
         public int? EndSoc { get; set; }
         public string? ReasoneForStop { get; set; }

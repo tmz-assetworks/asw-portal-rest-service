@@ -36,54 +36,50 @@ namespace PortalRestService.Infrastructure.Repositories
             List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
             if (request.Flag.ToLower() == "chargerSession".ToLower())
             {
-                if (!string.IsNullOrEmpty(request.Fromdate) || !string.IsNullOrEmpty(request.Todate) || request.status.Count > 0)
+                res = (from s in _dbContext.ChargingSessions
+                       join charger in _dbContext.Charger on s.ChargerId equals charger.Id
+                       join location in _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals location.Id
+                       join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                       join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
+
+                       select new ChartDetailsList
+                       {
+                           Id = s.Id,
+                           ChargerName = charger.ChargeBoxId,
+                           UID = "",
+                           ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == s.ChargerId && p.Connectorid == s.ConnectorId).Select(s => s.Connector.ConnectorType)),
+                           FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).Count() == 0 ? "" :
+                            (DateTime.Now - _dbContext.ChargerStatusHistory.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
+                           FaultDescription = "",
+                           TimeReported = s.StartTime,
+                           LocationId = location.Id,
+                           LocationName = location.LocationName,
+                           ChargingStatus = (request.ChartType.ToLower() == "chargerinuse" ?
+                           (
+                                                            s.ChargingStatus.ToLower().Equals("completed".ToLower()) ? "Available" :
+                                                            s.ChargingStatus.ToLower().Equals("cancelled".ToLower()) ? "Available" :
+                                                            s.ChargingStatus.ToLower().Equals("interrupted".ToLower()) ? "Available" : "Unavailable"
+                                                    ) : s.ChargingStatus
+                           ),
+                           ChargeBoxId = charger.ChargeBoxId,
+                           StartTime = s.StartTime,
+                           EndTime = s.EndTime,
+                           Startmetervalue = Math.Round(Convert.ToDecimal(s.StartMeterValue) / 1000, 2).ToString(),
+                           Endmetervalue = Math.Round(Convert.ToDecimal(s.EndMeterValue) / 1000, 2).ToString(),
+                           Startsoc = s.StartSoc,
+                           EndSoc = s.EndSoc,
+
+                           ReasoneForStop = s.ReasonForStop
+                       }).OrderByDescending(a => a.TimeReported).ToList<ChartDetailsList>();
+                if (res != null)
                 {
-                    if (!string.IsNullOrEmpty(request.Fromdate) && !string.IsNullOrEmpty(request.Todate))
+                    if (!string.IsNullOrEmpty(request.Fromdate) || !string.IsNullOrEmpty(request.Todate) || request.status.Count > 0)
                     {
-                        request.Fromdate = Convert.ToDateTime(request.Fromdate).ToString("yyyy-MM-dd");
-                        request.Todate = Convert.ToDateTime(request.Todate).ToString("yyyy-MM-dd");
-                    }
-                    
-                    res = (from s in _dbContext.ChargingSessions
-                           join charger in _dbContext.Charger on s.ChargerId equals charger.Id
-                           join location in _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals location.Id
-                           join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
-                           join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-
-                           select new ChartDetailsList
-                           {
-                               Id = s.Id,
-                               ChargerName = charger.ChargeBoxId,
-                               UID = "",
-							   ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == charger.Id && p.Connectorid==s.ConnectorId).Select(s => s.Connector.ConnectorType)),
-							   FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId==s.ChargerId && x.ConnectorId==s.ConnectorId).Count() == 0 ? "" :
-                                (DateTime.Now - _dbContext.ChargerStatusHistory.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
-                               FaultDescription = "",
-                               TimeReported = s.StartTime,
-                               LocationId = location.Id,
-                               LocationName = location.LocationName,
-                               ChargingStatus = (request.ChartType.ToLower() == "chargerinuse" ?
-                               (
-                                                                s.ChargingStatus.ToLower().Equals("completed".ToLower()) ? "Available" :
-                                                                s.ChargingStatus.ToLower().Equals("cancelled".ToLower()) ? "Available" :
-                                                                s.ChargingStatus.ToLower().Equals("interrupted".ToLower()) ? "Available" : "Unavailable"
-                                                        ) : s.ChargingStatus
-
-
-                               ),
-                               
-                               ChargeBoxId = charger.ChargeBoxId,
-                               StartTime = Convert.ToDateTime(s.StartTime).ToString("yyyy-MM-dd"),
-                               EndTime = Convert.ToDateTime(s.EndTime).ToString("yyyy-MM-dd"),
-                                Startmetervalue = Math.Round(Convert.ToDecimal(s.StartMeterValue) / 1000, 2).ToString(),
-                               Endmetervalue = Math.Round(Convert.ToDecimal(s.EndMeterValue) / 1000, 2).ToString(),
-                               Startsoc = s.StartSoc,
-                               EndSoc = s.EndSoc,
-
-                               ReasoneForStop = s.ReasonForStop
-                           }).OrderByDescending(a => a.TimeReported).ToList<ChartDetailsList>();
-                    if (res != null)
-                    {
+                        if (!string.IsNullOrEmpty(request.Fromdate) && !string.IsNullOrEmpty(request.Todate))
+                        {
+                            request.Fromdate = Convert.ToDateTime(request.Fromdate).ToString("yyyy-MM-dd");
+                            request.Todate = Convert.ToDateTime(request.Todate).ToString("yyyy-MM-dd");
+                        }
                         if (!string.IsNullOrEmpty(request.Fromdate))
                         {
                             res = res.Where(o => Convert.ToDateTime(o.StartTime) >= Convert.ToDateTime(request.Fromdate) && Convert.ToDateTime(o.StartTime) <= Convert.ToDateTime(request.Todate)).ToList();
@@ -92,51 +88,12 @@ namespace PortalRestService.Infrastructure.Repositories
                         {
                             res = res.Where(o => request.status.Contains(o.ChargingStatus, StringComparer.InvariantCultureIgnoreCase)).ToList();
                         }
-                    }                    
-                }
-                else
-                {
-                    res = (from s in _dbContext.ChargingSessions.ToList()
-                           where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(request.Duration)) && s.StartTime <= DateTime.Now
-                           join charger in _dbContext.Charger on s.ChargerId equals charger.Id
-                           join location in _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals location.Id
-                           join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
-                           join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                           
-                           select new ChartDetailsList
-                           {
-                               Id = s.Id,
-                               ChargerName = charger.ChargeBoxId,
-                               UID = "",
-							   ChargerType = String.Join(",", _dbContext.Port.Where(p => p.ChargerId == s.ChargerId && p.Connectorid==s.ConnectorId).Select(s => s.Connector.ConnectorType)),
-							   FaultSince = _dbContext.ChargerStatuses.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).Count() == 0 ? "" :
-                                (DateTime.Now - _dbContext.ChargerStatusHistory.Where(x => x.ConnectorStatus.ToLower() == "faulted" && x.ChargerId == s.ChargerId && x.ConnectorId == s.ConnectorId).OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
-                               FaultDescription = "",
-                               TimeReported = s.StartTime,
-                               LocationId = location.Id,
-                               LocationName = location.LocationName,
-                               ChargingStatus = (request.ChartType.ToLower() == "chargerinuse" ?
-                               (
-                                                                s.ChargingStatus.ToLower().Equals("completed".ToLower()) ? "Available" :
-                                                                s.ChargingStatus.ToLower().Equals("cancelled".ToLower()) ? "Available" :
-                                                                s.ChargingStatus.ToLower().Equals("interrupted".ToLower()) ? "Available" : "Unavailable"
-                                                        ) : s.ChargingStatus
-
-
-                               ),
-                               ChargeBoxId = charger.ChargeBoxId,
-                               StartTime = Convert.ToDateTime(s.StartTime).ToString("yyyy-MM-dd"),
-                               EndTime = Convert.ToDateTime(s.EndTime).ToString("yyyy-MM-dd"),
-                               Startmetervalue = Math.Round(Convert.ToDecimal(s.StartMeterValue)/1000,2).ToString(),
-                               Endmetervalue = Math.Round(Convert.ToDecimal(s.EndMeterValue) / 1000, 2).ToString(),
-                               Startsoc = s.StartSoc,
-                               EndSoc = s.EndSoc,
-
-                               ReasoneForStop = s.ReasonForStop
-                           }).OrderByDescending(a => a.TimeReported).ToList<ChartDetailsList>();
-
-                    
-                }                
+                    }
+                    else
+                    {
+                        res = res.Where(o=> o.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(request.Duration)) && o.StartTime <= DateTime.Now).ToList();
+                    }
+                }              
                 if (request.LocationIds.Count > 0)
                 {
                     res = res.Where(o => request.LocationIds.Contains(o.LocationId)).ToList();

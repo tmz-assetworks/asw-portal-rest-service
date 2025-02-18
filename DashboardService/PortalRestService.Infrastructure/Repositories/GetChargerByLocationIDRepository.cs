@@ -88,7 +88,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                                      //laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
                                                      //laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
                                                      //laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") :
-                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dd-MM-yyyy") : ""),
+                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM-dd-yyyy") : ""),
                                                  }).ToList<ChargerByLocationBO>();
 
                 List<ChargerByLocationChartBO> finalon = null;
@@ -148,8 +148,8 @@ namespace PortalRestService.Infrastructure.Repositories
                 interval = new TimeSpan(24, 0, 0);
                 laveltype = "date";
 
-                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-1).ToString("dd-MM-yyyy"), ChargeStatus = "Available", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddDays(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-2).ToString("dd-MM-yyyy"), ChargeStatus = "Unavailable", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-1).ToString("MM-dd-yyyy"), ChargeStatus = "Available", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddDays(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-2).ToString("MM-dd-yyyy"), ChargeStatus = "Unavailable", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
                 
 
             }
@@ -160,8 +160,8 @@ namespace PortalRestService.Infrastructure.Repositories
                 interval = new TimeSpan(24 * 7, 0, 0);
                 laveltype = "date";
 
-                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-6).ToString("dd-MM-yyyy"), ChargeStatus = "Available", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-12).ToString("dd-MM-yyyy"), ChargeStatus = "Unavailable", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-6).ToString("MM-dd-yyyy"), ChargeStatus = "Available", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddDays(-12).ToString("MM-dd-yyyy"), ChargeStatus = "Unavailable", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
                 
             }
             else
@@ -169,8 +169,8 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 interval = new TimeSpan(24, 0, 0);
                 laveltype = "date";
-                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddMonths(-1).ToString("dd-MM-yyyy"), ChargeStatus = "Available", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddMonths(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
-                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddMonths(-2).ToString("dd-MM-yyyy"), ChargeStatus = "Unavailable", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddMonths(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddMonths(-1).ToString("MM-dd-yyyy"), ChargeStatus = "Available", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddMonths(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new ChargerByLocationChartBO() { times = DateTime.Now.AddMonths(-2).ToString("MM-dd-yyyy"), ChargeStatus = "Unavailable", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddMonths(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
             
 
 

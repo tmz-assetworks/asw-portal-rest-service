@@ -21,7 +21,7 @@ namespace PortalRestService.Core.Responses
     public class VehicleByIdData
     {
         public long Id { get; set; }
-        public string VIN { get; set; }
+        public string? VIN { get; set; }
         public string department { get; set; }
 
         public string licencePlate { get; set; }
@@ -30,11 +30,11 @@ namespace PortalRestService.Core.Responses
 
         public string vehicleMacAddress { get; set; }
 
-        public string MakeName { get; set; }
+        public string? MakeName { get; set; }
 
-        public long ModelYear { get; set; }
+        public long? ModelYear { get; set; }
 
-        public string ModelName { get; set; }
+        public string? ModelName { get; set; }
         public bool Status { get; set; }
         public string? UnitNumber { get; set; }
         public string rfId { get; set; }

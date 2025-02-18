@@ -11,7 +11,7 @@ namespace PortalRestService.Infrastructure.Models
         
         public long Id { get; set; }
 
-        public string VIN { get; set; }
+        public string? VIN { get; set; }
 
         public string LicencePlate { get; set; }
        
@@ -33,12 +33,12 @@ namespace PortalRestService.Infrastructure.Models
 
         public DateTime ModifiedOn { get; set; }
 
-        public long ModelYear { get; set; }          
+        public long? ModelYear { get; set; }          
 
       
-        public string MakeName { get; set; }
+        public string? MakeName { get; set; }
 
-        public string ModelName { get; set; }
+        public string? ModelName { get; set; }
 
         public string? UnitNumber { get; set; }
         public string? AssetId { get; set; }
