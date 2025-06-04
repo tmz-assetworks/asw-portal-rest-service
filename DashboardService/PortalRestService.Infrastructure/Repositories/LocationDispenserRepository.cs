@@ -37,28 +37,29 @@ namespace PortalRestService.Infrastructure.Repositories
         {
             LocationDispenserForLocationResponse objLocationDispneser = new LocationDispenserForLocationResponse();
             List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
-            objLocationDispneser.data =  (from location in locationDispensersRequest.locationIds.Count>0? _dbContext.Locations.Where(x=> locationDispensersRequest.locationIds.Contains(x.Id) && locationList.Contains(x.Id)): _dbContext.Locations.Where(x => locationList.Contains(x.Id))
-                                          join charger in !string.IsNullOrEmpty(locationDispensersRequest.SearchParam) == true ? _dbContext.Charger.Where(d => locationDispensersRequest.SearchParam.ToLower().Contains(d.ChargeBoxId.ToLower())) : _dbContext.Charger
-                                          on location.Id equals charger.LocationId
-                                          join address in _dbContext.LocationAddress
-                                          on location.LocationAddressId equals address.Id
-                                          join Status in _dbContext.LocationStatus
-                                          on location.LocationStatusId equals Status.Id
-                                          select new LocationDispenserForLocation
-                               {
-                                   DispenserId = charger.Id,
-                                   locationId = location.Id,
-                                   ChargeBoxId = charger.ChargeBoxId,
-                                   ChargerStatus = charger.ChargerStatuses == null || charger.ChargerStatuses.Count == 0 ? "Offline" :
-                                    charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
-                                  .Replace("finishing", "Busy").Replace("preparing", "Busy"),
-                                   ConnectorType = String.Join(",",_dbContext.Connector.Where(cnn=> charger.Ports.Where(p => p.ChargerId == charger.Id).Select(s => s.ConnectorType ).Contains(cnn.Id)).Select(z=>z.ConnectorType)),
-                                   DispenserModel = charger.ModelName,
-                                   ProtocolName = charger.ProtocolName,
-                                   NoofPort = charger.Ports.Count.ToString(),
-                                   DispenserMake = charger.MakeName,
-                                   ModifiedAt= charger.CreatedOn
-                               }
+            objLocationDispneser.data = (from location in locationDispensersRequest.locationIds.Count > 0 ? _dbContext.Locations.Where(x => locationDispensersRequest.locationIds.Contains(x.Id) && locationList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationList.Contains(x.Id))
+                                         join charger in !string.IsNullOrEmpty(locationDispensersRequest.SearchParam) == true ? _dbContext.Charger.Where(d => locationDispensersRequest.SearchParam.ToLower().Contains(d.ChargeBoxId.ToLower())) : _dbContext.Charger
+                                         on location.Id equals charger.LocationId
+                                         join address in _dbContext.LocationAddress
+                                         on location.LocationAddressId equals address.Id
+                                         join Status in _dbContext.LocationStatus
+                                         on location.LocationStatusId equals Status.Id
+                                         select new LocationDispenserForLocation
+                                         {
+                                             DispenserId = charger.Id,
+                                             locationId = location.Id,
+                                             ChargeBoxId = charger.ChargeBoxId,
+                                             ChargerStatus = charger.ChargerStatuses == null || charger.ChargerStatuses.Count == 0 ? "Offline" :
+                                   charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
+                                 .Replace("finishing", "Busy").Replace("preparing", "Busy"),
+                                             ConnectorType = String.Join(",", _dbContext.Connector.Where(cnn => charger.Ports.Where(p => p.ChargerId == charger.Id).Select(s => s.ConnectorType).Contains(cnn.Id)).Select(z => z.ConnectorType)),
+                                             DispenserModel = charger.ModelName,
+                                             ProtocolName = charger.ProtocolName,
+                                             NoofPort = charger.Ports.Count.ToString(),
+                                             DispenserMake = charger.MakeName,
+                                             ModifiedAt = charger.CreatedOn,
+                                             AssetId = charger.AssetId
+                                         }
 
                            ).OrderByDescending(m => m.ModifiedAt).ToList<LocationDispenserForLocation>();
             return objLocationDispneser;

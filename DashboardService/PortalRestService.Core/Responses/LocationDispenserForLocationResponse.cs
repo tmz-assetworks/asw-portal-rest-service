@@ -22,6 +22,7 @@ namespace PortalRestService.Core.Responses
 
     public class LocationDispenserForLocation
     {
+        public string? AssetId { get; set; }
         public long locationId { get; set; }
         public int DispenserId { get; set; }
         public string ChargeBoxId { get; set; }
