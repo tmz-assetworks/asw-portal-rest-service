@@ -16,109 +16,52 @@ namespace PortalRestService.Infrastructure.Repositories
     public class ChargerSessionDetailsListRepository : OcppRepository<ChargerSessionDetailsListResponse>, IGetChargerSessionDetailsListRepository
     {
         TokenBase _tokenBase;
-        public ChargerSessionDetailsListRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token) : base(dbContext)
+        private readonly ILocationRepository _locationRepository;
+        public ChargerSessionDetailsListRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token, ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase=token;
+            _tokenBase = token;
+            _locationRepository = locationRepository;
         }
 
         async Task<PagedList<ChargerSessionDetailsList>> IGetChargerSessionDetailsListRepository.GetChargerSessionDetailsList(ChargerSessionListRequest request)
         {
-            List<ChargerSessionDetailsList> ChargingSessionslist = new List<ChargerSessionDetailsList>();
             List<ChargerSessionDetailsList> res = new List<ChargerSessionDetailsList>();
-            DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
-
-
-
+            List<long> locationIdList = await _locationRepository.GetAllLocationIdByObjectId();
             string zero = "0000000000";
-            if (!string.IsNullOrEmpty(request.Fromdate) || !string.IsNullOrEmpty(request.Todate) || request.status.Count > 0)
+            res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId, StringComparer.InvariantCultureIgnoreCase) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
+                   join vehiclerfid in _dbContext.VehicleRFID on c.RfId equals vehiclerfid.Name
+                   join vehicle in _dbContext.Vehicle on vehiclerfid.VehicleId equals vehicle.Id
+                   join charger in _dbContext.Charger on c.ChargerId equals charger.Id
+                   join location in _dbContext.Locations.Where(x => locationIdList.Contains(x.Id)) on charger.LocationId equals location.Id
+                   select new ChargerSessionDetailsList
+                   {
+                       Id = c.Id,
+                       Duration = "",
+                       Sessionid = zero.Substring(0, (10 - c.Id.ToString().Length)) + c.Id.ToString(),
+                       Usage = (Convert.ToDouble(c.EndMeterValue) < Convert.ToDouble(c.StartMeterValue)) ? 0 : Math.Round((Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)) / 1000, 2),
+                       StartTime = c.StartTime,
+                       EndTime = c.EndTime,
+                       ChargingStatus = c.ChargingStatus,
+                       ChargeBoxId = c.DeviceId,
+                       ModifiedAt = c.ModifiedAt,
+                       CreatedAt = c.CreatedAt,
+                       Startmetervalue = c.StartMeterValue,
+                       Endmetervalue = c.EndMeterValue,
+                       Startsoc = c.StartSoc,
+                       EndSoc = c.EndSoc,
+                       ReasoneForStop = c.ReasonForStop,
+                       AssetId = vehicle.AssetId
+                   }).DistinctBy(d => d.Id).OrderByDescending(a => a.ModifiedAt).Where(s => s.ChargeBoxId != null).ToList();
+            if (!string.IsNullOrEmpty(request.Fromdate) && !string.IsNullOrEmpty(request.Todate) && res.Any())
             {
-                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId, StringComparer.InvariantCultureIgnoreCase) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
-                       join vehiclerfid in _dbContext.VehicleRFID on c.RfId equals vehiclerfid.Name
-                       join vehicle in _dbContext.Vehicle on vehiclerfid.VehicleId equals vehicle.Id
-                       join charger in _dbContext.Charger on c.ChargerId equals charger.Id
-                       join location in  _dbContext.Locations on charger.LocationId equals location.Id
-                       join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
-                       join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                       on location.Id equals userMap.LocationId
-                       select new ChargerSessionDetailsList
-                       {
-                           Id = c.Id,
-                           Duration = "",
-                           Sessionid = zero.Substring(0,(10- c.Id.ToString().Length))+ c.Id.ToString(),
-                           ChargingStatus = c.ChargingStatus,
-						   //Usage = Math.Round((Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue))/1000,2),
-						   Usage = (Convert.ToDouble(c.EndMeterValue) < Convert.ToDouble(c.StartMeterValue))?0: (Math.Round((Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)) / 1000, 2)),
-						   StartTime = c.StartTime,
-                           EndTime = c.EndTime,
-                           ChargeBoxId = c.DeviceId,
-                           ModifiedAt = c.ModifiedAt,
-                           CreatedAt = c.CreatedAt,
-                           Startmetervalue=c.StartMeterValue,
-                           Endmetervalue=c.EndMeterValue,
-                           Startsoc=c.StartSoc,
-                           EndSoc=c.EndSoc,
-                         
-                           ReasoneForStop=c.ReasonForStop,
-                           AssetId = vehicle.AssetId
-
-                       }).DistinctBy(d => d.Id).OrderByDescending(a => a.ModifiedAt).Where(s => s.ChargeBoxId != null).ToList();
-                if (res != null)
-                {
-                    if (!string.IsNullOrEmpty(request.Fromdate))
-                    {
-                        res = res.Where(o => o.StartTime >= Convert.ToDateTime(request.Fromdate) && o.StartTime <= Convert.ToDateTime(request.Todate)).ToList();
-                    }
-                    if (request.status.Count > 0)
-                    {
-                        res = res.Where(o => request.status.Contains(o.ChargingStatus, StringComparer.InvariantCultureIgnoreCase)).ToList();
-                    }
-                }
-
-            }
-            else
-            {
-                res = (from c in request.chargerboxid.Count > 0 ? _dbContext.ChargingSessions.ToList().Where(o => request.chargerboxid.Contains(o.DeviceId, StringComparer.InvariantCultureIgnoreCase) && o.DeviceId != null) : _dbContext.ChargingSessions.ToList().Where(o => o.DeviceId != null)
-                       join vehiclerfid in _dbContext.VehicleRFID on c.RfId equals vehiclerfid.Name
-                       join vehicle in _dbContext.Vehicle on vehiclerfid.VehicleId equals vehicle.Id
-                       join charger in  _dbContext.Charger on c.ChargerId equals charger.Id
-                       join location in _dbContext.Locations on charger.LocationId equals location.Id
-                       join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
-                       join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                       join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                       on location.Id equals userMap.LocationId
-                       select new ChargerSessionDetailsList
-                       {
-                           Id = c.Id,
-                           Duration = "",
-                           Sessionid = zero.Substring(0,(10- c.Id.ToString().Length))+ c.Id.ToString(),
-						   //Usage = Math.Round((Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)) / 1000, 2),
-						   Usage = (Convert.ToDouble(c.EndMeterValue) < Convert.ToDouble(c.StartMeterValue)) ? 0 : Math.Round((Convert.ToDouble(c.EndMeterValue) - Convert.ToDouble(c.StartMeterValue <= 0 ? 0 : c.StartMeterValue)) / 1000, 2),
-						   StartTime = c.StartTime,
-                           EndTime = c.EndTime,
-                           ChargingStatus = c.ChargingStatus,
-                           ChargeBoxId = c.DeviceId,
-                           ModifiedAt = c.ModifiedAt,
-                           CreatedAt = c.CreatedAt,
-                           Startmetervalue = c.StartMeterValue,
-                           Endmetervalue = c.EndMeterValue,
-                           Startsoc = c.StartSoc,
-                           EndSoc = c.EndSoc,
-                           ReasoneForStop = c.ReasonForStop,
-                           AssetId = vehicle.AssetId
-                       }).DistinctBy(d => d.Id).OrderByDescending(a => a.ModifiedAt).Where(s => s.ChargeBoxId != null).ToList();
-            }
-
-
-            if (res == null)
-            {
-                res = new List<ChargerSessionDetailsList>();
+                res = res.Where(o => o.StartTime >= Convert.ToDateTime(request.Fromdate) && o.StartTime <= Convert.ToDateTime(request.Todate)).ToList();
+                if (request.status.Count > 0)
+                    res = res.Where(o => request.status.Contains(o.ChargingStatus, StringComparer.InvariantCultureIgnoreCase)).ToList();
             }
             if (res.Count > 0)
             {
                 foreach (var s in res)
                 {
-
                     if (s.EndTime.HasValue && s.StartTime.HasValue)
                     {
                         System.TimeSpan diff1 = (TimeSpan)(s.EndTime - s.StartTime);
@@ -132,19 +75,10 @@ namespace PortalRestService.Infrastructure.Repositories
                     }
                 }
                 if (!string.IsNullOrEmpty(request.SearchParam))
-                    res = res.Where(d => d.ChargeBoxId.ToLower() == request.SearchParam.ToLower()).ToList();
-
-                
+                    res = res.Where(d => d.ChargeBoxId.ToLower() == request.SearchParam.ToLower()).ToList();                
             }
-            var dataResult = PagedList<ChargerSessionDetailsList>.ToPagedList(res,
-              request.PageNumber,
-              request.PageSize);
+            var dataResult = PagedList<ChargerSessionDetailsList>.ToPagedList(res, request.PageNumber, request.PageSize);
             return await Task.FromResult(dataResult);
-
-
-
-
-
         }
 
     }
