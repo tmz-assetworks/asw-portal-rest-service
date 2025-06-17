@@ -15,11 +15,9 @@ namespace PortalRestService.Infrastructure.Repositories
 {
     public class ChargerSessionDetailsListRepository : OcppRepository<ChargerSessionDetailsListResponse>, IGetChargerSessionDetailsListRepository
     {
-        TokenBase _tokenBase;
         private readonly ILocationRepository _locationRepository;
-        public ChargerSessionDetailsListRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token, ILocationRepository locationRepository) : base(dbContext)
+        public ChargerSessionDetailsListRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository) : base(dbContext)
         {
-            _tokenBase = token;
             _locationRepository = locationRepository;
         }
 

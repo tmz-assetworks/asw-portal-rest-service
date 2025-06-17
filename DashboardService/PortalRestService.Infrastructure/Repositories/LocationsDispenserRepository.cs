@@ -29,7 +29,6 @@ namespace PortalRestService.Infrastructure.Repositories
 
         public async Task<LocationsDispenserpResponce> GetLocationsDispenserformap(LocationOpratorRequest request)
         {
-           // LocationsDispenserformapResponce obj = new LocationsDispenserformapResponce();
             LocationsDispenserpResponce query = new LocationsDispenserpResponce();
             DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
 
@@ -42,16 +41,14 @@ namespace PortalRestService.Infrastructure.Repositories
                               join location in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)(x.Id)) && locationIdlist.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdlist.Contains(x.Id)) on Charger.LocationId equals location.Id
                               join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
                               join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                              //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                              //on location.Id equals userMap.LocationId
                               select new LocationsDispenser
                                                          {
                                                              CityName = location.LocationAddress.CityName,
                                                              CountryName = location.LocationAddress.CountryName,
                                                              StateName = location.LocationAddress.StateName,
                                                              locationId = location.Id,
-                                                             Latitude = location.LocationAddress.Latitude.ToString(),
-                                                             Longitude = location.LocationAddress.Longitude.ToString(),
+                                                             Latitude = Charger.Latitude.HasValue?Charger.Latitude.ToString(): location.LocationAddress.Latitude.ToString(),
+                                                             Longitude = Charger.Longitude.HasValue ? Charger.Longitude.ToString() : location.LocationAddress.Longitude.ToString(),
                                                              LocationName = location.LocationName,
                                                              DispenserId = Charger.Id,
                                                              ChargeBoxid = Charger.ChargeBoxId,
