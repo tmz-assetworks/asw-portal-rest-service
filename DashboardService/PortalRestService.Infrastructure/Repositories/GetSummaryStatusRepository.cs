@@ -275,13 +275,12 @@ namespace PortalRestService.Infrastructure.Repositories
                         cardData.Type = "Active Errors";
                     else cardData.Type = "Alerts";
                     cardData.Count = 10;
-
                     var ChargerS = String.Join(",", locationsResponse.data.Where(ch => ch.ChargerStatus.ToLower() == "faulted").Select(x => x.DispenserId));
 
                     //var chargerid = string.Join(",", _dbContext.ChargerStatuses.Where(r => r.ConnectorStatus.ToLower() == "Faulted").Distinct().Select(p => p.ChargerId.ToString()));
                     var chargeboxid = string.Join(",", _dbContext.Charger.Where(o => ChargerS.Contains(o.Id.ToString())).Distinct().Select(p => p.ChargeBoxId.ToString()));
                     //var chargeboxid = string.Join(",", _dbContext.Charger.Where(o => ChargerS.Contains(o.Id.ToString())).Distinct().Select(p => p.ChargeBoxId.ToString()));
-                    var faualtlist = (from cs in _dbContext.ErrorSeverity join l in _dbContext.FaultyErrorCode on cs.Id equals l.ErrorSeverityId where cs.IsActive == true select l).ToList();
+                    var faualtlist = (from cs in _dbContext.ErrorSeverity join l in _dbContext.FaultyErrorCode on cs.Id equals l.ErrorSeverityId where cs.IsActive && l.IsActive select l).ToList();
 
 
                     //List<OcppEventLog> objlogs = (from v in _dbContext.OcppEventLogs.ToList()
@@ -299,7 +298,8 @@ namespace PortalRestService.Infrastructure.Repositories
                     //                            ).ToList<OcppEventLog>();
 
 
-                    List<OcppEventLog> objlogs = (from v in _dbContext.OcppEventLogs.Where(v => v.RequestType.ToLower() == "statusnotification").ToList()
+
+                    List<OcppEventLog> objlogs = (from v in _dbContext.OcppEventLogs.Where(v => v.RequestType.ToLower() == "statusnotification" && locationsResponse.data.Select(x => x.ChargeBoxId).Contains(v.DeviceId))
                                                   select new OcppEventLog
                                                   {
                                                       Id = v.Id,
@@ -340,21 +340,24 @@ namespace PortalRestService.Infrastructure.Repositories
             if (dataResponse.data == null)
                 dataResponse.StatusCode = (int)HttpStatusCode.NotFound;
             return Task.FromResult(dataResponse).Result;
-        }
-        public string geterror(string str, string RequestType)
+        }        
+
+        public static string geterror(string str, string RequestType)
         {
-            string ex1 = "";
-            if (RequestType.ToLower() == "StatusNotification".ToLower())
+            if (RequestType.ToLower() != "StatusNotification".ToLower())
+                return "";
+            try
             {
-                JArray jObj = JArray.Parse(str);
-                string[] ex = jObj[3].ToString().Split(",");
-                ex1 = ex[2].ToString().Split(":")[1];
-                Regex rgx = new Regex("[^a-zA-Z0-9 -]");
-                ex1 = rgx.Replace(ex1, "").Trim();
+                var jArray = JArray.Parse(str);
+                var payload = jArray[3] as JObject;
+                if (payload == null) return "";
+                var errorCode = payload["errorCode"]?.ToString() ?? "";
+                return Regex.Replace(errorCode, "[^a-zA-Z0-9 -]", "", RegexOptions.None, TimeSpan.FromSeconds(5)).Trim();
             }
-
-
-            return ex1;
+            catch
+            {
+                return "";
+            }
         }
     }
 }

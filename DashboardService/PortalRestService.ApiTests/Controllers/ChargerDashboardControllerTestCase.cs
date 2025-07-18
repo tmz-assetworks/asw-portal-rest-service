@@ -209,11 +209,11 @@ namespace PortalRestService.ApiTests.Controllers
                          ChargingStatus="",
                          Endmetervalue="0",
                          EndSoc=0,
-                         EndTime="",
+                         EndTime=null,
                          ReasoneForStop="",
                          Startmetervalue="0",
                          Startsoc = 0,
-                         StartTime="",
+                         StartTime=null
                     }
                 },
                 paginationResponse = new PaginationResponse()
