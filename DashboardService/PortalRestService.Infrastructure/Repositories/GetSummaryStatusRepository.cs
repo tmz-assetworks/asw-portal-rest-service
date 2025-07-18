@@ -340,22 +340,7 @@ namespace PortalRestService.Infrastructure.Repositories
             if (dataResponse.data == null)
                 dataResponse.StatusCode = (int)HttpStatusCode.NotFound;
             return Task.FromResult(dataResponse).Result;
-        }
-        public string geterror1(string str, string RequestType)
-        {
-            string ex1 = "";
-            if (RequestType.ToLower() == "StatusNotification".ToLower())
-            {
-                JArray jObj = JArray.Parse(str);
-                string[] ex = jObj[3].ToString().Split(",");
-                ex1 = ex[2].ToString().Split(":")[1];
-                Regex rgx = new Regex("[^a-zA-Z0-9 -]");
-                ex1 = rgx.Replace(ex1, "").Trim();
-            }
-
-
-            return ex1;
-        }
+        }        
 
         public static string geterror(string str, string RequestType)
         {
@@ -367,7 +352,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 var payload = jArray[3] as JObject;
                 if (payload == null) return "";
                 var errorCode = payload["errorCode"]?.ToString() ?? "";
-                return Regex.Replace(errorCode, "[^a-zA-Z0-9 -]", "").Trim();
+                return Regex.Replace(errorCode, "[^a-zA-Z0-9 -]", "", RegexOptions.None, TimeSpan.FromSeconds(5)).Trim();
             }
             catch
             {
