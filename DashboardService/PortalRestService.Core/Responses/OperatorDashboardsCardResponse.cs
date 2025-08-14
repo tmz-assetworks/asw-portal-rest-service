@@ -253,7 +253,8 @@ namespace PortalRestService.Core.Responses
 
     public class LocationsDispenserDetails
     {
-        public long locationId { get; set; }
+        public long Id { get; set; }
+        public string? LocationId { get; set; }
         public long DispenserId { get; set; }
         public string LocationName { get; set; }
         public string Address { get; set; }

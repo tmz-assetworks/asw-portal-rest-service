@@ -80,7 +80,8 @@ namespace PortalRestService.Infrastructure.Repositories
            result = await locationQuery.Select(location => new LocationsDispenserDetails {
                             Address = location.LocationAddress.AddressLine1 + " " + location.LocationAddress.AddressLine2,
 
-                            locationId = location.Id,
+                            Id = location.Id,
+                            LocationId = location.LocationId,
                             CreatedOn = location.CreatedOn,
 
                             LocationName = location.LocationName,
@@ -128,7 +129,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
                         }).ToListAsync<LocationsDispenserDetails>();
             
-            result = result != null ? result.OrderByDescending(a => a.locationId).ToList() : result;
+            result = result != null ? result.OrderByDescending(a => a.Id).ToList() : result;
             if (!string.IsNullOrEmpty(locationDispenserRequest.SearchParam))
                 result = result.Where(d => d.LocationName.ToLower().Contains(locationDispenserRequest.SearchParam.ToLower())
              ).ToList<LocationsDispenserDetails>();
