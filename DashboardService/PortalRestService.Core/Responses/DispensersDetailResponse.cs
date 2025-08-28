@@ -39,6 +39,8 @@ namespace PortalRestService.Core.Responses
         public string LocationContactNumber { get; set; }
         public string? AssetId { get; set; }
         public string? SimCardMSIDN { get; set; }
+        public string? ModelName { get; set; }
+        public string? MakeName { get; set; }
     }
     public class DispensersDetailRequest : QueryStringParameters
     {
