@@ -78,7 +78,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 if (res.Count <= 0)
                 {
                     //17-aug-2023 no need default value
-                    //finalon = getstatus();
+                    finalon = getstatus();
                 }
                 else
                 {
@@ -139,12 +139,7 @@ namespace PortalRestService.Infrastructure.Repositories
         public List<LocationPerformingResponse> getstatus()
         {
             List<LocationPerformingResponse> chargingSessionByLocationBOs = new List<LocationPerformingResponse>();
-
-
-            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP", LocationName = "Philadelphia", MeterValue = 0 });
-            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP",LocationName = "Austin Public Works", MeterValue = 0 });
-            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP", LocationName = "Alaska", MeterValue = 0 });
-            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP",LocationName = "Fleet Services", MeterValue = 0 });
+            chargingSessionByLocationBOs.Add(new LocationPerformingResponse() { Orderby = "TOP", LocationName = "", MeterValue = 0 });
             return chargingSessionByLocationBOs;
         }
     }
