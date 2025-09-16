@@ -16,46 +16,67 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
         {
             _locationRepository = locationRepository;
         }
-
-
-        public async Task<PagedList<DispensersDetail>> GetDispensersDetail(DispensersDetailRequest dispensersDetailRequest)
+        public async Task<PagedList<DispensersDetail>> GetDispensersDetail(DispensersDetailRequest request)
         {
-            List<long> locationIdList = await _locationRepository.GetAllLocationIdByObjectId();
-            List<DispensersDetail> result = (from disp in _dbContext.Charger
-                              join location in _dbContext.Locations.Where(x => locationIdList.Contains(x.Id)) on disp.LocationId equals location.Id
-                              //join userMap in _dbContext.OperatorUserMapper.Where(x => x.UserId == (_dbContext.Users.Where(z => z.ObjectId.Equals(_tokenBase.getObjectId())).FirstOrDefault().Id))
-                              //on location.Id equals userMap.LocationId 
-                              where (!string.IsNullOrEmpty(dispensersDetailRequest.SearchParam)) ? (disp.ChargeBoxId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.AssetId.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.MakeName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.ModelName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || location.LocationName.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower()) || disp.SimCardMSIDN.ToLower().Contains(dispensersDetailRequest.SearchParam.ToLower())) : disp.ChargeBoxId != null
-                              select new DispensersDetail
-                              {
-                                  AssetId = disp.AssetId,
-                                  ChargerBoxId = disp.ChargeBoxId,
-                                  TimeReported = disp.ChargerStatuses == null ? "" :
-                                  disp.ChargerStatuses.ToList().Where(x => x.ConnectorStatus.ToLower() == "faulted").ToList().Count == 0 ? "" :
-                                  disp.ChargerStatusHistories.Where(x => x.ConnectorStatus.ToLower() == "faulted").OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn.Value.ToString("d-MM-yyyy h:mm"),
-                                  FaultSince = disp.ChargerStatuses.ToList().Where(x => x.ConnectorStatus.ToLower() == "faulted").ToList().Count == 0 ? "" :
-                                  (DateTime.Now - disp.ChargerStatusHistories.Where(x => x.ConnectorStatus.ToLower() == "faulted").OrderByDescending(m => m.Id).FirstOrDefault().CreatedOn).Value.Hours.ToString() + " hours",
-                                  LocationId = disp.LocationId == null ? 0 : (long)disp.LocationId,
-                                  State = location.LocationAddress != null ? location.LocationAddress.StateName : "",
-                                  ChargerType = "OCPP",
-                                  LocationContactName = location.LocationName,
-                                  LocationContactNumber = location.ContactPersonNumber,
-                                  SimCardMSIDN = disp.SimCardMSIDN != null ? disp.SimCardMSIDN : "",
-                                  MakeName = disp.MakeName,
-                                  ModelName = disp.ModelName,
-                              }).ToList<DispensersDetail>();
+            var locationIdList = await _locationRepository.GetAllLocationIdByObjectId();
 
-            result = result != null ? result.OrderByDescending(a => a.ChargerName).ToList<DispensersDetail>() : result;
+            var query = from disp in _dbContext.Charger
+                        join location in _dbContext.Locations
+                            on disp.LocationId equals location.Id
+                        where locationIdList.Contains(location.Id)
+                        select new
+                        {
+                            disp,
+                            location,
+                            lastFault = disp.ChargerStatusHistories
+                                .Where(x => x.ConnectorStatus == "Faulted")
+                                .OrderByDescending(x => x.Id)
+                                .Select(x => x.CreatedOn)
+                                .FirstOrDefault()
+                        };
 
-            //  Paging on Records
+            // Search filtering (server-side)
+            if (!string.IsNullOrEmpty(request.SearchParam))
+            {
+                string search = request.SearchParam.ToLower();
+                query = query.Where(q =>
+                    q.disp.ChargeBoxId.ToLower().Contains(search) ||
+                    q.disp.AssetId.ToLower().Contains(search) ||
+                    q.disp.MakeName.ToLower().Contains(search) ||
+                    q.disp.ModelName.ToLower().Contains(search) ||
+                    q.location.LocationName.ToLower().Contains(search) ||
+                    q.disp.SimCardMSIDN.ToLower().Contains(search));
+            }
 
-            var dataResult = PagedList<DispensersDetail>.ToPagedList(result,
-            dispensersDetailRequest.PageNumber,
-            dispensersDetailRequest.PageSize);
+            // Projection (materialize only needed fields)
+            var projected = query.Select(q => new DispensersDetail
+            {
+                AssetId = q.disp.AssetId,
+                ChargerBoxId = q.disp.ChargeBoxId,
+                TimeReported = q.lastFault.HasValue
+                    ? q.lastFault.Value.ToString("dd-MM-yyyy HH:mm")
+                    : "",
+                FaultSince = q.lastFault.HasValue
+                    ? (DateTime.Now - q.lastFault.Value).Hours + " hours"
+                    : "",
+                LocationId = q.disp.LocationId ?? 0,
+                State = q.location.LocationAddress != null ? q.location.LocationAddress.StateName : "",
+                ChargerType = "OCPP",
+                LocationContactName = q.location.LocationName,
+                LocationContactNumber = q.location.ContactPersonNumber,
+                SimCardMSIDN = q.disp.SimCardMSIDN ?? "",
+                MakeName = q.disp.MakeName,
+                ModelName = q.disp.ModelName,
+            });
 
-            return dataResult;
+            // Paging & Ordering in SQL
+            var pagedResult = await PagedList<DispensersDetail>.CreateAsync(
+                projected.OrderByDescending(x => x.ChargerBoxId),  // Replace ChargerName
+                request.PageNumber,
+                request.PageSize);
+
+            return pagedResult;
         }
-
     }
 
 }

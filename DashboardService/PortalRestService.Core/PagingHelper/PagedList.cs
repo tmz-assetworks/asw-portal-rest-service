@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace PortalRestService.Core.PagingHelper
 {
@@ -36,7 +37,15 @@ namespace PortalRestService.Core.PagingHelper
 			var items = source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 			return new PagedList<T>(items, count, pageNumber, pageSize);
 		}
-	}
+        public static async Task<PagedList<T>> CreateAsync(IQueryable<T> source, int pageNumber, int pageSize)
+        {
+            var count = await source.CountAsync(); // stays in SQL
+            var items = await source.Skip((pageNumber - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync(); // stays in SQL
+            return new PagedList<T>(items, count, pageNumber, pageSize);
+        }
+    }
     public class PaginationResponse
     {
         public int TotalCount { get;  set; }
