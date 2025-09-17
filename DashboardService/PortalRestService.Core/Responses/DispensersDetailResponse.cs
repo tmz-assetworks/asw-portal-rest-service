@@ -41,6 +41,9 @@ namespace PortalRestService.Core.Responses
         public string? SimCardMSIDN { get; set; }
         public string? ModelName { get; set; }
         public string? MakeName { get; set; }
+        public string? ChargerStatus { get; set; }
+        public string? NoofPort { get; set; }
+        
     }
     public class DispensersDetailRequest : QueryStringParameters
     {
