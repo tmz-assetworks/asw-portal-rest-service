@@ -1,4 +1,5 @@
 using Azure;
+using PortalRestService.Core.Models;
 using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
@@ -6,6 +7,7 @@ using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace PortalRestService.Infrastructure.Repositories.Assets
 {
@@ -61,12 +63,16 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                     : "",
                 LocationId = q.disp.LocationId ?? 0,
                 State = q.location.LocationAddress != null ? q.location.LocationAddress.StateName : "",
-                ChargerType = "OCPP",
+                ChargerType = q.disp.Ports.FirstOrDefault().Connector.ConnectorType,
                 LocationContactName = q.location.LocationName,
                 LocationContactNumber = q.location.ContactPersonNumber,
                 SimCardMSIDN = q.disp.SimCardMSIDN ?? "",
                 MakeName = q.disp.MakeName,
                 ModelName = q.disp.ModelName,
+                ChargerStatus = q.disp.ChargerStatuses == null || q.disp.ChargerStatuses.Count == 0 ? "Offline" :
+                                   q.disp.ChargerStatuses.FirstOrDefault().Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
+                                 .Replace("finishing", "Busy").Replace("preparing", "Busy"),
+                NoofPort = q.disp.Ports.Count() == 0 ? "0" : q.disp.Ports.Count.ToString(),
             });
 
             // Paging & Ordering in SQL
