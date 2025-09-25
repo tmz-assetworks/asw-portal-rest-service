@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -11,6 +12,7 @@ using PortalRestService.Infrastructure.EnumData;
 using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,7 +44,7 @@ namespace PortalRestService.Infrastructure.Repositories
             perkwtRate = (double)Convert.ToDouble(this._configuration.GetSection("EneryRatePerKg").GetSection("perkwtRate").Value);
         }
 
-        public async Task<CardDataResponse> GetSummaryStatus(int locationId, bool isChargersReq)
+        public async Task<CardDataResponse> GetSummaryStatus1(int locationId, bool isChargersReq)
         {
             CardDataResponse dataResponse = new CardDataResponse();
 
@@ -340,8 +342,181 @@ namespace PortalRestService.Infrastructure.Repositories
             if (dataResponse.data == null)
                 dataResponse.StatusCode = (int)HttpStatusCode.NotFound;
             return Task.FromResult(dataResponse).Result;
-        }        
+        }
 
+
+        public async Task<CardDataResponse> GetSummaryStatus(int locationId, bool isChargersReq)
+        {
+            var response = new CardDataResponse();
+
+            if (locationId > 0 && isChargersReq)
+            {
+                return new CardDataResponse
+                {
+                    data = null,
+                    StatusMessage = "Request is not valid.",
+                    StatusCode = (int)HttpStatusCode.OK
+                };
+            }
+
+            try
+            {
+                var allowedLocationIds = await _locationRepository.GetAllLocationIdByObjectId();
+                var cardDataList = new List<CardData>();
+
+                // ==========================
+                // Locations Summary (only for all locations)
+                // ==========================
+                if (locationId == 0)
+                {
+                    var locationCounts = await _dbContext.Locations
+                        .Where(l => allowedLocationIds.Contains(l.Id))
+                        .GroupBy(l => l.LocationStatus.LocationStatusName)
+                        .Select(g => new { Status = g.Key, Count = g.Count() })
+                        .ToListAsync();
+
+                    cardDataList.Add(new CardData
+                    {
+                        Type = "Locations",
+                        Count = locationCounts.Sum(x => x.Count),
+                        StatusData = new List<StatusData>
+                {
+                    new() { Key = Status_Indication.LocationStatus.Live.GetEnumDisplayName(),
+                            Value = CommonHelpers.GetHoursTwoDigitFormat(locationCounts.FirstOrDefault(x => x.Status == Status_Indication.LocationStatus.Live.GetEnumDisplayName())?.Count ?? 0),
+                            Color = ColorsEnum.LocationsColor.Live.GetEnumDisplayName() },
+                    new() { Key = Status_Indication.LocationStatus.UnderMaintenance.GetEnumDisplayName(),
+                            Value = CommonHelpers.GetHoursTwoDigitFormat(locationCounts.FirstOrDefault(x => x.Status == Status_Indication.LocationStatus.UnderMaintenance.GetEnumDisplayName())?.Count ?? 0),
+                            Color = ColorsEnum.LocationsColor.UnderMaintenance.GetEnumDisplayName() },
+                    new() { Key = Status_Indication.LocationStatus.Inactive.GetEnumDisplayName(),
+                            Value = CommonHelpers.GetHoursTwoDigitFormat(locationCounts.FirstOrDefault(x => x.Status == Status_Indication.LocationStatus.Inactive.GetEnumDisplayName())?.Count ?? 0),
+                            Color = ColorsEnum.LocationsColor.Inactive.GetEnumDisplayName() },
+                    new() { Key = Status_Indication.LocationStatus.Commissioned.GetEnumDisplayName(),
+                            Value = CommonHelpers.GetHoursTwoDigitFormat(locationCounts.FirstOrDefault(x => x.Status == Status_Indication.LocationStatus.Commissioned.GetEnumDisplayName())?.Count ?? 0),
+                            Color = ColorsEnum.LocationsColor.Commissioned.GetEnumDisplayName() },
+                    new() { Key = Status_Indication.LocationStatus.Upcoming.GetEnumDisplayName(),
+                            Value = CommonHelpers.GetHoursTwoDigitFormat(locationCounts.FirstOrDefault(x => x.Status == Status_Indication.LocationStatus.Upcoming.GetEnumDisplayName())?.Count ?? 0),
+                            Color = ColorsEnum.LocationsColor.Upcoming.GetEnumDisplayName() }
+                }
+                    });
+                }
+
+                // ==========================
+                // Chargers Summary
+                // ==========================
+                var chargerQuery = _dbContext.Charger
+                    .Where(c => c.LocationId.HasValue && allowedLocationIds.Contains(c.LocationId.Value) && (locationId == 0 || c.LocationId == locationId))
+                    .Select(c => new
+                    {
+                        Status = c.ChargerStatuses.OrderByDescending(s => s.ModifiedAt).Select(s => s.Chargerstatus).FirstOrDefault() ?? "Offline"
+                    });
+
+                var chargerCounts = await chargerQuery.GroupBy(c => c.Status)
+                                                     .Select(g => new { Status = g.Key, Count = g.Count() })
+                                                     .ToListAsync();
+
+                cardDataList.Add(new CardData
+                {
+                    Type = "Chargers",
+                    Count = chargerCounts.Sum(x => x.Count),
+                    StatusData = new List<StatusData>
+            {
+                new() { Key = Status_Indication.ChargerStatus.Available.GetEnumDisplayName(),
+                        Value = CommonHelpers.GetHoursTwoDigitFormat(chargerCounts.FirstOrDefault(x => x.Status.ToLower() == "available")?.Count ?? 0),
+                        Color = ColorsEnum.ChargerStatus.Available.GetEnumDisplayName() },
+                new() { Key = Status_Indication.ChargerStatus.Connected.GetEnumDisplayName(),
+                        Value = CommonHelpers.GetHoursTwoDigitFormat(chargerCounts.FirstOrDefault(x => x.Status.ToLower() == "connected")?.Count ?? 0),
+                        Color = ColorsEnum.ChargerStatus.Connected.GetEnumDisplayName() },
+                new() { Key = Status_Indication.ChargerStatus.Offline.GetEnumDisplayName(),
+                        Value = CommonHelpers.GetHoursTwoDigitFormat(chargerCounts.FirstOrDefault(x => x.Status.ToLower() == "offline")?.Count ?? 0),
+                        Color = ColorsEnum.ChargerStatus.Offline.GetEnumDisplayName() }
+            }
+                });
+
+                // ==========================
+                // Charging Sessions Summary
+                // ==========================
+                var sessionCounts = await (from cs in _dbContext.ChargingSessions
+                                           join c in _dbContext.Charger on cs.ChargerId equals c.Id
+                                           where allowedLocationIds.Contains(c.LocationId.Value) && (locationId == 0 || c.LocationId == locationId)
+                                           group cs by cs.ChargingStatus into g
+                                           select new
+                                           {
+                                               Status = g.Key,
+                                               Count = g.Count()
+                                           })
+                          .ToListAsync();
+
+                cardDataList.Add(new CardData
+                {
+                    Type = "Charging Sessions",
+                    Count = sessionCounts.Sum(x => x.Count),
+                    StatusData = new List<StatusData>
+            {
+                new() { Key = Status_Indication.ChargingSessionStatus.Cancelled.ToString(),
+                        Value = CommonHelpers.GetHoursTwoDigitFormat(sessionCounts.FirstOrDefault(x => x.Status.ToLower() == "cancelled")?.Count ?? 0),
+                        Color = ColorsEnum.ChargingSessionsColor.Cancelled.GetEnumDisplayName() },
+                new() { Key = Status_Indication.ChargingSessionStatus.Interrupted.ToString(),
+                        Value = CommonHelpers.GetHoursTwoDigitFormat(sessionCounts.FirstOrDefault(x => x.Status.ToLower() == "interrupted")?.Count ?? 0),
+                        Color = ColorsEnum.ChargingSessionsColor.Interrupted.GetEnumDisplayName() },
+                new() { Key = Status_Indication.ChargingSessionStatus.Completed.ToString(),
+                        Value = CommonHelpers.GetHoursTwoDigitFormat(sessionCounts.FirstOrDefault(x => x.Status.ToLower() == "completed")?.Count ?? 0),
+                        Color = ColorsEnum.ChargingSessionsColor.Completed.GetEnumDisplayName() }
+            }
+                });
+
+                // ==========================
+                // Errors / Alerts Summary
+                // ==========================
+                var chargeBoxIds = await _dbContext.Charger
+                    .Where(c => c.LocationId.HasValue && allowedLocationIds.Contains(c.LocationId.Value) && (locationId == 0 || c.LocationId == locationId))
+                    .Select(c => c.ChargeBoxId)
+                    .ToListAsync();
+
+                var logs = await _dbContext.OcppEventLogs
+                    .Where(l => chargeBoxIds.Contains(l.DeviceId) && l.RequestType.ToLower() == "statusnotification")
+                    .Select(l => geterror(l.RequestPayload, l.RequestType))
+                    .ToListAsync();
+
+                var faults = await (from es in _dbContext.ErrorSeverity
+                                    join fe in _dbContext.FaultyErrorCode on es.Id equals fe.ErrorSeverityId
+                                    where es.IsActive && fe.IsActive
+                                    select new { fe.Names, ErrorSeverityId = es.Id }).ToListAsync();
+
+                var errorCounts = new Dictionary<string, int>
+                {
+                    ["Critical"] = logs.Count(l => faults.Where(f => f.ErrorSeverityId == (int)Errors.Critical).Select(f => f.Names).Contains(l, StringComparer.InvariantCultureIgnoreCase)),
+                    ["High"] = logs.Count(l => faults.Where(f => f.ErrorSeverityId == (int)Errors.High).Select(f => f.Names).Contains(l, StringComparer.InvariantCultureIgnoreCase)),
+                    ["Medium"] = logs.Count(l => faults.Where(f => f.ErrorSeverityId == (int)Errors.Medium).Select(f => f.Names).Contains(l, StringComparer.InvariantCultureIgnoreCase))
+                };
+
+                cardDataList.Add(new CardData
+                {
+                    Type = locationId == 0 ? "Active Errors" : "Alerts",
+                    Count = errorCounts.Values.Sum(),
+                    StatusData = new List<StatusData>
+            {
+                new() { Key = "Critical", Value = CommonHelpers.GetHoursTwoDigitFormat(errorCounts["Critical"]), Color = ColorsEnum.ErrorsColor.Critical.GetEnumDisplayName() },
+                new() { Key = "High", Value = CommonHelpers.GetHoursTwoDigitFormat(errorCounts["High"]), Color = ColorsEnum.ErrorsColor.High.GetEnumDisplayName() },
+                new() { Key = "Medium", Value = CommonHelpers.GetHoursTwoDigitFormat(errorCounts["Medium"]), Color = ColorsEnum.ErrorsColor.Medium.GetEnumDisplayName() }
+            }
+                });
+
+                // ==========================
+                // Final Response
+                // ==========================
+                response.data = cardDataList;
+                response.StatusMessage = RespnoseMessage.Record_found;
+                response.StatusCode = (int)HttpStatusCode.OK;
+            }
+            catch (Exception ex)
+            {
+                Log.Information(ex, "Error in GetSummaryStatus for location {LocationId}", locationId);
+                response.StatusMessage = "Internal server error.";
+                response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
+
+            return response;
+        }
         public static string geterror(string str, string RequestType)
         {
             if (RequestType.ToLower() != "StatusNotification".ToLower())
