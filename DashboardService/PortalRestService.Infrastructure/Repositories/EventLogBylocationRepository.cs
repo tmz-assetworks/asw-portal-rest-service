@@ -84,8 +84,12 @@ namespace PortalRestService.Infrastructure.Repositories
                     ? _dbContext.Locations.Where(l => request.LocationIds.Contains((int)l.Id) && allowedLocationIds.Contains(l.Id))
                     : _dbContext.Locations.Where(l => allowedLocationIds.Contains(l.Id));
 
+                var eventLogsBase = request.ChargerBoxIds.Count > 0
+                    ? _dbContext.OcppEventLogs.Where(o => o.DeviceId != null && request.ChargerBoxIds.Contains(o.DeviceId))
+                    : _dbContext.OcppEventLogs.Where(o => o.DeviceId != null);
+
                 var eventLogsQuery =
-                    from log in _dbContext.OcppEventLogs
+                    from log in eventLogsBase
                     join charger in _dbContext.Charger on log.DeviceId equals charger.ChargeBoxId
                     join loc in locationsQuery on charger.LocationId equals loc.Id
                     select new EventLogLocation
@@ -122,12 +126,14 @@ namespace PortalRestService.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error in GetEventLogByLocation for locationIDs {locationids} and search parameter {parm}", request.LocationIds, request.SearchParam);
+                Log.Error(ex, "Error in GetEventLogByLocation for locationIDs {LocationIds}, chargerIDs {ChargerIds}, and search parameter {SearchParam}",
+                    request.LocationIds, request.ChargerBoxIds, request.SearchParam);
+
                 return await PagedList<EventLogLocation>.CreateAsync(
-            Enumerable.Empty<EventLogLocation>().AsQueryable(),
-            request.PageNumber,
-            request.PageSize
-        );
+                    Enumerable.Empty<EventLogLocation>().AsQueryable(),
+                    request.PageNumber,
+                    request.PageSize
+                );
             }
         }
 
