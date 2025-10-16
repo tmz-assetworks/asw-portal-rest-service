@@ -53,6 +53,7 @@ namespace PortalRestService.Infrastructure.Repositories
                      makeName = m.MakeName,
                      InstallationDate=m.InstallationDate,
                      SimCardMSIDN = m.SimCardMSIDN != null ? m.SimCardMSIDN : "",
+                     OEMOrderNumber = m.OEMOrderNumber ?? "",
 
                      ChargerStatus = ((from ob in _dbContext.ChargerStatuses.Where(x => x.ChargerId == m.Id)
                                select new ChargerStatusDTO
@@ -73,6 +74,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                     {
                                         Id = (int)obls.Id,
                                         LocationName = obls.LocationName,
+                                        LocationId=obls.LocationId,
                                         LocationAddress = new LocationAddressDTO()
                                         {
                                             Id = obls.LocationAddress.Id,
@@ -132,6 +134,12 @@ namespace PortalRestService.Infrastructure.Repositories
                     chargerInformationResponse.data.ChargeBoxId = dispenser.chargeBoxId;
                     chargerInformationResponse.data.ConnectorType = dispenser.Ports.Count() > 0 ? dispenser.Ports[0].ConnectorType : 0;
                     chargerInformationResponse.data.SimCardMSIDN = dispenser.SimCardMSIDN;
+                    chargerInformationResponse.data.LocationId=dispenser.LocationDTO.LocationId;
+                    chargerInformationResponse.data.LocationName = dispenser.LocationDTO.LocationName;
+                    chargerInformationResponse.data.ChargerMake=dispenser.makeName;
+                    chargerInformationResponse.data.ChargerModel = dispenser.modelName;
+                    chargerInformationResponse.data.OEMOrderNumber = dispenser.OEMOrderNumber;
+
                 }
                
                 else

@@ -52,6 +52,7 @@ namespace PortalRestService.Core.Models
         public DateTime? ModifiedOn { get; set; }
         public double? Longitude { get; set; }
         public double? Latitude { get; set; }
+        public string? OEMOrderNumber { get; set; }
         public virtual ICollection<Port> Ports { get; set; }
         public virtual List<ChargerStatus> ChargerStatuses { get; set; }
         public virtual ICollection<ChargerStatusHistory> ChargerStatusHistories { get; set; }
