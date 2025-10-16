@@ -53,6 +53,7 @@ namespace PortalRestService.Core.Responses
         public string stationName { get; set; }
         public int vendorId { get; set; }
         public string? SimCardMSIDN { get; set; }
+        public string? OEMOrderNumber { get; set; }
         public Vendor vendor { get; set; }
         public List<PortDTO> Ports { get; set; }
         public DateTime? InstallationDate { get; set; }

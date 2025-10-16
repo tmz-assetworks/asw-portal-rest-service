@@ -338,6 +338,12 @@ namespace PortalRestService.Core.Responses
         public string ConnectorIds { get; set; }
         public long ConnectorType { get; set; }
         public string? SimCardMSIDN { get; set; }
+        public string? ChargerMake { get; set; }
+        public string? ChargerModel { get; set; }
+        public string? LocationId { get; set; }
+        public string? LocationName { get; set; }
+        public string? OEMOrderNumber { get; set; }
+
     }
 }
 
