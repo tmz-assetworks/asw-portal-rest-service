@@ -64,7 +64,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
                 var groupByLocation = query.data.GroupBy(x => x.LocationName);
 
-                Random rand = new Random();
+                var rand = Random.Shared;
                 foreach (var group in groupByLocation)
                 {
                     foreach (var charger in group)
