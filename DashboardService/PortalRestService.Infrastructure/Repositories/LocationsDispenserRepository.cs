@@ -35,40 +35,63 @@ namespace PortalRestService.Infrastructure.Repositories
             try
             {
                 List<long> locationIdlist = await _locationRepository.GetAllLocationIdByObjectId();
-               
-                query.data = (from Charger in  request.ChargeBoxId.Count() > 0 ? _dbContext.Charger.Where(o => request.ChargeBoxId.Contains(o.ChargeBoxId)) 
-                              : _dbContext.Charger 
+
+                query.data = (from Charger in request.ChargeBoxId.Count() > 0 ? _dbContext.Charger.Where(o => request.ChargeBoxId.Contains(o.ChargeBoxId))
+                              : _dbContext.Charger
                               join location in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)(x.Id)) && locationIdlist.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdlist.Contains(x.Id)) on Charger.LocationId equals location.Id
                               join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
                               join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
                               select new LocationsDispenser
-                                                         {
-                                                             CityName = location.LocationAddress.CityName,
-                                                             CountryName = location.LocationAddress.CountryName,
-                                                             StateName = location.LocationAddress.StateName,
-                                                             locationId = location.Id,
-                                                             Latitude = Charger.Latitude.HasValue?Charger.Latitude.ToString(): location.LocationAddress.Latitude.ToString(),
-                                                             Longitude = Charger.Longitude.HasValue ? Charger.Longitude.ToString() : location.LocationAddress.Longitude.ToString(),
-                                                             LocationName = location.LocationName,
-                                                             DispenserId = Charger.Id,
-                                                             ChargeBoxid = Charger.ChargeBoxId,
-                                                             status = Charger.ChargerStatuses == null || Charger.ChargerStatuses.Count == 0 ? "Offline" :
+                              {
+                                  CityName = location.LocationAddress.CityName,
+                                  CountryName = location.LocationAddress.CountryName,
+                                  StateName = location.LocationAddress.StateName,
+                                  locationId = location.Id,
+                                  Latitude = Charger.Latitude.ToString()!,// Charger.Latitude.HasValue ? Charger.Latitude.ToString() : location.LocationAddress.Latitude.ToString(),
+                                  Longitude = Charger.Longitude.ToString()!, //Charger.Longitude.HasValue ? Charger.Longitude.ToString() : location.LocationAddress.Longitude.ToString(),
+                                  LocLatitude = location.LocationAddress.Latitude.ToString(),
+                                  LocLongitude = location.LocationAddress.Longitude.ToString(),
+                                  LocationName = location.LocationName,
+                                  DispenserId = Charger.Id,
+                                  ChargeBoxid = Charger.ChargeBoxId,
+                                  status = Charger.ChargerStatuses == null || Charger.ChargerStatuses.Count == 0 ? "Offline" :
                                 Charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("Charging", "Busy").Replace("suspendedev", "Busy").Replace("SuspendedEV", "Busy").Replace("suspendedevse", "Busy").Replace("SuspendedEVSE", "Busy")
                               .Replace("finishing", "Busy").Replace("Finishing", "Busy").Replace("preparing", "Busy").Replace("Preparing", "Busy"),
-                                                             AssetId = Charger.AssetId,
-                                                             MakeName = Charger.MakeName,
-                                                             ModelName = Charger.ModelName,
-                                                         }).ToList<LocationsDispenser>();
+                                  AssetId = Charger.AssetId,
+                                  MakeName = Charger.MakeName,
+                                  ModelName = Charger.ModelName,
+                              }).ToList<LocationsDispenser>();
 
-               
+                var groupByLocation = query.data.GroupBy(x => x.LocationName);
 
+                Random rand = new Random();
+                foreach (var group in groupByLocation)
+                {
+                    foreach (var charger in group)
+                    {
+                        charger.IsAutoGenerated = false;
+                        if (charger.Latitude == null && charger.Longitude == null)
+                        {
+                            double baseLat = Convert.ToDouble(charger.LocLatitude);
+                            double baseLon = Convert.ToDouble(charger.LocLongitude);
+                            double radius = 0.0006;
+                            double angle = rand.NextDouble() * Math.PI * 2;
+                            double distance = radius * Math.Sqrt(rand.NextDouble());
+                            double offsetLat = distance * Math.Cos(angle);
+                            double offsetLon = distance * Math.Sin(angle);
+                            charger.Latitude = (baseLat + offsetLat).ToString();
+                            charger.Longitude = (baseLon + offsetLon).ToString();
+                            charger.IsAutoGenerated = true;
+                        }
+                    }
+                }
 
                 if (query.data.Count > 0)
                     query.StatusMessage = RespnoseMessage.Record_found;
                 else
                     query.StatusMessage = RespnoseMessage.Record_not_found;
                 query.StatusCode = 200;
-               
+
             }
             catch (Exception ex)
             {
