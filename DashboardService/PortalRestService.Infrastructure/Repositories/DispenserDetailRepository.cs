@@ -18,7 +18,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
         {
             _locationRepository = locationRepository;
         }
-        public async Task<PagedList<DispensersDetail>> GetDispensersDetail(DispensersDetailRequest request)
+        public async Task<PagedList<DispensersDetail>> GetDispensersDetail(DispensersDetailRequest dispensersDetailRequest)
         {
             var locationIdList = await _locationRepository.GetAllLocationIdByObjectId();
 
@@ -38,9 +38,9 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                         };
 
             // Search filtering (server-side)
-            if (!string.IsNullOrEmpty(request.SearchParam))
+            if (!string.IsNullOrEmpty(dispensersDetailRequest.SearchParam))
             {
-                string search = request.SearchParam.ToLower();
+                string search = dispensersDetailRequest.SearchParam.ToLower();
                 query = query.Where(q =>
                     q.disp.ChargeBoxId.ToLower().Contains(search) ||
                     q.disp.AssetId.ToLower().Contains(search) ||
@@ -59,7 +59,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                     ? q.lastFault.Value.ToString("dd-MM-yyyy HH:mm")
                     : "",
                 FaultSince = q.lastFault.HasValue
-                    ? (DateTime.Now - q.lastFault.Value).Hours + " hours"
+                    ? (DateTime.UtcNow - q.lastFault.Value).Hours + " hours"
                     : "",
                 LocationId = q.disp.LocationId ?? 0,
                 State = q.location.LocationAddress != null ? q.location.LocationAddress.StateName : "",
@@ -72,14 +72,14 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                 ChargerStatus = q.disp.ChargerStatuses == null || q.disp.ChargerStatuses.Count == 0 ? "Offline" :
                                    q.disp.ChargerStatuses.FirstOrDefault().Chargerstatus.Replace("charging", "Busy").Replace("suspendedev", "Busy").Replace("uspendedevse", "Busy")
                                  .Replace("finishing", "Busy").Replace("preparing", "Busy"),
-                NoofPort = q.disp.Ports.Count() == 0 ? "0" : q.disp.Ports.Count.ToString(),
+                NoofPort = q.disp.Ports.Count == 0 ? "0" : q.disp.Ports.Count.ToString(),
             });
 
             // Paging & Ordering in SQL
             var pagedResult = await PagedList<DispensersDetail>.CreateAsync(
                 projected.OrderByDescending(x => x.ChargerBoxId),  // Replace ChargerName
-                request.PageNumber,
-                request.PageSize);
+                dispensersDetailRequest.PageNumber,
+                dispensersDetailRequest.PageSize);
 
             return pagedResult;
         }

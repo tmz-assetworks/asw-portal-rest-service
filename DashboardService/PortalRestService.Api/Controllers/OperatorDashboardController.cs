@@ -529,8 +529,7 @@ namespace PortalRestService.Api.Controllers
             }
             catch (Exception ex)
             {
-                Log.Error("error occurred :" + ex.Message);
-
+                Log.Error(ex, "Error occurred in GetSummaryStatus1");
                 EventLogLocationResponse response = new()
                 {
                     StatusMessage = RespnoseMessage.Record_Not_Updated,
