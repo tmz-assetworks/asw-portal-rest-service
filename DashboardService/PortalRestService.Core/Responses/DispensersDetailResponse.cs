@@ -48,6 +48,8 @@ namespace PortalRestService.Core.Responses
     public class DispensersDetailRequest : QueryStringParameters
     {
         public string operatorId { get; set; }
+        public List<int> LocationIds { get; set; } = new();
+        public int? ActivationStatus { get; set; }
     }
 }
 
