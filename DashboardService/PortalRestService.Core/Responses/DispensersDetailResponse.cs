@@ -24,6 +24,7 @@ namespace PortalRestService.Core.Responses
     public class LocationDispensersRequest : QueryStringParameters
     {
         public List<long> locationIds { get; set; }
+        public int? ActivationStatus { get; set; }
     }
     public class DispensersDetail
     {
