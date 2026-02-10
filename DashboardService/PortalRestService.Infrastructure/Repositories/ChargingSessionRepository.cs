@@ -1,11 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
+using PortalRestService.Core.Models;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Repositories.Base;
 using PortalRestService.Core.Responses;
 using PortalRestService.Helper;
 using PortalRestService.Infrastructure.Helper;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 using System.Net.Http.Headers;
 using System.Text;
@@ -42,107 +45,118 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
             return DateTime.Now.AddDays(-day);
 
         }
-        async Task<ChargingSessionByLocationForChartResponse> IChargingSessionRepository.GetChargerSession(List<int> locations, string duration, string ChargerBoxId)
-        {
+        
 
-            ChargingSessionByLocationForChartResponse obj = new ChargingSessionByLocationForChartResponse();
-            
-            DispenserByLocationIdResponse? dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+        public async Task<ChargingSessionByLocationForChartResponse> GetChargerSession(List<int> locations,string duration, string ChargerBoxId)
+        {
+            ChargingSessionByLocationForChartResponse obj = new();
+
             try
             {
+                DurationAndIntervalDto dto = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
 
-                DurationAndIntervalDTO dTO = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
+                string labelType = dto.laveltype;
+                TimeSpan interval = dto.interval;
+                duration = dto.duration;
 
-
-                string laveltype = dTO.laveltype;
-                TimeSpan interval = dTO.interval;
-                duration = dTO.duration;
-               
                 List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
-                List<ChargingSessionByLocationBO> res = (from s in _dbContext.ChargingSessions.ToList()
-                                                         where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now
-                                                         join charger in !string.IsNullOrEmpty(ChargerBoxId) == true ? _dbContext.Charger.Where(x => ChargerBoxId.ToLower().Equals(x.ChargeBoxId.ToLower())) : _dbContext.Charger on s.ChargerId equals charger.Id
-                                                         join location in locations.Count>0? _dbContext.Locations.Where(x=>locations.Contains((int)(x.Id)) && locationList.Contains(x.Id)): _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals location.Id
-                                                         join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
-                                                         join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
-                                                         select new ChargingSessionByLocationBO
-                                                         {
-                                                             Id = s.Id,
-                                                          
-                                                             ChargerId = (long)s.ChargerId,
-                                                             ChargingCost = s.ChargingCost,
-                                                             ChargingStatus = s.ChargingStatus,
-                                                             ConnectorId = s.ConnectorId,
-                                                             DeviceId = s.DeviceId,
-                                                             ReasonForStop = s.ReasonForStop,
-                                                             StartMeterValue = s.StartMeterValue,
-                                                             StartSoc = s.StartSoc,
-                                                             StartTime = s.StartTime,
-                                                             EndMeterValue = s.EndMeterValue,
-                                                             EndSoc = s.EndSoc,
-                                                             EndTime = s.EndTime,
-                                                             CreatedAt = s.CreatedAt,
-                                                             ModifiedAt = s.ModifiedAt,
-                                                             LocationId = (location.Id),
-                                                             LocationName = location.LocationName,
-                                                             ContactPersonName = location.ContactPersonName,
-                                                             AddressLine1 = "",
-                                                             LocationStatusName = "",
-                                                             LocationStatusId = location.LocationStatusId,
-                                                             ChargeBoxId = charger.ChargeBoxId,
-                                                             svalue = (s.StartTime.HasValue == true ?
-                                                             laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
-                                                             laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
-                                                             laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
-                                                             (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") : ""),
-                                                                     times = (s.StartTime.HasValue == true ?
-                                                             laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
-                                                             laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
-                                                             laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM-dd-yyyy") :
-                                                             (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
 
-                                                             SerialNumber = "",
-                                                         }).ToList<ChargingSessionByLocationBO>();
+                DateTime fromDate = DateTime.Now.AddDays(-Convert.ToInt32(duration));
+                DateTime toDate = DateTime.Now;
 
-                List<ChargingSessionByLocationChartBO> finalon = null;
-                
-                if (res.Count <= 0)
+                IQueryable<Core.Models.ChargingSession> sessions = _dbContext.ChargingSessions
+                    .AsNoTracking()
+                    .Where(s => s.StartTime >= fromDate && s.StartTime <= toDate);
+
+                IQueryable<Charger> chargers = string.IsNullOrEmpty(ChargerBoxId)
+                    ? _dbContext.Charger
+                    : _dbContext.Charger.Where(x => x.ChargeBoxId.ToLower() == ChargerBoxId.ToLower());
+
+                IQueryable<Location> locationQuery = locations.Count > 0
+                    ? _dbContext.Locations.Where(x => locations.Contains((int)x.Id) && locationList.Contains(x.Id))
+                    : _dbContext.Locations.Where(x => locationList.Contains(x.Id));
+
+                var raw = await (
+                    from s in sessions
+                    join c in chargers on s.ChargerId equals c.Id
+                    join l in locationQuery on c.LocationId equals l.Id
+                    select new
+                    {
+                        s.ChargingStatus,
+                        s.StartTime
+                    }).ToListAsync();
+
+                List<ChargingSessionByLocationChartBO> finalon;
+
+                if (!raw.Any())
                 {
                     finalon = getstatus(duration);
                 }
                 else
                 {
-                        finalon = res
-                    .GroupBy(x => new { x.times, x.ChargingStatus })
-                    .Select(y => new ChargingSessionByLocationChartBO()
-                    {
-                        ChargingStatus = y.Key.ChargingStatus,
-                        svalue = y.Max(f => f.svalue),
-                        times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
-                        Counts = y.ToList().Count,
-                        Color = Extensions.GetColorCodesByChargingSession(y.Key.ChargingStatus)
-                    }
-                    ).OrderBy(t => (t.svalue, t.ChargingStatus)).ToList<ChargingSessionByLocationChartBO>();
+                    finalon = raw
+                        .Where(x => x.StartTime.HasValue)
+                        .Select(x =>
+                        {
+                            DateTime bucket =
+                                new DateTime((x.StartTime!.Value.Ticks / interval.Ticks) * interval.Ticks);
+
+                            return new ChargingSessionByLocationChartBO
+                            {
+                                ChargingStatus = x.ChargingStatus,
+                                SortDate = bucket,
+
+                                svalue = labelType switch
+                                {
+                                    "time" => bucket.ToString("HH"),
+                                    "day" => bucket.ToString("MMdd"),
+                                    "date" => bucket.ToString("MMdd"),
+                                    _ => bucket.ToString("MM")
+                                },
+
+                                times = labelType switch
+                                {
+                                    "time" => bucket.ToString("HH"),
+                                    "day" => bucket.ToString("dddd"),
+                                    "date" => bucket.ToString("MM-dd-yyyy"),
+                                    _ => bucket.ToString("MMMM")
+                                }
+                            };
+                        })
+                        .GroupBy(x => new { x.SortDate, x.times, x.ChargingStatus })
+                        .Select(g => new ChargingSessionByLocationChartBO
+                        {
+                            ChargingStatus = g.Key.ChargingStatus,
+                            SortDate = g.Key.SortDate,
+                            times = g.Key.times.Length >= 2 ? g.Key.times : "0" + g.Key.times,
+                            svalue = g.Max(x => x.svalue),
+                            Counts = g.Count(),
+                            Color = Extensions.GetColorCodesByChargingSession(g.Key.ChargingStatus)
+                        })
+                        .OrderBy(x => x.SortDate)
+                        .ThenBy(x => x.ChargingStatus)
+                        .ToList();
                 }
-                
-                
 
+                obj.StatusMessage = finalon.Any()
+                    ? RespnoseMessage.Record_found
+                    : RespnoseMessage.Record_not_found;
 
-                if(finalon.Count>0)
-                obj.StatusMessage = RespnoseMessage.Record_found;
-                else
-                obj.StatusMessage = RespnoseMessage.Record_not_found;
                 obj.StatusCode = 200;
                 obj.data = finalon;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                obj.StatusMessage = RespnoseMessage.Opeartion_Failed; 
+                obj.StatusMessage = RespnoseMessage.Opeartion_Failed;
                 obj.StatusCode = RespnoseCode.Bad_Request;
                 obj.data = new List<ChargingSessionByLocationChartBO>();
             }
+
             return obj;
         }
+
+
+
         public List<ChargingSessionByLocationChartBO> getstatus(string duration)
         {
             List<ChargingSessionByLocationChartBO> chargingSessionByLocationBOs = new List<ChargingSessionByLocationChartBO>();

@@ -36,7 +36,7 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 List<long> locationIdlist = await _locationRepository.GetAllLocationIdByObjectId();
 
-                query.data = (from Charger in request.ChargeBoxId.Count() > 0 ? _dbContext.Charger.Where(o => request.ChargeBoxId.Contains(o.ChargeBoxId))
+                query.data = (from Charger in request.ChargeBoxId.Any() ? _dbContext.Charger.Where(o => request.ChargeBoxId.Contains(o.ChargeBoxId))
                               : _dbContext.Charger
                               join location in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)(x.Id)) && locationIdlist.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdlist.Contains(x.Id)) on Charger.LocationId equals location.Id
                               join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
@@ -47,8 +47,8 @@ namespace PortalRestService.Infrastructure.Repositories
                                   CountryName = location.LocationAddress.CountryName,
                                   StateName = location.LocationAddress.StateName,
                                   locationId = location.Id,
-                                  Latitude = Charger.Latitude.ToString()!,// Charger.Latitude.HasValue ? Charger.Latitude.ToString() : location.LocationAddress.Latitude.ToString(),
-                                  Longitude = Charger.Longitude.ToString()!, //Charger.Longitude.HasValue ? Charger.Longitude.ToString() : location.LocationAddress.Longitude.ToString(),
+                                  Latitude = Charger.Latitude.ToString()!,
+                                  Longitude = Charger.Longitude.ToString()!,
                                   LocLatitude = location.LocationAddress.Latitude.ToString(),
                                   LocLongitude = location.LocationAddress.Longitude.ToString(),
                                   LocationName = location.LocationName,

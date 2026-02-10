@@ -10,6 +10,7 @@ namespace PortalRestService.Core.Responses
     public class EnergyUsedsResponse
     {
 
+        public DateTime SortDate { get; set; }
         public long Counts { get; set; }
         public int EndMeterValue { get; set; }
         public string?  svalue { get; set; }

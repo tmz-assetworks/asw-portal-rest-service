@@ -32,7 +32,7 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                DurationAndIntervalDTO dTO = await durationAndIntervalAsync(duration);
+                DurationAndIntervalDto dTO = await durationAndIntervalAsync(duration);
 
 
                 string laveltype = dTO.laveltype;
@@ -176,9 +176,9 @@ namespace PortalRestService.Infrastructure.Repositories
 
         }
 
-        public Task<DurationAndIntervalDTO> durationAndIntervalAsync(string duration)
+        public Task<DurationAndIntervalDto> durationAndIntervalAsync(string duration)
         {
-            DurationAndIntervalDTO dTO = new DurationAndIntervalDTO();
+            DurationAndIntervalDto dTO = new DurationAndIntervalDto();
             if (string.IsNullOrEmpty(duration) || duration.ToLower() == "string")
                 duration = "1";
             string laveltype = "time";
