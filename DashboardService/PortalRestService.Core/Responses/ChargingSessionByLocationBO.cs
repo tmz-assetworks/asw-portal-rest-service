@@ -12,7 +12,7 @@ namespace PortalRestService.Core.Entities.Charger
 
         public long Counts { get; set; }
         public string ChargingStatus { get; set; }
-
+        public DateTime SortDate { get; set; }
         public string? times { get; set; }
         public string?  svalue { get; set; }
         public string? Color { get; set; }

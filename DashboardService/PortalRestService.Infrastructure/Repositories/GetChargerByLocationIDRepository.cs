@@ -51,7 +51,7 @@ namespace PortalRestService.Infrastructure.Repositories
             DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
             try
             {
-                DurationAndIntervalDTO dTO = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
+                DurationAndIntervalDto dTO = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
 
 
                 string laveltype = dTO.laveltype;

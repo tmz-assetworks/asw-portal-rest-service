@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Entities.Charger;
+using PortalRestService.Core.Models;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
+using PortalRestService.Infrastructure.Models;
 using PortalRestService.Infrastructure.Repositories.Repository;
 
 namespace PortalRestService.Infrastructure.Repositories
@@ -21,76 +24,119 @@ namespace PortalRestService.Infrastructure.Repositories
             _locationRepository = locationRepository;
             _milesAddedByLocationQueryRepository = milesAddedByLocationQueryRepository;
         }
-        async Task<EnergyUsedBOForChartResponse> IEnergyUsedByLocationIDRepository.GetEnergyUsedByLocationID(List<int> location, string duration, string chargeBoxId)
+
+        public async Task<EnergyUsedBOForChartResponse> GetEnergyUsedByLocationID( List<int> location, string duration, string chargeBoxId)
         {
-            EnergyUsedBOForChartResponse obj = new EnergyUsedBOForChartResponse();
-            DispenserByLocationIdResponse dispenserByLocationIdResponse = new DispenserByLocationIdResponse();
+            EnergyUsedBOForChartResponse obj = new();
+
             try
             {
-                DurationAndIntervalDTO dTO = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
+                DurationAndIntervalDto dto = await _milesAddedByLocationQueryRepository.durationAndIntervalAsync(duration);
 
+                string labelType = dto.laveltype;
+                TimeSpan interval = dto.interval;
+                duration = dto.duration;
 
-                string laveltype = dTO.laveltype;
-                TimeSpan interval = dTO.interval;
-                duration = dTO.duration;                
-                
                 List<long> locationList = await _locationRepository.GetAllLocationIdByObjectId();
-                List<EnergyUsedChartBO> res = (from s in _dbContext.ChargingSessions
-                                               where s.StartTime >= DateTime.Now.AddDays(-Convert.ToInt32(duration)) && s.StartTime <= DateTime.Now && s.EndMeterValue>0
-                                               join charger in !string.IsNullOrEmpty(chargeBoxId) == true ? _dbContext.Charger.Where(x => chargeBoxId.ToLower().Equals(x.ChargeBoxId.ToLower())) : _dbContext.Charger on s.ChargerId equals charger.Id
-                                               join locations in location.Count>0? _dbContext.Locations.Where(x=>location.Contains((int)x.Id) && locationList.Contains(x.Id)) : _dbContext.Locations.Where(x => locationList.Contains(x.Id)) on charger.LocationId equals locations.Id
-                                               join address in _dbContext.LocationAddress on locations.LocationAddressId equals address.Id
-                                               join Status in _dbContext.LocationStatus on locations.LocationStatusId equals Status.Id                                               
-                                               select new EnergyUsedChartBO
-                                               {
-                                                   StartMeterValue = s.StartMeterValue.Value,
-                                                   EndMeterValue = s.EndMeterValue.Value,
-                                                   chargeboxId = charger.ChargeBoxId,
-                                                   svalue = (s.StartTime.HasValue == true ?
-                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
-                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
-                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") :
-                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") : ""),
-                                                   times = (s.StartTime.HasValue == true ?
-                                                     laveltype == "time" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("HH") :
-                                                     laveltype == "day" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("dddd") :
-                                                     laveltype == "date" ? (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MM-dd-yyyy") :
-                                                     (new DateTime((s.StartTime.Value.Ticks / interval.Ticks) * interval.Ticks)).ToString("MMMM") : ""),
-                                               }).ToList<EnergyUsedChartBO>();
 
-                List<EnergyUsedsResponse> finalon = null;
+                DateTime fromDate = DateTime.Now.AddDays(-Convert.ToInt32(duration));
+                DateTime toDate = DateTime.Now;
 
-                if (res.Count <= 0)
+                IQueryable<Core.Models.ChargingSession> sessions = _dbContext.ChargingSessions
+                    .AsNoTracking()
+                    .Where(s =>
+                        s.StartTime >= fromDate &&
+                        s.StartTime <= toDate &&
+                        s.EndMeterValue > 0);
+
+                IQueryable<Charger> chargers = string.IsNullOrEmpty(chargeBoxId)
+                    ? _dbContext.Charger
+                    : _dbContext.Charger.Where(x => x.ChargeBoxId.ToLower() == chargeBoxId.ToLower());
+
+                IQueryable<Location> locations = location.Count > 0
+                    ? _dbContext.Locations.Where(x => location.Contains((int)x.Id) && locationList.Contains(x.Id))
+                    : _dbContext.Locations.Where(x => locationList.Contains(x.Id));
+
+                var raw = await (
+                    from s in sessions
+                    join c in chargers on s.ChargerId equals c.Id
+                    join l in locations on c.LocationId equals l.Id
+                    select new
+                    {
+                        s.StartTime,
+                        s.StartMeterValue,
+                        s.EndMeterValue
+                    }).ToListAsync();
+
+                List<EnergyUsedsResponse> finalon;
+
+                if (!raw.Any())
                 {
                     finalon = getstatus(duration);
                 }
                 else
                 {
-                    finalon = res
-                    .GroupBy(x => new { x.times })
-                    .Select(y => new EnergyUsedsResponse()
-                    {
+                    finalon = raw
+                        .Where(x => x.StartTime.HasValue)
+                        .Select(x =>
+                        {
+                            DateTime bucket =
+                                new DateTime((x.StartTime!.Value.Ticks / interval.Ticks) * interval.Ticks);
 
-                        svalue = y.Max(f => f.svalue),
-                        times = y.Key.times.Length >= 2 ? y.Key.times : "0" + y.Key.times,
-                        EndMeterValue = Convert.ToInt32(y.Sum(c => c.EndMeterValue) - y.Sum(c => c.StartMeterValue <= 0 ? 0 : c.StartMeterValue))/1000,
-                    }
-                    ).OrderBy(t => t.svalue).ToList<EnergyUsedsResponse>();
+                            return new
+                            {
+                                SortDate = bucket,
+                                Start = x.StartMeterValue ?? 0,
+                                End = x.EndMeterValue ?? 0,
+
+                                svalue = labelType switch
+                                {
+                                    "time" => bucket.ToString("HH"),
+                                    "day" => bucket.ToString("MMdd"),
+                                    "date" => bucket.ToString("MMdd"),
+                                    _ => bucket.ToString("MM")
+                                },
+
+                                times = labelType switch
+                                {
+                                    "time" => bucket.ToString("HH"),
+                                    "day" => bucket.ToString("dddd"),
+                                    "date" => bucket.ToString("MM-dd-yyyy"),
+                                    _ => bucket.ToString("MMMM")
+                                }
+                            };
+                        })
+                        .GroupBy(x => new { x.SortDate, x.times })
+                        .Select(g => new EnergyUsedsResponse
+                        {
+                            SortDate = g.Key.SortDate,
+                            times = g.Key.times.Length >= 2 ? g.Key.times : "0" + g.Key.times,
+                            svalue = g.Max(x => x.svalue),
+                            EndMeterValue = Convert.ToInt32(
+                                (g.Sum(c => c.End) - g.Sum(c => c.Start)) / 1000)
+                        })
+                        .OrderBy(x => x.SortDate)
+                        .ToList();
                 }
 
                 obj.StatusMessage = RespnoseMessage.Record_found;
                 obj.StatusCode = 200;
                 obj.data = finalon;
             }
-            catch (Exception ex)
+            catch
             {
                 obj.StatusMessage = RespnoseMessage.Faild;
                 obj.StatusCode = 404;
-                obj.data = new List<EnergyUsedsResponse>(); 
+                obj.data = new List<EnergyUsedsResponse>();
             }
 
             return obj;
         }
+
+
+
+
+
         public List<EnergyUsedsResponse> getstatus(string duration)
         {
             List<EnergyUsedsResponse> chargingSessionByLocationBOs = new List<EnergyUsedsResponse>();

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PortalRestService.Core.Responses
 {
-    public class DurationAndIntervalDTO
+    public class DurationAndIntervalDto
     {
         public string laveltype { get; set; }
         public string duration { get; set; }
