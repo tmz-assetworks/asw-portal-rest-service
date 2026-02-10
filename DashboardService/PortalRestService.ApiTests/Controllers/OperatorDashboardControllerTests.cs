@@ -542,7 +542,7 @@ namespace PortalRestService.Api.Controllers.Tests
                         Faulted="No",
                         NoofPort="1",
                         DispenserId=1,
-                        locationId=1,
+                        LocationId=Convert.ToString(1),
                         status="Active"
                     },
                 },

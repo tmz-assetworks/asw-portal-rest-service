@@ -17,6 +17,10 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
 {
     public class ChargingSessionRepository : OcppRepository<ChargerSessionByLocationResponse>, IChargingSessionRepository
     {
+        private const string DateFormatMonthDayYear = "MM-dd-yyyy";
+        private const string Charging = "Charging";
+        private const string Completed = "Completed";
+        private const string Interrupted = "Interrupted";
         private readonly ILocationRepository _locationRepository;
         private readonly IMilesAddedByLocationQueryRepository _milesAddedByLocationQueryRepository;
         public ChargingSessionRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, ILocationRepository locationRepository, IMilesAddedByLocationQueryRepository milesAddedByLocationQueryRepository) : base(dbContext)
@@ -47,7 +51,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
         }
         
 
-        public async Task<ChargingSessionByLocationForChartResponse> GetChargerSession(List<int> locations,string duration, string ChargerBoxId)
+        public async Task<ChargingSessionByLocationForChartResponse> GetChargerSession(List<int> location, string duration, string ChargeBoxId)
         {
             ChargingSessionByLocationForChartResponse obj = new();
 
@@ -68,12 +72,12 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                     .AsNoTracking()
                     .Where(s => s.StartTime >= fromDate && s.StartTime <= toDate);
 
-                IQueryable<Charger> chargers = string.IsNullOrEmpty(ChargerBoxId)
+                IQueryable<Charger> chargers = string.IsNullOrEmpty(ChargeBoxId)
                     ? _dbContext.Charger
-                    : _dbContext.Charger.Where(x => x.ChargeBoxId.ToLower() == ChargerBoxId.ToLower());
+                    : _dbContext.Charger.Where(x => x.ChargeBoxId.ToLower() == ChargeBoxId.ToLower());
 
-                IQueryable<Location> locationQuery = locations.Count > 0
-                    ? _dbContext.Locations.Where(x => locations.Contains((int)x.Id) && locationList.Contains(x.Id))
+                IQueryable<Location> locationQuery = location.Any()
+                    ? _dbContext.Locations.Where(x => location.Contains((int)x.Id) && locationList.Contains(x.Id))
                     : _dbContext.Locations.Where(x => locationList.Contains(x.Id));
 
                 var raw = await (
@@ -118,7 +122,7 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                                 {
                                     "time" => bucket.ToString("HH"),
                                     "day" => bucket.ToString("dddd"),
-                                    "date" => bucket.ToString("MM-dd-yyyy"),
+                                    "date" => bucket.ToString(DateFormatMonthDayYear),
                                     _ => bucket.ToString("MMMM")
                                 }
                             };
@@ -167,10 +171,10 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
             {
                 duration = "1";
                 interval = new TimeSpan(4, 0, 0);
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "04", ChargingStatus = "Charging", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = "04" });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "08", ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = "08" });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "12", ChargingStatus = "Interrupted", Color = Extensions.GetColorCodesByChargingSession("Interrupted"), svalue = "12" });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "16", ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = "16" });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "04", ChargingStatus = Charging, Color = Extensions.GetColorCodesByChargingSession(Charging), svalue = "04" });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "08", ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = "08" });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "12", ChargingStatus = Interrupted, Color = Extensions.GetColorCodesByChargingSession(Interrupted), svalue = "12" });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = "16", ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = "16" });
 
             }
             if (duration == "6")
@@ -179,10 +183,10 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                 interval = new TimeSpan(24, 0, 0);
                 laveltype = "date";
 
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-1).ToString("MM-dd-yyyy"), ChargingStatus = "Charging", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddDays(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-2).ToString("MM-dd-yyyy"), ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-3).ToString("MM-dd-yyyy"), ChargingStatus = "Interrupted", Color = Extensions.GetColorCodesByChargingSession("Interrupted"), svalue = (new DateTime((DateTime.Now.AddDays(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-4).ToString("MM-dd-yyyy"), ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-1).ToString(DateFormatMonthDayYear), ChargingStatus = Charging, Color = Extensions.GetColorCodesByChargingSession(Charging), svalue = (new DateTime((DateTime.Now.AddDays(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-2).ToString(DateFormatMonthDayYear), ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = (new DateTime((DateTime.Now.AddDays(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-3).ToString(DateFormatMonthDayYear), ChargingStatus = Interrupted, Color = Extensions.GetColorCodesByChargingSession(Interrupted), svalue = (new DateTime((DateTime.Now.AddDays(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-4).ToString(DateFormatMonthDayYear), ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = (new DateTime((DateTime.Now.AddDays(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
 
             }
             else
@@ -192,20 +196,20 @@ namespace PortalRestService.Infrastructure.Repositories.Assets
                 interval = new TimeSpan(24 * 7, 0, 0);
                 laveltype = "date";
 
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-6).ToString("MM-dd-yyyy"), ChargingStatus = "Charging", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-12).ToString("MM-dd-yyyy"), ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-18).ToString("MM-dd-yyyy"), ChargingStatus = "Interrupted", Color = Extensions.GetColorCodesByChargingSession("Interrupted"), svalue = (new DateTime((DateTime.Now.AddDays(-18).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-24).ToString("MM-dd-yyyy"), ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddDays(-24).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-6).ToString(DateFormatMonthDayYear), ChargingStatus =  Charging, Color = Extensions.GetColorCodesByChargingSession(Charging), svalue = (new DateTime((DateTime.Now.AddDays(-6).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-12).ToString(DateFormatMonthDayYear), ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = (new DateTime((DateTime.Now.AddDays(-12).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-18).ToString(DateFormatMonthDayYear), ChargingStatus = Interrupted, Color = Extensions.GetColorCodesByChargingSession(Interrupted), svalue = (new DateTime((DateTime.Now.AddDays(-18).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddDays(-24).ToString(DateFormatMonthDayYear), ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = (new DateTime((DateTime.Now.AddDays(-24).Ticks / interval.Ticks) * interval.Ticks)).ToString("MMdd") });
             }
             else
             if (duration == "90")
             {
                 interval = new TimeSpan(24, 0, 0);
                 laveltype = "date";
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-1).ToString("MMMM"), ChargingStatus = "Charging", Color = Extensions.GetColorCodesByChargingSession("Charging"), svalue = (new DateTime((DateTime.Now.AddMonths(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-2).ToString("MMMM"), ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddMonths(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-3).ToString("MMMM"), ChargingStatus = "Interrupted", Color = Extensions.GetColorCodesByChargingSession("Interrupted"), svalue = (new DateTime((DateTime.Now.AddMonths(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
-                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-4).ToString("MMMM"), ChargingStatus = "Completed", Color = Extensions.GetColorCodesByChargingSession("Completed"), svalue = (new DateTime((DateTime.Now.AddMonths(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-1).ToString("MMMM"), ChargingStatus = Charging, Color = Extensions.GetColorCodesByChargingSession(Charging), svalue = (new DateTime((DateTime.Now.AddMonths(-1).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-2).ToString("MMMM"), ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = (new DateTime((DateTime.Now.AddMonths(-2).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-3).ToString("MMMM"), ChargingStatus = Interrupted, Color = Extensions.GetColorCodesByChargingSession(Interrupted), svalue = (new DateTime((DateTime.Now.AddMonths(-3).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
+                chargingSessionByLocationBOs.Add(new ChargingSessionByLocationChartBO() { times = DateTime.Now.AddMonths(-4).ToString("MMMM"), ChargingStatus = Completed, Color = Extensions.GetColorCodesByChargingSession(Completed), svalue = (new DateTime((DateTime.Now.AddMonths(-4).Ticks / interval.Ticks) * interval.Ticks)).ToString("MM") });
 
 
             }
