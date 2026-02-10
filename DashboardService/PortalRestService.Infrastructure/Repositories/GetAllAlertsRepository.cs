@@ -14,6 +14,10 @@ namespace PortalRestService.Infrastructure.Repositories
         TokenBase _tokenBase;
         private readonly IConfiguration _configuration;
         private readonly string OccpIp = String.Empty;
+        private const string Unavailable = "Unavailable";
+        private const string Faulted = "Faulted";
+        private const string SuspendedEVSE = "SuspendedEVSE";
+        private const string StatusNotification = "StatusNotification";
 
         public GetAllAlertsRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, TokenBase token, IConfiguration configuration) : base(dbContext)
         {
@@ -337,31 +341,31 @@ namespace PortalRestService.Infrastructure.Repositories
                          (!operatorAlertRequest.isRead ?
                          (operatorAlertRequest.chargerBoxIds.Count > 0 ?
                            _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId)
-                               && o.RequestType == "StatusNotification"
+                               && o.RequestType == StatusNotification
                                && o.CreatedAt >= DateTime.Now.AddDays(-30)
                                && o.IsRead == false)
-                         .Where(o => o.RequestPayload.Contains("SuspendedEVSE")
-                               || o.RequestPayload.Contains("Faulted")
-                               || o.RequestPayload.Contains("Unavailable"))
-                         : _dbContext.OcppEventLogs.Where(o => o.RequestType == "StatusNotification"
+                         .Where(o => o.RequestPayload.Contains(SuspendedEVSE)
+                               || o.RequestPayload.Contains(Faulted)
+                               || o.RequestPayload.Contains(Unavailable))
+                         : _dbContext.OcppEventLogs.Where(o => o.RequestType == StatusNotification
                                && o.CreatedAt >= DateTime.Now.AddDays(-30)
                                && o.IsRead == false)
-                         .Where(o => o.RequestPayload.Contains("SuspendedEVSE")
-                               || o.RequestPayload.Contains("Faulted")
-                               || o.RequestPayload.Contains("Unavailable")))
+                         .Where(o => o.RequestPayload.Contains(SuspendedEVSE)
+                               || o.RequestPayload.Contains(Faulted)
+                               || o.RequestPayload.Contains(Unavailable)))
     
                                : (operatorAlertRequest.chargerBoxIds.Count > 0 ?
                            _dbContext.OcppEventLogs.Where(o => operatorAlertRequest.chargerBoxIds.Contains(o.DeviceId)
-                               && o.RequestType == "StatusNotification"
+                               && o.RequestType == StatusNotification
                                && o.CreatedAt >= DateTime.Now.AddDays(-30))
-                         .Where(o => o.RequestPayload.Contains("SuspendedEVSE")
-                               || o.RequestPayload.Contains("Faulted")
-                               || o.RequestPayload.Contains("Unavailable"))
-                         : _dbContext.OcppEventLogs.Where(o => o.RequestType == "StatusNotification"
+                         .Where(o => o.RequestPayload.Contains(SuspendedEVSE)
+                               || o.RequestPayload.Contains(Faulted)
+                               || o.RequestPayload.Contains(Unavailable))
+                         : _dbContext.OcppEventLogs.Where(o => o.RequestType == StatusNotification
                                && o.CreatedAt >= DateTime.Now.AddDays(-30))
-                         .Where(o => o.RequestPayload.Contains("SuspendedEVSE")
-                               || o.RequestPayload.Contains("Faulted")
-                               || o.RequestPayload.Contains("Unavailable"))))
+                         .Where(o => o.RequestPayload.Contains(SuspendedEVSE)
+                               || o.RequestPayload.Contains(Faulted)
+                               || o.RequestPayload.Contains(Unavailable))))
 
                        join charger in _dbContext.Charger on s.DeviceId equals charger.ChargeBoxId
                        join locations in operatorAlertRequest.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => operatorAlertRequest.LocationIds.Contains((int)x.Id)) : _dbContext.Locations on charger.LocationId equals locations.Id

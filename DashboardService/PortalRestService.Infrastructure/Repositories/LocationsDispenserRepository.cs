@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Models;
 using PortalRestService.Core.Repositories;
@@ -36,9 +37,9 @@ namespace PortalRestService.Infrastructure.Repositories
             {
                 List<long> locationIdlist = await _locationRepository.GetAllLocationIdByObjectId();
 
-                query.data = (from Charger in request.ChargeBoxId.Any() ? _dbContext.Charger.Where(o => request.ChargeBoxId.Contains(o.ChargeBoxId))
-                              : _dbContext.Charger
-                              join location in request.LocationIds.Count > 0 ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)(x.Id)) && locationIdlist.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdlist.Contains(x.Id)) on Charger.LocationId equals location.Id
+                query.data = await (from Charger in request.ChargeBoxId.Any() ? _dbContext.Charger.Where(o => request.ChargeBoxId.Contains(o.ChargeBoxId) && o.IsActive)
+                              : _dbContext.Charger.Where(o => o.IsActive)
+                              join location in request.LocationIds.Any() ? _dbContext.Locations.Where(x => request.LocationIds.Contains((int)(x.Id)) && locationIdlist.Contains(x.Id)) : _dbContext.Locations.Where(x => locationIdlist.Contains(x.Id)) on Charger.LocationId equals location.Id
                               join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
                               join Status in _dbContext.LocationStatus on location.LocationStatusId equals Status.Id
                               select new LocationsDispenser
@@ -60,7 +61,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                   AssetId = Charger.AssetId,
                                   MakeName = Charger.MakeName,
                                   ModelName = Charger.ModelName,
-                              }).ToList<LocationsDispenser>();
+                              }).ToListAsync();
 
                 var groupByLocation = query.data.GroupBy(x => x.LocationName);
 
