@@ -10,6 +10,7 @@ using PortalRestService.Application.Handlers.Assets.QueryHandlers;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Repositories.Base;
 using PortalRestService.Helpers;
+using PortalRestService.Infrastructure.DBContext;
 using PortalRestService.Infrastructure.Repositories;
 using PortalRestService.Infrastructure.Repositories.Assets;
 using PortalRestService.Infrastructure.Repositories.Repository;
@@ -58,8 +59,10 @@ namespace RestService.Assets
             .AddMicrosoftIdentityWebApi(configurationENV.GetSection("AzureAd"));
                 services.AddControllers();
             }
-            services.AddDbContext<PortalRestService.Infrastructure.DBContext.ocpp_dbContext>(
-            m => m.UseSqlServer(connectionString), ServiceLifetime.Transient);
+            services.AddDbContextFactory<ocpp_dbContext>(options =>
+            {
+                options.UseSqlServer(connectionString);
+            });
 
             services.AddCors();
             services.AddSwaggerGen(c =>
@@ -121,8 +124,8 @@ namespace RestService.Assets
             services.AddTransient<IGetLocationByIdRepository, GetLocationByIdRepository>();
             services.AddTransient<IChargingSessionAndPaymentTransactionRepository, ChargingSessionAndPaymentTransactionRepository>();
             services.AddScoped<PortalRestService.Infrastructure.Helper.TokenBase>();
-            services.AddHealthChecks()
-                .AddCheck<PortalHealthCheck>("example_health_check");
+            services.AddHealthChecks().AddCheck<PortalHealthCheck>("example_health_check");
+            services.AddMemoryCache();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
