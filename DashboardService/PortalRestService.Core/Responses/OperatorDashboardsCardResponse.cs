@@ -9,7 +9,7 @@ namespace PortalRestService.Core.Responses
         public int StatusCode { get; set; }
         public string StatusMessage { get; set; }
 
-        public List<CardData> data { get; set; }
+        public List<CardData>? data { get; set; }
     }
 
     // Dashboard Cards
@@ -270,6 +270,8 @@ namespace PortalRestService.Core.Responses
         public string ContactNo { get; set; }
         public string ContactName { get; set; }
         public DateTime CreatedOn { get; set; }
+        public int locationId { get; set; }
+        
     }
     public class LocationsDispenserpResponce
     {
