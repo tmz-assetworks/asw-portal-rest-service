@@ -20,7 +20,6 @@ namespace PortalRestService.Infrastructure.Repositories
 {
     public class GetSummaryStatusRepository : OcppRepository<CardDataResponse>, IGetSummaryStatusRepository
     {
-
         private readonly IConfiguration _configuration;
         private readonly ILocationRepository _locationRepository;
         private readonly IMemoryCache _cache;
@@ -101,7 +100,7 @@ namespace PortalRestService.Infrastructure.Repositories
                 var chargerCountsTask = GetChargerCountsAsync(locationId, allowedLocationIds);
                 var activeChargerTask = GetActiveChargerCountAsync(locationId, allowedLocationIds);
                 var sessionCountsTask = GetSessionCountsAsync(locationId, allowedLocationIds);
-                var errorCountsTask = GetErrorCountsAsync(locationId, allowedLocationIds);
+                var errorCountsTask = GetErrorCountsAsync(allowedLocationIds);
 
                 await Task.WhenAll(chargerCountsTask, activeChargerTask, sessionCountsTask, errorCountsTask);
 
@@ -299,43 +298,41 @@ namespace PortalRestService.Infrastructure.Repositories
 
             return result.Select(x => (x.Status, x.Count)).ToList();
         }
-
-        private async Task<List<(string Severity, int Count)>> GetErrorCountsAsync(int locationId, List<long> allowedLocationIds)
+        private async Task<List<(string Severity, int Count)>> GetErrorCountsAsync(List<long> allowedLocationIds)
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
+            var last24Hours = DateTime.UtcNow.AddHours(-24);
 
-            var query =
-                from l in db.OcppEventLogs.AsNoTracking()
-                join c in db.Charger.AsNoTracking()
-                    on l.DeviceId equals c.ChargeBoxId
-                where c.LocationId.HasValue
-                      && allowedLocationIds.Contains(c.LocationId.Value)
-                      && (locationId == 0 || c.LocationId == locationId)
-                      && l.RequestType == "StatusNotification"
-                select new { l.RequestPayload };
+            var logs = db.OcppEventLogs.AsNoTracking()
+                .Where(l => l.RequestType == "StatusNotification"
+                && l.CreatedAt >= last24Hours);
+
 
             var result =
-                from q in query
-                from fe in db.FaultyErrorCode.AsNoTracking()
-                join es in db.ErrorSeverity.AsNoTracking()
-                    on fe.ErrorSeverityId equals es.Id
-                where es.IsActive
-                      && fe.IsActive
-                      && EF.Functions.Like(q.RequestPayload, "%" + fe.Names + "%")
-                group fe by es.Names into g
-                select new
-                {
-                    Severity = g.Key,
-                    Count = g.Count()
-                };
+                from l in logs
+                 join c in db.Charger.AsNoTracking()
+                 on l.DeviceId equals c.ChargeBoxId
+                 where c.LocationId.HasValue
+                       && allowedLocationIds.Contains(c.LocationId.Value)
+                 //&& (locationId == 0 || c.LocationId == locationId)
+                 join fe in db.FaultyErrorCode.AsNoTracking()
+                     on l.ErrorCode equals fe.Names
+                 where fe.IsActive
+                 join es in db.ErrorSeverity.AsNoTracking()
+                     on fe.ErrorSeverityId equals es.Id
+                 where es.IsActive
+                 group es by es.Names into g
+                 select new
+                 {
+                     Severity = g.Key,
+                     Count = g.Count()
+                 };
+
 
             var list = await result.ToListAsync();
 
             return list.Select(x => (x.Severity, x.Count)).ToList();
         }
-
-
-
         public static string geterror(string str, string RequestType)
         {
             if (RequestType.ToLower() != "StatusNotification".ToLower())

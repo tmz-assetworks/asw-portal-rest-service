@@ -44,14 +44,11 @@ namespace PortalRestService.Infrastructure.DBContext
         public virtual DbSet<PaymentTransaction> PaymentTransaction { get; set; }
         public virtual DbSet<LocationSchedule> LocationSchedule { get; set; }
         public virtual DbSet<Connector> Connector { get; set; }
-
+    
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
-
-
-
-
+        
 
             modelBuilder.Entity<ChargingSession>(entity =>
             {
