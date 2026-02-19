@@ -15,7 +15,9 @@ namespace PortalRestService.Core.Models
         public string? RequestType { get; set; }
         public string? ResponsePayload { get; set; }
         public bool? IsRead { get; set; }
-         
+        public string? ErrorCode { get; set; }
+
+
     }
     public partial class OcppEventLogErrorName
     {
