@@ -18,20 +18,21 @@ using System.Text.RegularExpressions;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
-    public class GetSummaryStatusRepository : OcppRepository<CardDataResponse>, IGetSummaryStatusRepository
+    public class GetSummaryStatusRepository : OcppRepositoryFactory<CardDataResponse>, IGetSummaryStatusRepository
     {
         private readonly IConfiguration _configuration;
         private readonly ILocationRepository _locationRepository;
         private readonly IMemoryCache _cache;
         private readonly IDbContextFactory<ocpp_dbContext> _dbFactory;
 
-        public GetSummaryStatusRepository(Infrastructure.DBContext.ocpp_dbContext dbContext, IConfiguration configuration,
-            ILocationRepository locationRepository, IMemoryCache cache, IDbContextFactory<ocpp_dbContext> dbFactory) : base(dbContext)
+        public GetSummaryStatusRepository(IDbContextFactory<ocpp_dbContext> dbFactory, IConfiguration configuration,
+            ILocationRepository locationRepository, IMemoryCache cache) : base(dbFactory)
         {
+            _dbFactory = dbFactory;
             this._configuration = configuration;
             this._locationRepository = locationRepository;
             _cache = cache;
-            _dbFactory = dbFactory;
+
 
         }
 
@@ -65,7 +66,8 @@ namespace PortalRestService.Infrastructure.Repositories
                 // ==========================
                 if (locationId == 0)
                 {
-                    var locationCounts = await _dbContext.Locations.AsNoTracking()
+                    await using var db = await CreateDbContextAsync();
+                    var locationCounts = await db.Locations.AsNoTracking()
                         .Where(l => allowedLocationIds.Contains(l.Id))
                         .GroupBy(l => l.LocationStatus.LocationStatusName)
                         .Select(g => new { Status = g.Key, Count = g.Count() })
@@ -229,7 +231,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
         private async Task<List<(string Status, int Count)>> GetChargerCountsAsync(int locationId, List<long> allowedLocationIds)
         {
-            await using var db = await _dbFactory.CreateDbContextAsync();
+            await using var db = await CreateDbContextAsync();
 
             var chargersBase = db.Charger.AsNoTracking()
                 .Where(c =>
@@ -270,7 +272,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
         private async Task<int> GetActiveChargerCountAsync(int locationId, List<long> allowedLocationIds)
         {
-            await using var db = await _dbFactory.CreateDbContextAsync();
+            await using var db = await CreateDbContextAsync();
 
             return await db.Charger.AsNoTracking()
                 .Where(c =>
@@ -283,7 +285,7 @@ namespace PortalRestService.Infrastructure.Repositories
 
         private async Task<List<(string Status, int Count)>> GetSessionCountsAsync(int locationId, List<long> allowedLocationIds)
         {
-            await using var db = await _dbFactory.CreateDbContextAsync();
+            await using var db = await CreateDbContextAsync();
 
             var result = await (
                 from cs in db.ChargingSessions.AsNoTracking()
@@ -300,7 +302,7 @@ namespace PortalRestService.Infrastructure.Repositories
         }
         private async Task<List<(string Severity, int Count)>> GetErrorCountsAsync(List<long> allowedLocationIds)
         {
-            await using var db = await _dbFactory.CreateDbContextAsync();
+            await using var db = await CreateDbContextAsync();
             var last24Hours = DateTime.UtcNow.AddHours(-24);
 
             var logs = db.OcppEventLogs.AsNoTracking()
@@ -310,23 +312,23 @@ namespace PortalRestService.Infrastructure.Repositories
 
             var result =
                 from l in logs
-                 join c in db.Charger.AsNoTracking()
-                 on l.DeviceId equals c.ChargeBoxId
-                 where c.LocationId.HasValue
-                       && allowedLocationIds.Contains(c.LocationId.Value)
-                 //&& (locationId == 0 || c.LocationId == locationId)
-                 join fe in db.FaultyErrorCode.AsNoTracking()
-                     on l.ErrorCode equals fe.Names
-                 where fe.IsActive
-                 join es in db.ErrorSeverity.AsNoTracking()
-                     on fe.ErrorSeverityId equals es.Id
-                 where es.IsActive
-                 group es by es.Names into g
-                 select new
-                 {
-                     Severity = g.Key,
-                     Count = g.Count()
-                 };
+                join c in db.Charger.AsNoTracking()
+                on l.DeviceId equals c.ChargeBoxId
+                where c.LocationId.HasValue
+                      && allowedLocationIds.Contains(c.LocationId.Value)
+                //&& (locationId == 0 || c.LocationId == locationId)
+                join fe in db.FaultyErrorCode.AsNoTracking()
+                    on l.ErrorCode equals fe.Names
+                where fe.IsActive
+                join es in db.ErrorSeverity.AsNoTracking()
+                    on fe.ErrorSeverityId equals es.Id
+                where es.IsActive
+                group es by es.Names into g
+                select new
+                {
+                    Severity = g.Key,
+                    Count = g.Count()
+                };
 
 
             var list = await result.ToListAsync();
