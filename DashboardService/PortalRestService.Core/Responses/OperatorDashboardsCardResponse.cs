@@ -12,7 +12,6 @@ namespace PortalRestService.Core.Responses
         public List<CardData>? data { get; set; }
     }
 
-    // Dashboard Cards
     public class CardData
     {
         public string Type { get; set; }
@@ -175,7 +174,6 @@ namespace PortalRestService.Core.Responses
     public class LocationDTO
     {
         public int Id { get; set; }
-        //public int LocationAddressId { get; set; }
         public LocationAddressDTO LocationAddress { get; set; }
         public int LocationStatusId { get; set; }
         public LocationStatus LocationStatus { get; set; }
@@ -270,7 +268,6 @@ namespace PortalRestService.Core.Responses
         public string ContactNo { get; set; }
         public string ContactName { get; set; }
         public DateTime CreatedOn { get; set; }
-        public int locationId { get; set; }
         
     }
     public class LocationsDispenserpResponce
