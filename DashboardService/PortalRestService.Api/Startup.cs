@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
@@ -59,10 +60,14 @@ namespace RestService.Assets
             .AddMicrosoftIdentityWebApi(configurationENV.GetSection("AzureAd"));
                 services.AddControllers();
             }
-            services.AddDbContextFactory<ocpp_dbContext>(options =>
+            services.AddDbContext<ocpp_dbContext>(options =>options.UseSqlServer(connectionString));
+
+            services.AddScoped<IDbContextFactory<ocpp_dbContext>>(provider =>
             {
-                options.UseSqlServer(connectionString);
+                var options = provider.GetRequiredService<DbContextOptions<ocpp_dbContext>>();
+                return new PooledDbContextFactory<ocpp_dbContext>(options);
             });
+
 
             services.AddCors();
             services.AddSwaggerGen(c =>
