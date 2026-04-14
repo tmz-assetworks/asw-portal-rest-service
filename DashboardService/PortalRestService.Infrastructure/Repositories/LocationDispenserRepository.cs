@@ -1,27 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using PortalRestService.Core.Repositories;
-using PortalRestService.Core.Responses;
-using PortalRestService.Helper;
-using PortalRestService.Infrastructure.Repositories.Repository;
-using System.Text;
-using Newtonsoft.Json;
-using PortalRestService.Application;
-using PortalRestService.Core.Entities.Charger;
-using PortalRestService.Core.Repositories;
-using PortalRestService.Core.Responses;
-using PortalRestService.Helper;
-using PortalRestService.Infrastructure.EnumData;
-using PortalRestService.Infrastructure.Helper;
-using PortalRestService.Infrastructure.Repositories.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PortalRestService.Core.PagingHelper;
 using PortalRestService.Core.Models;
+using PortalRestService.Core.Repositories;
+using PortalRestService.Core.Responses;
 using PortalRestService.Infrastructure.Models;
+using PortalRestService.Infrastructure.Repositories.Repository;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
@@ -33,21 +15,15 @@ namespace PortalRestService.Infrastructure.Repositories
             _locationRepository = locationRepository;
         }
 
-        
-        async Task<LocationDispenserForLocationResponse>ILocationDispenserRepository.GetDispenserByLocation(LocationDispensersRequest locationDispensersRequest)
+        async Task<LocationDispenserForLocationResponse> ILocationDispenserRepository.GetDispenserByLocation(LocationDispensersRequest locationDispensersRequest)
         {
             var response = new LocationDispenserForLocationResponse();
+            List<long> allowedLocationIds = await _locationRepository.GetAllLocationIdByObjectId();
 
-            List<long> allowedLocationIds =
-                await _locationRepository.GetAllLocationIdByObjectId();
-
-            IQueryable<Location> locationQuery =
-                locationDispensersRequest.locationIds != null &&
-                locationDispensersRequest.locationIds.Any()
-                    ? _dbContext.Locations.Where(x =>
+            IQueryable<Location> locationQuery = locationDispensersRequest.locationIds != null &&
+                        locationDispensersRequest.locationIds.Any() ? _dbContext.Locations.Where(x =>
                         locationDispensersRequest.locationIds.Contains(x.Id) &&
-                        allowedLocationIds.Contains(x.Id))
-                    : _dbContext.Locations.Where(x =>
+                        allowedLocationIds.Contains(x.Id)) : _dbContext.Locations.Where(x =>
                         allowedLocationIds.Contains(x.Id));
 
             IQueryable<Charger> chargerQuery = _dbContext.Charger;
@@ -60,36 +36,29 @@ namespace PortalRestService.Infrastructure.Repositories
             }
 
             int activationStatus = locationDispensersRequest.ActivationStatus ?? 1;
-
-            if (activationStatus != 0)
+            if (activationStatus == 1)
             {
-                if (activationStatus == 1)
-                {
-                    chargerQuery = chargerQuery.Where(c => c.IsActive);
-                }
-                else if (activationStatus == 2)
-                {
-                    chargerQuery = chargerQuery.Where(c => !c.IsActive);
-                }
+                chargerQuery = chargerQuery.Where(c => c.IsActive);
+            }
+            else if (activationStatus == 2)
+            {
+                chargerQuery = chargerQuery.Where(c => !c.IsActive);
             }
 
             response.data = await (
                 from location in locationQuery
-                join charger in chargerQuery
-                    on location.Id equals charger.LocationId
-                join address in _dbContext.LocationAddress
-                    on location.LocationAddressId equals address.Id
-                join status in _dbContext.LocationStatus
-                    on location.LocationStatusId equals status.Id
+                join charger in chargerQuery on location.Id equals charger.LocationId
+                join address in _dbContext.LocationAddress on location.LocationAddressId equals address.Id
+                join status in _dbContext.LocationStatus on location.LocationStatusId equals status.Id
                 select new LocationDispenserForLocation
                 {
                     DispenserId = charger.Id,
                     locationId = location.Id,
                     ChargeBoxId = charger.ChargeBoxId,
-
+                    Id = charger.Id,
                     ChargerStatus =
-                        charger.ChargerStatuses == null ||
-                        charger.ChargerStatuses.Count == 0
+                            charger.ChargerStatuses == null ||
+                            charger.ChargerStatuses.Count == 0
                             ? "Offline"
                             : charger.ChargerStatuses[0].Chargerstatus
                                 .Replace("charging", "Busy")
@@ -98,14 +67,8 @@ namespace PortalRestService.Infrastructure.Repositories
                                 .Replace("finishing", "Busy")
                                 .Replace("preparing", "Busy"),
 
-                    ConnectorType = string.Join(",",
-                        _dbContext.Connector
-                            .Where(cnn =>
-                                charger.Ports
-                                    .Where(p => p.ChargerId == charger.Id)
-                                    .Select(s => s.ConnectorType)
-                                    .Contains(cnn.Id))
-                            .Select(z => z.ConnectorType)),
+                    ConnectorType = string.Join(",", _dbContext.Connector.Where(cnn => charger.Ports.Where(p => p.ChargerId == charger.Id)
+                                    .Select(s => s.ConnectorType).Contains(cnn.Id)).Select(z => z.ConnectorType)),
 
                     DispenserModel = charger.ModelName,
                     ProtocolName = charger.ProtocolName,
@@ -113,10 +76,7 @@ namespace PortalRestService.Infrastructure.Repositories
                     DispenserMake = charger.MakeName,
                     ModifiedAt = charger.CreatedOn,
                     AssetId = charger.AssetId
-                })
-                .OrderByDescending(m => m.ModifiedAt)
-                .ToListAsync();
-
+                }).OrderByDescending(m => m.ModifiedAt).ToListAsync();
             return response;
         }
 
