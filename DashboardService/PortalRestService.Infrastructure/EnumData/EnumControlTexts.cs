@@ -36,7 +36,7 @@ namespace PortalRestService.Infrastructure.EnumData
             TotalEnergy = 8,
             [Display(Name = "Daily Average")]
             DailyAverage = 9,
-            [Display(Name = "Today's")]
+            [Display(Name = "Today")]
             Todays = 10,
 
             // Energy Points
