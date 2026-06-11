@@ -41,6 +41,8 @@
         public List<Revenue> Revenue { get; set; }
         public List<EnergyUsed> EnergyUsed { get; set; }
         public List<EnergyPoint> EnergyPoints { get; set; }
+        public DateTime? LastVehicleUpdate { get; set; }
+        public DateTime? LastTransactionUpdate { get; set; }
     }
 
     public class EnergyPoint

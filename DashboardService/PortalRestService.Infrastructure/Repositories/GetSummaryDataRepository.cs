@@ -223,6 +223,10 @@ namespace PortalRestService.Infrastructure.Repositories
                 summaryData.StatusCode = (int)HttpStatusCode.OK;
                 if (summaryData.Data == null)
                     summaryData.StatusCode = (int)HttpStatusCode.NotFound;
+                var lastVehicleUpdate = await _dbContext.Vehicle.MaxAsync(v => (DateTime?)v.ModifiedOn);
+                var lastTransactionUpdate = await _dbContext.PaymentTransaction.MaxAsync(t => (DateTime?)t.ModifiedOn);
+                summaryDetail.LastTransactionUpdate = lastTransactionUpdate;
+                summaryDetail.LastVehicleUpdate = lastVehicleUpdate;
             }
             catch (Exception ex)
             {
