@@ -4,14 +4,7 @@ using PortalRestService.Core.ConstantResponse;
 using PortalRestService.Core.Models;
 using PortalRestService.Core.Repositories;
 using PortalRestService.Core.Responses;
-using PortalRestService.Infrastructure.Helper;
 using PortalRestService.Infrastructure.Repositories.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PortalRestService.Infrastructure.Repositories
 {
@@ -57,7 +50,7 @@ namespace PortalRestService.Infrastructure.Repositories
                                   ChargeBoxid = Charger.ChargeBoxId,
                                   status = Charger.ChargerStatuses == null || Charger.ChargerStatuses.Count == 0 ? "Offline" :
                                 Charger.ChargerStatuses.ToList()[0].Chargerstatus.Replace("charging", "Busy").Replace("Charging", "Busy").Replace("suspendedev", "Busy").Replace("SuspendedEV", "Busy").Replace("suspendedevse", "Busy").Replace("SuspendedEVSE", "Busy")
-                              .Replace("finishing", "Busy").Replace("Finishing", "Busy").Replace("preparing", "Busy").Replace("Preparing", "Busy"),
+                              .Replace("finishing", "Busy").Replace("Finishing", "Busy").Replace("preparing", "Busy").Replace("Preparing", "Busy").Replace("Disconnected", "EV Disconnected"),
                                   AssetId = Charger.AssetId,
                                   MakeName = Charger.MakeName,
                                   ModelName = Charger.ModelName,
